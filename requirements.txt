@@ -1,4 +1,3 @@
-requests
 pandas
 numpy
 pyarrow
@@ -8,5 +7,5 @@ scipy
 statsmodels
 matplotlib
 seaborn
-python-dateutil
 holidays
+requests
