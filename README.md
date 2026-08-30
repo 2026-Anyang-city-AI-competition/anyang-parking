@@ -46,4 +46,3 @@ reports/         figures/ · tables/   ← 발표자료로 직행
 > ⚠️ 라벨 수집에 쓰는 `parking.auc.or.kr` API는 비공식 내부 API다.
 > 학습·검증용으로만 쓰고 공모전 신청서의 "활용 공공데이터" 항목에 기재하지 않는다.
 > 폴링 간격은 5분 이상을 유지한다.
-# anyang-parking

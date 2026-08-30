@@ -1,0 +1,12 @@
+requests
+pandas
+numpy
+pyarrow
+scikit-learn
+lightgbm
+scipy
+statsmodels
+matplotlib
+seaborn
+python-dateutil
+holidays

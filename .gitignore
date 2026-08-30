@@ -1,0 +1,20 @@
+# 데이터 (라벨 DB는 비공식 내부 API 수집물 — 절대 커밋 금지)
+data/raw/*.db
+data/raw/*.db-journal
+data/raw/*.db-wal
+data/raw/*.db-shm
+data/**/*.parquet
+
+# 파이썬
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# 환경·로그
+.env
+*.log
+
+# OS
+.DS_Store
