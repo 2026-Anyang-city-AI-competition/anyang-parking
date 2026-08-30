@@ -41,7 +41,11 @@ src/models/      train_a.py · train_b.py · evaluate.py
 reports/         figures/ · tables/   ← 발표자료로 직행
 ```
 
-작업 규칙은 [CLAUDE.md](CLAUDE.md) 참조.
+## 문서
+- **[공용-프로젝트-컨텍스트.md](공용-프로젝트-컨텍스트.md) — 정본.** 배점·일정·데이터 현황·기술 설계·작업 순서 전부.
+  데스크탑에서 갱신하고 이 리포에 덮어쓴다.
+- [CLAUDE.md](CLAUDE.md) — 위 문서 §14의 사본. Claude Code가 자동으로 읽는 코딩 규칙.
+  손으로 고치지 말 것. 두 문서가 충돌하면 정본이 이긴다.
 
 > ⚠️ 라벨 수집에 쓰는 `parking.auc.or.kr` API는 비공식 내부 API다.
 > 학습·검증용으로만 쓰고 공모전 신청서의 "활용 공공데이터" 항목에 기재하지 않는다.
