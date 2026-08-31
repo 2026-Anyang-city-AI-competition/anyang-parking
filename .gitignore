@@ -4,6 +4,7 @@ data/raw/*.db-journal
 data/raw/*.db-wal
 data/raw/*.db-shm
 data/**/*.parquet
+data/raw/.ckpt_*.json
 
 # 파이썬
 __pycache__/
