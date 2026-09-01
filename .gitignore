@@ -4,6 +4,9 @@ data/raw/*.db-journal
 data/raw/*.db-wal
 data/raw/*.db-shm
 data/**/*.parquet
+# 공단 전수 산출물 — 100MB 초과라 GitHub 거부. API 로 재생성 가능(sttus 31분)
+data/raw/kotsa_*_gg.jsonl
+data/raw/kotsa_*_idmap.json
 data/raw/.ckpt_*.json
 
 # 파이썬
