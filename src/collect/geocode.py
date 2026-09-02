@@ -41,6 +41,7 @@ SLEEP   = 0.2
 RETRY   = 3
 TIMEOUT = 15
 CROSSCHECK_M = 100          # VWorld↔Kakao 이 이상 벌어지면 needs_review
+_WARNED = set()             # 같은 원인의 실패를 한 번만 알린다
 
 COLS = ["parking_id","name","address","lat","lon","source",
         "dist_vworld_kakao_m","needs_review"]
@@ -135,13 +136,24 @@ def vworld(addr, typ="road"):
             "crs": "epsg:4326",              # 생략 금지 — 기본이 4326이 아닐 수 있다
             "type": typ, "address": addr, "key": VWORLD_KEY})
         j = r.json()
-        if j.get("response", {}).get("status") != "OK": return None
+        st = j.get("response", {}).get("status")
+        if st != "OK":
+            if st == "ERROR":
+                warn_once("vworld_err",
+                          f"VWorld ERROR: {j.get('response',{}).get('error')}")
+            return None
         p = j["response"]["result"]["point"]
         return float(p["y"]), float(p["x"])          # (위도, 경도)
     except Exception:
         return None
     finally:
         time.sleep(SLEEP)
+
+def warn_once(tag, msg):
+    """인증 실패와 '주소 못 찾음' 은 둘 다 None 이라 구분이 안 된다. 원인을 한 번은 알린다."""
+    if tag in _WARNED: return
+    _WARNED.add(tag)
+    print(f"  ⚠️ {msg}", flush=True)
 
 def kakao(addr):
     """반환 (lat, lon). documents[0].x 가 경도, .y 가 위도다."""
@@ -150,10 +162,22 @@ def kakao(addr):
         r = _get("https://dapi.kakao.com/v2/local/search/address.json",
                  params={"query": addr},
                  headers={"Authorization": f"KakaoAK {KAKAO_KEY}"})
+        if r.status_code != 200:
+            body = (r.text or "")[:200]
+            warn_once("kakao_http", f"Kakao HTTP {r.status_code}: {body}")
+            if r.status_code in (401, 403):
+                warn_once("kakao_fix",
+                          "→ 키는 유효하나 앱에 지도 서비스가 꺼져 있다. "
+                          "developers.kakao.com → 내 애플리케이션 → 제품 설정 → "
+                          "카카오맵 활성화 후 다시 실행할 것.")
+            return None
         docs = (r.json() or {}).get("documents") or []
-        if not docs: return None
+        if not docs:
+            warn_once("kakao_empty", f"Kakao 결과 0건 (예: {addr})")
+            return None
         return float(docs[0]["y"]), float(docs[0]["x"])   # (위도, 경도)
-    except Exception:
+    except Exception as e:
+        warn_once("kakao_exc", f"Kakao 예외: {str(e)[:150]}")
         return None
     finally:
         time.sleep(SLEEP)
