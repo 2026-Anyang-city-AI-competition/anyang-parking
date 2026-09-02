@@ -277,7 +277,9 @@ def validate():
         rows.append({"parking_id": r.parking_id, "name": r.name,
                      "is_nosang": int(r.div == "노상"),
                      "err_vworld": hav(r.lat, r.lng, *v) if v else float("nan"),
-                     "err_kakao":  hav(r.lat, r.lng, *k) if k else float("nan")})
+                     "err_kakao":  hav(r.lat, r.lng, *k) if k else float("nan"),
+                     # 두 지오코더가 서로 얼마나 다른가 — 독립성 점검용
+                     "dist_vk_m":  hav(*v, *k) if (v and k) else float("nan")})
     v = pd.DataFrame(rows)
     v.to_csv(TAB / "geocode_validation.csv", index=False)
 
@@ -297,16 +299,36 @@ def validate():
         if len(g):
             say(f"| {lb} | {len(g)} | {g.err_vworld.median():.0f}m | {g.err_kakao.median():.0f}m |")
     say()
+    say("**두 지오코더의 상호 일치도** — 서로 독립인지 점검한다.")
+    say()
+    say("| 구간 | n | VW↔Kakao 중앙값 | 1m 미만 |")
+    say("|---|---:|---:|---:|")
+    for f, lb in ((1,"노상"), (0,"노상 아님")):
+        g = v[(v.is_nosang == f)]["dist_vk_m"].dropna()
+        if len(g): say(f"| {lb} | {len(g)} | {g.median():.1f}m | {int((g<1).sum())}곳 |")
+    vk = v["dist_vk_m"].dropna()
+    if len(vk) and vk.median() < 5:
+        say()
+        say("> ⚠️ 두 지오코더가 서로 거의 같다. **둘 다 같은 도로명주소 DB 를 쓰기 때문**이며,")
+        say("> 서로에 대한 독립 검증이 되지 못한다. 도시공사 좌표도 같은 DB 산출물이면")
+        say("> 이 비교 전체가 순환 참조다. **보수 기준은 노외 구간의 오차를 쓴다.**")
+    say()
     mv, mk = v.err_vworld.median(), v.err_kakao.median()
     if pd.notna(mv) and pd.notna(mk):
         say(f"- 더 정확한 쪽: **{'VWorld' if mv <= mk else 'Kakao'}** ({min(mv,mk):.0f}m vs {max(mv,mk):.0f}m)")
-    best = min([x for x in (mv, mk) if pd.notna(x)], default=float("nan"))
+    # 노상은 도시공사 좌표 자체가 지오코더 산출물이라 오차가 0 에 붙는다(순환).
+    # 판정은 순환이 아닌 노외 구간으로 한다.
+    ext = v[v.is_nosang == 0]
+    cand = [x for x in (ext.err_vworld.median(), ext.err_kakao.median()) if pd.notna(x)]
+    best = min(cand) if cand else float("nan")
     if pd.notna(best):
-        say(f"- ### 결론: 오차 중앙값 **{best:.0f}m** — "
+        say(f"- 전체 중앙값은 {min([x for x in (mv,mk) if pd.notna(x)], default=float('nan')):.0f}m 지만 "
+            f"노상이 순환이라 부풀려진 값이다.")
+        say(f"- ### 결론: **노외 기준 오차 중앙값 {best:.0f}m** — "
             + ("**100m 를 넘는다. `compet_*` 의 반경 500m 를 재검토해야 한다** "
                "(오차가 반경의 20%를 넘으면 경쟁 집계가 흔들린다)."
                if best > 100 else
-               "100m 이하라 반경 500m 집계에 쓸 수 있다."))
+               f"100m 이하이고 반경 500m 의 {best/500:.0%} 수준이라 경쟁 집계에 쓸 수 있다."))
     say()
     return v
 
