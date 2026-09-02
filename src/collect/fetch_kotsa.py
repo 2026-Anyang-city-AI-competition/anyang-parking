@@ -21,6 +21,7 @@
 """
 import argparse, json, math, os, sqlite3, sys, time
 from pathlib import Path
+from urllib.parse import unquote
 import requests
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +42,10 @@ if not KEY:
             KEY = line.split("=", 1)[1].strip()
 if not KEY:
     sys.exit("KOTSA_KEY 없음. .env 에 디코딩 인증키를 넣어라.")
+# 인코딩 키를 넣으면 requests 가 한 번 더 인코딩해 SERVICE_KEY_IS_NOT_REGISTERED_ERROR 가 난다.
+# 어느 쪽을 넣어도 동작하도록 여기서 흡수한다(정본 §6 트러블슈팅).
+if "%" in KEY:
+    KEY = unquote(KEY)
 
 CALLS = 0
 def call(op, page=1, rows=100, retry=RETRY):
