@@ -8,6 +8,9 @@ data/**/*.parquet
 data/raw/kotsa_*_gg.jsonl
 data/raw/kotsa_*_idmap.json
 data/raw/.ckpt_*.json
+# 재생성 가능한 WFS 수집 캐시
+data/interim/zoning_cache.csv
+data/interim/type_dist_cache.csv
 
 # 파이썬
 __pycache__/
