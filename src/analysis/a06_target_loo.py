@@ -74,23 +74,37 @@ FEAT = pd.DataFrame({
     "compet_cells_500": np.log1p(pd.Series(cc, index=L.index)),
 }).replace([np.inf,-np.inf], np.nan).dropna()
 
-def loo(pool, data):
-    """pool: lot id 목록. data: 관측 부분집합. 반환 (MAE%p, Spearman, n, obs수)"""
-    f = FEAT.loc[FEAT.index.intersection(pool)]
-    f = f.drop(columns=[c for c in f.columns if f[c].std() == 0])
+def spearman_ci(rho, n, alpha=0.05):
+    """Fisher z 로 95% CI. n<4 면 계산 불가."""
+    if not np.isfinite(rho) or n < 4: return (np.nan, np.nan)
+    z  = np.arctanh(np.clip(rho, -0.999999, 0.999999))
+    se = 1.0 / np.sqrt(n - 3)
+    k  = stats.norm.ppf(1 - alpha/2)
+    return float(np.tanh(z - k*se)), float(np.tanh(z + k*se))
+
+def loo(train_pool, eval_pool, data, min_obs=10):
+    """학습 집단과 평가 집단을 분리한다.
+    각 평가 lot 마다 (학습집단 - 그 lot) 으로 학습하고 그 lot 만 예측한다.
+    반환 (MAE%p, rho, lo, hi, n_eval, n_train, n_obs)"""
+    f = FEAT.loc[FEAT.index.intersection(list(set(train_pool) | set(eval_pool)))]
     d = data[data.parking_id.isin(f.index)]
     cnt = d.groupby("parking_id").size()
-    ids = [i for i in f.index if cnt.get(i, 0) >= 10]      # 관측 10개 미만은 제외
-    if len(ids) < 6: return (np.nan,)*2 + (len(ids), len(d))
-    f = f.loc[ids]; d = d[d.parking_id.isin(ids)]
+    keep = [i for i in f.index if cnt.get(i, 0) >= min_obs]
+    f = f.loc[keep]; d = d[d.parking_id.isin(keep)]
+    tr_all = [i for i in keep if i in set(train_pool)]
+    ev     = [i for i in keep if i in set(eval_pool)]
+    if len(ev) < 4 or len(tr_all) < 6:
+        return (np.nan,)*4 + (len(ev), len(tr_all), len(d))
     lvl = d.groupby("parking_id")["occ"].mean()
     d = d.assign(sh=d["occ"] / d.parking_id.map(lvl))
-    Z = (f - f.mean()) / f.std()
     errs, hat = [], {}
-    for pid in ids:
-        tr = [i for i in ids if i != pid]
-        m = RidgeCV(alphas=np.logspace(-2,3,20)).fit(Z.loc[tr], lvl.loc[tr])
-        lh = float(m.predict(Z.loc[[pid]])[0]); hat[pid] = lh
+    for pid in ev:
+        tr = [i for i in tr_all if i != pid]
+        ftr = f.loc[tr]
+        cols = [c for c in ftr.columns if ftr[c].std() > 0]      # 학습 집단 기준으로 판단
+        mu, sg = ftr[cols].mean(), ftr[cols].std()
+        m = RidgeCV(alphas=np.logspace(-2,3,20)).fit((ftr[cols]-mu)/sg, lvl.loc[tr])
+        lh = float(m.predict(((f.loc[[pid], cols]-mu)/sg))[0]); hat[pid] = lh
         dtr = d[d.parking_id.isin(tr)]
         sh_ho = dtr.groupby(["hour","op"])["sh"].mean()
         sh_h  = dtr.groupby("hour")["sh"].mean()
@@ -99,8 +113,10 @@ def loo(pool, data):
         s2 = sh_ho.reindex(pd.MultiIndex.from_arrays([te["hour"], te["op"]])).to_numpy(float)
         s2 = np.where(np.isfinite(s2), s2, s1)
         errs.append(np.abs(te["occ"].values - lh*s2))
-    rho = stats.spearmanr(pd.Series(hat).loc[ids], lvl.loc[ids]).statistic
-    return np.concatenate(errs).mean()*100, rho, len(ids), len(d)
+    rho = stats.spearmanr(pd.Series(hat).loc[ev], lvl.loc[ev]).statistic
+    lo, hi = spearman_ci(rho, len(ev))
+    return (np.concatenate(errs).mean()*100, rho, lo, hi,
+            len(ev), len(tr_all), len(d))
 
 allid  = list(FEAT.index)
 noweoi = [i for i in allid if L.loc[i,"div"] == "노외"]
@@ -118,31 +134,35 @@ say(f"- 학습 후보 {len(allid)}곳 (변동 0 제외) · 노외 {len(noweoi)}�
     f"노외&≤60면 {len(small)}곳")
 say(f"- 피처는 a05 의 9개로 **고정**. 학습 집단만 바꾼다")
 say()
-say("| 학습 집단 | 곳 | 관측 | MAE(%p) | Spearman |")
-say("|---|---:|---:|---:|---:|")
-rows = [("89곳 전체 (a05 재현)", allid, live),
-        ("**노외 49곳만**", noweoi, live),
-        ("**노외 + 60면 이하**", small, live),
-        ("**노외 + 운영시간 외 구간만** ★", noweoi, live[live.op == 0])]
+say("| 학습 / 평가 | 학습 | 평가 | MAE(%p) | Spearman [95% CI] |")
+say("|---|---:|---:|---:|---|")
+rows = [("67 / 67 (a05 재현)",            allid,  allid,  live),
+        ("45 / 45 (학습까지 좁힘 · 과했던 설계)", noweoi, noweoi, live),
+        ("**67 / 노외 45** ★",             allid,  noweoi, live),
+        ("**67 / 노외 60면 이하 19**",       allid,  small,  live),
+        ("**67 / 노외 45 · 운영시간 외만**",   allid,  noweoi, live[live.op == 0])]
 res = {}
-for lb, pool, data in rows:
-    mae, rho, n, nobs = loo(pool, data)
-    res[lb] = (mae, rho, n)
-    say(f"| {lb} | {n} | {nobs:,} | "
-        + (f"**{mae:.1f}** | {rho:+.3f} |" if np.isfinite(mae) else "- | - |"))
+for lb, tp, ep, data in rows:
+    mae, rho, lo, hi, ne, nt, nobs = loo(tp, ep, data)
+    res[lb] = (mae, rho, lo, hi, ne)
+    ci = f"{rho:+.3f} [{lo:+.2f}, {hi:+.2f}]" if np.isfinite(rho) else "-"
+    say(f"| {lb} | {nt} | {ne} | " + (f"**{mae:.1f}** | {ci} |" if np.isfinite(mae) else "- | - |"))
 say()
-base = res["89곳 전체 (a05 재현)"][0]
-nw   = res["**노외 49곳만**"][0]
-free = res["**노외 + 운영시간 외 구간만** ★"][0]
-say(f"- 89곳 전체 {base:.1f}%p → 노외만 **{nw:.1f}%p** ({nw-base:+.1f}%p). "
-    + ("**낙관 편향이 확인됐다.**" if nw > base + 0.5 else
-       "노외만 봐도 크게 나빠지지 않는다." if nw < base + 0.5 else ""))
-say(f"- ★ 무료 조건(운영시간 외)만: **{free:.1f}%p** — "
-    f"타깃이 무료이므로 이 숫자가 가장 현실에 가깝다")
-say(f"- 목표 15%p 대비: " + " · ".join(
-    f"{k.strip('*') } {v[0]:.1f}" for k, v in res.items() if np.isfinite(v[0])))
+say("> 모든 상관에 n 과 Fisher z 95% CI 를 병기한다. CI 가 0 을 포함하면 판정 불가다.")
 say()
-pd.DataFrame([{"pool":k,"mae_pp":v[0],"spearman":v[1],"n_lots":v[2]}
+a = res["67 / 67 (a05 재현)"]; b = res["45 / 45 (학습까지 좁힘 · 과했던 설계)"]
+c = res["**67 / 노외 45** ★"]; e = res["**67 / 노외 60면 이하 19**"]
+say(f"- **설계 수정 효과**: 노외 45곳 평가에서 학습을 45→67 로 되돌리면 "
+    f"MAE {b[0]:.1f} → **{c[0]:.1f}%p**, Spearman {b[1]:+.3f} → **{c[1]:+.3f}**")
+say(f"  `is_nosang` 이 학습 집단에 살아 있어 level 예측이 회복된다")
+say(f"- **정정**: 60면 이하 19곳의 ρ={e[1]:+.3f} 는 CI [{e[2]:+.2f}, {e[3]:+.2f}] 로 "
+    f"{'0 을 포함한다 → **판정 불가**(표본 부족). 부호를 해석하면 안 된다' if e[2]*e[3] < 0 else '0 을 배제한다'}")
+say(f"- 타깃 조건 최선 추정: **MAE {c[0]:.1f}%p · Spearman {c[1]:+.3f} "
+    f"[{c[2]:+.2f}, {c[3]:+.2f}] (n={c[4]})**")
+say(f"  행정용 합격선 0.6 은 CI 상한 {c[3]:+.2f} 기준 "
+    + ("**여전히 도달 가능 범위**" if c[3] >= 0.6 else "**범위 밖**"))
+say()
+pd.DataFrame([{"pool":k,"mae_pp":v[0],"spearman":v[1],"ci_lo":v[2],"ci_hi":v[3],"n_eval":v[4]}
               for k,v in res.items()]).to_csv(TAB/"a06_target_loo.csv", index=False)
 (TAB/"a06_target_loo.md").write_text("\n".join(REPORT)+"\n", encoding="utf-8")
 print(f"\n→ {TAB/'a06_target_loo.md'}")

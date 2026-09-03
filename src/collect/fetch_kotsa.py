@@ -455,22 +455,45 @@ def realtime_quick(wait=600, rows=DEFAULT_ROWS, out=DEFAULT_OUT, yes=False):
     print("\n→ 진짜 실시간" if diff else "\n→ 변동 없음. 일 1회 스냅샷일 가능성")
 
 # ── 5. 안양분 운영정보 ────────────────────────────────
-def opr(rows=DEFAULT_ROWS, out=DEFAULT_OUT, yes=False):
+def opr(rows=20000, out=DEFAULT_OUT, yes=False):
+    """PrkOprInfo 는 중첩 객체가 많아 무겁다. rows=50000 은 SERVICE_TIMEOUT 이 난다.
+    실패 페이지는 건너뛰고 계속한다(sttus 와 동일 정책)."""
     ids = {o["prk_center_id"] for o in load_anyang(out)}
-    res, p = [], 1
-    while True:
+    f = outp(out, "anyang_opr.json")
+    ck = ckpt_load(out, "opr", rows)
+    if ck:
+        res, failed, pages, start = ck["res"], ck["failed"], ck["total_pages"], ck["last_page"]+1
+    else:
+        j = call("PrkOprInfo", 1, rows)
+        total = int(j.get("totalCount") or 0)
+        pages = math.ceil(total / rows)
+        print(f"운영정보 총 {total:,}건 / rows={rows:,} / {pages}페이지", flush=True)
+        res, failed, start = [], [], 1
+    t0 = time.time()
+    for p in range(start, pages + 1):
         try:
             lst = items(call("PrkOprInfo", p, rows), "PrkOprInfo")
         except Exception as e:
-            print(f"  p{p} 실패, 중단: {str(e)[:110]}"); break
+            failed.append(p)
+            print(f"  p{p} 실패({len(failed)}) 건너뜀: {str(e)[:90]}", flush=True)
+            if p % CKPT_EVERY == 0:
+                ckpt_save(out, "opr", {"last_page": p, "rows": rows, "total_pages": pages,
+                                       "res": res, "failed": failed})
+            continue
         if not lst: break
-        res += [o for o in lst if o.get("prk_center_id") in ids]
-        print(f"  p{p} 누적 {len(res)}", flush=True)
-        p += 1
-    f = outp(out, "anyang_opr.json")
+        hit = [o for o in lst if o.get("prk_center_id") in ids]
+        res += hit
+        if hit or p % 10 == 0:
+            print(f"  p{p}/{pages} 안양누적 {len(res)} ({time.time()-t0:.0f}s)", flush=True)
+        if p % CKPT_EVERY == 0:
+            ckpt_save(out, "opr", {"last_page": p, "rows": rows, "total_pages": pages,
+                                   "res": res, "failed": failed})
     json.dump(res, open(f, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"안양 운영정보 {len(res)}건 → {f.name}")
-    if res: print(json.dumps(res[0], ensure_ascii=False, indent=1)[:900])
+    ckpt_clear(out, "opr")
+    print(f"\n안양 운영정보 {len(res)}건 → {f.name}")
+    if failed: print(f"⚠️ 실패 {len(failed)}페이지: {failed[:20]} → 결과는 하한이다")
+    if res: print(json.dumps(res[0], ensure_ascii=False, indent=1)[:600])
+    print(f"호출 {CALLS}회 / {time.time()-t0:.0f}초")
 
 # ── 6. 포털 89곳과 좌표 매칭 ──────────────────────────
 def match(rows=DEFAULT_ROWS, out=DEFAULT_OUT, yes=False, max_m=120):
