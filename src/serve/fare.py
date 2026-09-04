@@ -62,8 +62,14 @@ def _open_window(lot, day):
         s, e = lot.get("wdays_start"), lot.get("wdays_end")
     a, b = _hhmm(s), _hhmm(e)
     if a is None or b is None:
-        return 0, 1440
-    if b <= a:                            # 자정 넘김
+        return 0, 1440                    # 값 자체가 없으면 24시간 운영으로 본다
+    if a == b:
+        # ★ "00:00~00:00" 은 24시간이 아니라 **미운영**이다.
+        #   실측: 주말 start=end 가 89곳 중 58곳(57곳이 00:00~00:00) — 주말 미운영.
+        #   진짜 24시간 운영은 "00:00~24:00" 으로 들어온다(7곳).
+        #   과소청구가 과다청구보다 안전하므로 미운영으로 처리한다.
+        return 0, 0
+    if b < a:                             # 자정 넘김
         b += 1440
     return a, b
 

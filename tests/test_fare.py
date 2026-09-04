@@ -66,8 +66,16 @@ r = calc_fare(G1, MON, 120)
 check("120분은 후불이 유리", r["recommend_prepaid"], False)
 check("자동 상한을 켜면 v10 동작", calc_fare(G1, MON, 300, apply_daily_pass_cap=True)["total"], 16000)
 
+print("\n=== 운영시간 표기 해석 ===")
+closed = {"type": "노외", "grade": 1, "wdays_start": "00:00", "wdays_end": "00:00"}
+check("00:00~00:00 은 미운영(24h 아님)", calc_fare(closed, MON, 300)["total"], 0)
+open24 = {"type": "노외", "grade": 1, "wdays_start": "00:00", "wdays_end": "24:00"}
+check("00:00~24:00 은 진짜 24시간", calc_fare(open24, MON, 300)["billable_min"], 300)
+nohours = {"type": "노외", "grade": 1}
+check("운영시간 값 자체가 없으면 24h", calc_fare(nohours, MON, 300)["billable_min"], 300)
+
 print("\n=== 상한 (비고 10 · 일 최대 25,000) ===")
-G24 = {"type": "노외", "grade": 1, "wdays_start": "00:00", "wdays_end": "00:00"}  # 24h → 별표5 밖
+G24 = {"type": "노외", "grade": 1, "wdays_start": "00:00", "wdays_end": "24:00"}  # 24h → 별표5 밖
 r = calc_fare(G24, MON, 600)
 check("24시간 운영은 일일권 표 밖", r["daily_pass"], None)
 check("그래도 25,000 상한은 걸린다", r["total"], 25000)
