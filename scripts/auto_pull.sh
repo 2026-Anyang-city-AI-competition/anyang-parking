@@ -29,10 +29,12 @@ fi
 echo $$ > "$LOCK/pid"
 trap 'rm -rf "$LOCK"' EXIT
 
-# ── 로그가 무한정 자라지 않게 ──
-if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 2000000 ]; then
-    tail -n 500 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
-    log "로그 회전(2MB 초과)"
+# ── 로그 회전 — 절대 지우지 않는다. 번호를 붙여 보관만 한다 ──
+#    (하루 ~10KB 라 20MB 에 도달하려면 5년쯤 걸린다. 사실상 발동 안 함)
+if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 20000000 ]; then
+    i=1; while [ -f "$LOG.$i" ]; do i=$((i+1)); done
+    mv "$LOG" "$LOG.$i"
+    log "로그 회전 → $(basename "$LOG").$i 로 보관(삭제 아님)"
 fi
 
 if ! command -v gcloud >/dev/null 2>&1; then
