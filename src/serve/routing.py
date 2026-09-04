@@ -33,10 +33,9 @@ LOCAL = "https://dapi.kakao.com/v2/local/search/category.json"
 TIMEOUT, MAX_DEST = 15, 30
 
 # 폴백 상수 — 직선거리 × 우회계수 ÷ 도심 평균속도
-#   ★ 2026-09-04 실측 보정. 안양역 출발 25개 경로를 카카오 실제값과 대조한 결과
-#     기존 가정(1.3 / 20km/h)은 거리를 20% · 소요시간을 37% 과소추정했다.
-#     실제 도로거리/직선거리 중앙 1.62 · 실제 평균속도 중앙 15.6km/h
-#   ⚠️ 출발지 1곳 25개 경로 기준이다. 표본이 늘면 재보정할 것.
+#   ★ 출발지 1곳·경로 25개로 맞춘 값이라 근거가 얇다. **더 맞추지 않는다(재보정 금지).**
+#     대신 폴백 결과에 estimated=True 를 달아 호출자가 신뢰도를 알게 한다.
+#     (참고: 원래 가정 1.3/20km/h 는 소요시간을 37% 과소추정했다)
 DETOUR, URBAN_KMH = 1.6, 15.5
 
 def _key():
@@ -47,16 +46,21 @@ def _key():
     return k
 
 def haversine_m(lat1, lon1, lat2, lon2):
+    """직선거리(m). 후보 추림(반경 1km 등)에 쓰는 건 **정상 로직**이지 폴백이 아니다."""
     p = math.pi/180
     a = (math.sin((lat2-lat1)*p/2)**2 +
          math.cos(lat1*p)*math.cos(lat2*p)*math.sin((lon2-lon1)*p/2)**2)
     return 6371000 * 2 * math.asin(math.sqrt(a))
 
 def fallback_eta(lat1, lon1, lat2, lon2):
-    """직선거리 × 1.3 ÷ 20km/h. 카카오가 죽어도 서비스가 돌게 하는 최후 수단."""
+    """직선거리 근사. 카카오가 죽어도 서비스가 돌게 하는 최후 수단.
+
+    ★ 상수는 출발지 1곳·경로 25개로 맞춘 것이라 근거가 얇다. 더 맞추지 않는다.
+      대신 `estimated: True` 를 달아 호출자가 "추정치"임을 알게 한다.
+      이 플래그가 붙은 항목은 **만차확률 기반 순위 강등을 적용하지 않는다.**"""
     d = haversine_m(lat1, lon1, lat2, lon2) * DETOUR
     return {"distance": int(round(d)), "duration": int(round(d / (URBAN_KMH*1000/3600))),
-            "source": "fallback"}
+            "source": "fallback", "estimated": True}
 
 def multi_eta(origin, dests, radius=10000, key=None):
     """origin=(lat,lon) · dests={id:(lat,lon)} → {id:{distance,duration,source}}
@@ -81,7 +85,7 @@ def multi_eta(origin, dests, radius=10000, key=None):
                         if rt.get("result_code") == 0 and rt.get("summary"):
                             got[rt["key"]] = {"distance": rt["summary"]["distance"],
                                               "duration": rt["summary"]["duration"],
-                                              "source": "kakao"}
+                                              "source": "kakao", "estimated": False}
                 else:
                     print(f"[routing] HTTP {r.status_code} {r.text[:120]} → 폴백")
             except Exception as e:
@@ -107,7 +111,8 @@ def future_eta(origin, dest, minutes_ahead=30, key=None):
                 if rt.get("result_code") == 0:
                     s = rt["summary"]
                     return {"distance": s["distance"], "duration": s["duration"],
-                            "fare": s.get("fare"), "departure_time": dt, "source": "kakao"}
+                            "fare": s.get("fare"), "departure_time": dt,
+                            "source": "kakao", "estimated": False}
             print(f"[future] HTTP {r.status_code} → 폴백")
         except Exception as e:
             print(f"[future] {type(e).__name__}: {str(e)[:100]} → 폴백")
@@ -153,13 +158,24 @@ if __name__ == "__main__":
 
     print("\n=== 폴백 강제 (키를 비워서) ===")
     fb = multi_eta(ORIG, dests, key="")
-    same = [k for k in res if res[k]["source"] == "kakao"]
-    if same:
-        import statistics as st
-        ratio = st.median(fb[k]["duration"]/res[k]["duration"] for k in same)
-        print(f"  폴백/실제 소요시간 비 중앙값 {ratio:.2f}  (1.0 이면 근사가 정확)")
     for k, v in list(fb.items())[:3]:
-        print(f"  {nm[k][:14]:<16} {v['distance']:>6}m {v['duration']:>5}초 ({v['source']})")
+        print(f"  {nm[k][:14]:<16} {v['distance']:>6}m {v['duration']:>5}초 "
+              f"({v['source']}, estimated={v['estimated']})")
+
+    print("\n=== ★ estimated 플래그 검증 ===")
+    bad_k = [k for k, v in res.items() if v["source"] == "kakao" and v["estimated"] is not False]
+    bad_f = [k for k, v in fb.items() if v["source"] == "fallback" and v["estimated"] is not True]
+    miss  = [k for k, v in list(res.items()) + list(fb.items()) if "estimated" not in v]
+    print(f"  카카오 경로 estimated=False  : {'PASS' if not bad_k else f'FAIL {bad_k}'}"
+          f"  (n={sum(1 for v in res.values() if v['source']=='kakao')})")
+    print(f"  폴백  경로 estimated=True   : {'PASS' if not bad_f else f'FAIL {bad_f}'}"
+          f"  (n={sum(1 for v in fb.values() if v['source']=='fallback')})")
+    print(f"  플래그 누락 없음             : {'PASS' if not miss else f'FAIL {miss}'}")
+    fe_k = future_eta(ORIG, list(dests.values())[0])
+    fe_f = future_eta(ORIG, list(dests.values())[0], key="")
+    print(f"  future_eta 카카오/폴백       : "
+          f"{'PASS' if fe_k.get('estimated') is False and fe_f.get('estimated') is True else 'FAIL'}"
+          f"  ({fe_k.get('source')}/{fe_k.get('estimated')} · {fe_f.get('source')}/{fe_f.get('estimated')})")
 
     print("\n=== future_eta (30분 뒤 출발) ===")
     print(" ", future_eta(ORIG, dests[16] if 16 in dests else list(dests.values())[0]))
