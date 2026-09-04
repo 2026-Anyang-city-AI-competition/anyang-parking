@@ -17,6 +17,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 KOTSA = ROOT / "data/raw/kotsa_v2_anyang.jsonl"
 STD   = ROOT / "data/raw/std_parking.csv"
+OPR   = ROOT / "data/raw/kotsa_v2_anyang_opr.json"
 OUT   = ROOT / "data/interim/population.csv"
 TAB   = ROOT / "reports/tables"; TAB.mkdir(parents=True, exist_ok=True)
 
@@ -75,12 +76,33 @@ def main():
         say(f"  (좌표만 120m 로 보면 107곳 전부 매칭되지만, 옆 건물 부설이 잡혀 신뢰할 수 없다)")
     say()
 
+    # 요금 신호 — PrkOprInfo. 부설은 basic_info 껍데기만 있고 값이 비어 있다.
+    #  ★ 레코드 존재가 아니라 "필드 채움" 으로 판단해야 한다(7,458곳 전부 레코드는 있다).
+    fee_ids = set()
+    if OPR.exists():
+        import json as _j
+        o = pd.DataFrame(_j.load(open(OPR, encoding="utf-8"))).drop_duplicates("prk_center_id")
+        def _num(r, k1, k2):
+            v = r.get(k1) or {}
+            try: return float(v.get(k2))
+            except (TypeError, ValueError): return np.nan
+        for k1, k2 in (("basic_info","parking_chrge_bs_chrge"),
+                       ("fxamt_info","parking_chrge_one_day_chrge"),
+                       ("fxamt_info","parking_chrge_mon_unit_chrge")):
+            col = o.apply(lambda r: _num(r, k1, k2), axis=1)
+            fee_ids |= set(o.loc[col.notna(), "prk_center_id"])
+        say(f"- 요금 신호: 운영정보 {len(o):,}곳 중 요금 필드가 **실제로 채워진 곳 {len(fee_ids)}곳** "
+            f"({len(fee_ids)/len(o):.1%})")
+        say(f"  운영시간도 같은 {len(fee_ids)}곳만 값이 있고 나머지는 빈 문자열, "
+            f"`opertn_bs_free_time` 은 전 곳 `0` 상수 → 모집단 피처로 못 쓴다")
+        say()
+    d["fee_sig"] = d["prk_center_id"].isin(fee_ids)
     d["b_sig"]     = d.nm.apply(lambda t: any(w in t for w in BUILD))
     d["p_sig"]     = d.nm.apply(lambda t: any(w in t for w in PUBLIC))
     d["std_match"] = d.index.isin(matched)
 
     def klass(r):
-        if r.std_match or (r.p_sig and not r.b_sig): return "비부설"
+        if r.std_match or r.fee_sig or (r.p_sig and not r.b_sig): return "비부설"
         if r.b_sig: return "부설"
         if r.nm == "" and pd.notna(r.cells) and r.cells <= 10: return "부설"
         return "애매"
@@ -110,8 +132,10 @@ def main():
     say("> ⚠️ **공단 안양 데이터는 사실상 건축물 부설주차장 대장이다.** "
         "면수 중앙 5면, 53%가 무명이다. 비부설을 신뢰성 있게 골라낼 신호가 이름뿐이라 "
         "애매 구간이 크게 남는다.")
-    say("> 애매 1,200곳을 가르려면 `PrkOprInfo` 의 요금 정보가 다음 카드다 "
-        "(부설은 대개 요금 정보가 없다). 전수 31페이지·31분이면 받는다.")
+    say(f"> **요금 카드는 써봤고 거의 소득이 없었다.** 정밀도는 높지만"
+        f"(요금 있음 → 95% 가 비부설) 재현율이 낮아 애매 구간을 못 가른다.")
+    say("> 다음 후보: 좌표 밀집도(부설은 건물마다 하나씩 촘촘하다) · 표준데이터 좌표 근접성 · "
+        "면수 분포. 다만 애매 1,190곳의 면수 중앙이 14면이라 소형 부설과 겹친다.")
     say()
 
     d["confidence"] = d.klass.map({"비부설":0.9, "부설":0.9, "애매":0.3})

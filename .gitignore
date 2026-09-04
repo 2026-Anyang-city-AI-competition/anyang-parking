@@ -7,6 +7,7 @@ data/**/*.parquet
 # 공단 전수 산출물 — 100MB 초과라 GitHub 거부. API 로 재생성 가능(sttus 31분)
 data/raw/kotsa_*_gg.jsonl
 data/raw/kotsa_*_idmap.json
+data/raw/kotsa_*_anyang_opr.json
 data/raw/.ckpt_*.json
 # 재생성 가능한 WFS 수집 캐시
 data/interim/zoning_cache.csv
