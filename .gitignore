@@ -1,19 +1,5 @@
-# 데이터 (라벨 DB는 비공식 내부 API 수집물 — 절대 커밋 금지)
-# parking.db · gits.db · *_vm.db 전부. 같은 줄 주석은 패턴에 포함되니 쓰지 말 것
-data/raw/*.db
-data/raw/*.db-journal
-data/raw/*.db-wal
-data/raw/*.db-shm
-data/**/*.parquet
-# 공단 전수 산출물 — 100MB 초과라 GitHub 거부. API 로 재생성 가능(sttus 31분)
-data/raw/kotsa_*_gg.jsonl
-data/raw/kotsa_*_idmap.json
-data/raw/kotsa_*_anyang_opr.json
-data/raw/.ckpt_*.json
-# 재생성 가능한 WFS 수집 캐시
-data/interim/zoning_cache.csv
-data/interim/type_dist_cache.csv
-
+# 데이터 일체 — git 으로 공유하지 않는다. 팀원과는 별도 경로로 전달
+data/
 # 파이썬
 __pycache__/
 *.py[cod]
