@@ -40,7 +40,8 @@ pip install -r requirements.txt
 ## 실행
 ```bash
 bash scripts/run_poll.sh        # 폴링 시작 (중복 실행 방지, nohup)
-bash scripts/pull_vm.sh         # VM에서 DB 회수 → 병합 → 결측 점검
+bash scripts/pull_vm.sh         # VM에서 DB 회수 → 병합 → 결측 점검 (수동)
+bash scripts/auto_pull.sh       # 위를 잠금·로깅 붙여 실행 (cron 이 3시간마다 호출)
 python3 scripts/check_gaps.py   # 폴링 결측 구간 확인 (venv 필요)
 python3 src/analysis/a05_shape_check.py   # 게이트 재실행
 ```
