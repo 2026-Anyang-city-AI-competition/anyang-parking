@@ -112,12 +112,15 @@ def _progressive(rate, billable):
 
 
 def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
-              apply_daily_pass_cap=True):
+              apply_daily_pass_cap=False):
     """반환 dict. 계산 불가면 None 이 아니라 reason 을 담은 dict 를 준다
     (서비스가 죽으면 안 된다)."""
     out = {"total": None, "reason": None, "breakdown": [], "capped": False,
            "billable_min": 0, "free_minutes": 0, "daily_pass": None,
-           "daily_pass_better_after_min": None, "raw_progressive": None}
+           "daily_pass_better_after_min": None, "raw_progressive": None,
+           # ★ 일일권은 자동 상한이 아니라 '선불 상품'이다(별표1 비고 8).
+           #   두 금액을 병기하고 "입차 시 구매" 를 안내한다.
+           "total_prepaid": None, "recommend_prepaid": False, "prepaid_saving": None}
 
     typ = lot.get("type")
     if typ not in ("노상", "노외", "부설"):
@@ -167,9 +170,10 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
         out["reason"] = (f"일일주차권 표 밖 (운영시간 {(b-a)/60:.0f}h, 급지 {grade}) "
                          f"— 상한 없음으로 처리")
 
-    caps = [T.DAILY_CAP]                     # 비고 10 · 일 최대 25,000
+    # 비고 10 · 누진 일 최대 상한 25,000. 일일권은 여기 포함하지 않는다(비고 8).
+    caps = [T.DAILY_CAP]
     if apply_daily_pass_cap and dp is not None:
-        caps.append(dp)
+        caps.append(dp)                       # 후불에도 일일권 상한을 적용하고 싶을 때만
     cap = min(caps)
     if total > cap:
         total, out["capped"] = cap, True
@@ -178,9 +182,18 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
     if d and d["rate"] != 1.0:
         total = total * d["rate"]
 
-    # 비고 11 · 100원 미만 절사
+    # 비고 11 · 100원 미만 절사 (감면 '후')
     total = int(total // T.ROUND_DOWN_TO * T.ROUND_DOWN_TO)
     out["total"] = total
+
+    # ★ 선불 일일권과 병기 — 어느 쪽이 싼지 사용자가 고르게 한다
+    if dp is not None:
+        prepaid = dp
+        if d and d["rate"] != 1.0:            # 별표2-2: 1일주차 요금은 70% 감면
+            prepaid = int(dp * 0.3 // T.ROUND_DOWN_TO * T.ROUND_DOWN_TO)
+        out["total_prepaid"] = prepaid
+        out["recommend_prepaid"] = prepaid < total
+        out["prepaid_saving"] = max(0, total - prepaid)
 
     # ★ 일일권이 더 싸지는 시점
     if dp is not None:

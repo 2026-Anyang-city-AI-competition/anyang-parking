@@ -25,12 +25,12 @@ G3 = {"type": "노외", "grade": 3, "wdays_start": "10:00", "wdays_end": "18:00"
 
 print("=== 노외 1급지 (13시간 운영 · 일일권 16,000) ===")
 for m, want in ((14, 0), (30, 600), (40, 900), (60, 1500),
-                (90, 3300), (120, 5100), (180, 10500), (300, 16000)):
-    check(f"{m}분", calc_fare(G1, MON, m)["total"], want)
+                (90, 3300), (120, 5100), (180, 10500), (300, 24900)):
+    check(f"{m}분 (후불 누진)", calc_fare(G1, MON, m)["total"], want)
 
 print("\n=== 노외 3급지 (8시간 운영 · 일일권 5,000) ===")
-for m, want in ((30, 200), (60, 500), (120, 2300), (180, 4700), (240, 5000)):
-    check(f"{m}분", calc_fare(G3, MON, m)["total"], want)
+for m, want in ((30, 200), (60, 500), (120, 2300), (180, 4700), (240, 7100)):
+    check(f"{m}분 (후불 누진)", calc_fare(G3, MON, m)["total"], want)
 
 print("\n=== 운영시간 처리 ===")
 # 23:00 입차 3시간 → 운영 09:00~22:00 밖 → 전액 0원
@@ -56,6 +56,16 @@ check("장애인_중 최초 2시간 면제(120분)",
 check("전통시장 최초 90분 면제(120분 → 30분분)",
       calc_fare(G1, MON, 120, discount="전통시장")["total"], 600)
 
+print("\n=== ★ 일일권은 선불 상품 (비고 8, v11) ===")
+r = calc_fare(G1, MON, 300)
+check("300분 후불 누진", r["total"], 24900)
+check("300분 선불 일일권", r["total_prepaid"], 16000)
+check("선불 권장", r["recommend_prepaid"], True)
+check("절약액", r["prepaid_saving"], 8900)
+r = calc_fare(G1, MON, 120)
+check("120분은 후불이 유리", r["recommend_prepaid"], False)
+check("자동 상한을 켜면 v10 동작", calc_fare(G1, MON, 300, apply_daily_pass_cap=True)["total"], 16000)
+
 print("\n=== 상한 (비고 10 · 일 최대 25,000) ===")
 G24 = {"type": "노외", "grade": 1, "wdays_start": "00:00", "wdays_end": "00:00"}  # 24h → 별표5 밖
 r = calc_fare(G24, MON, 600)
@@ -75,15 +85,16 @@ r = calc_fare({"type": "노외", "grade": None, "name": "x"}, MON, 60)
 check("급지 결측도 total None + reason", (r["total"], bool(r["reason"])), (None, True))
 
 print("\n=== 일일권 교차점 ===")
-r = calc_fare(G1, MON, 300)
+rr = calc_fare(G1, MON, 300)
+r = rr
 n = r["daily_pass_better_after_min"]
 before, _ = calc_fare(G1, MON, n - 1), None
 print(f"  1급지 13시간: 일일권 {r['daily_pass']:,}원 · 교차점 {n}분 "
       f"({n//60}시간 {n%60}분)")
 check("교차점 직전은 일일권보다 싸다",
-      calc_fare(G1, MON, n - 1, apply_daily_pass_cap=False)["total"] <= r["daily_pass"], True)
+      calc_fare(G1, MON, n - 1)["total"] <= r["daily_pass"], True)
 check("교차점 이후는 일일권보다 비싸다",
-      calc_fare(G1, MON, n + 10, apply_daily_pass_cap=False)["total"] > r["daily_pass"], True)
+      calc_fare(G1, MON, n + 10)["total"] > r["daily_pass"], True)
 
 print()
 if FAIL:
