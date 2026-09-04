@@ -29,7 +29,6 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
-import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,12 +36,21 @@ RAW  = ROOT / "data/raw"; RAW.mkdir(parents=True, exist_ok=True)
 DB   = RAW / "gits.db"
 BASE = "https://openapigits.gg.go.kr/api/rest/"
 AVAIL, INFO = "getParkingPlaceAvailabilityInfoList", "getParkingPlaceInfoList"
-TIMEOUT, RETRY, INTERVAL = 60, 5, 300      # 안양 포털과 동일하게 5분
+TIMEOUT, RETRY = 60, 5
+INTERVAL_OK   = 300      # 기본 5분 (안양 포털과 동일)
+INTERVAL_SLOW = 600      # headerCd 8(요청 제한 초과) 시 자동 감속
+BACKOFF_RECOVER = 3      # 연속 이만큼 성공하면 기본 간격으로 복귀
 
 KEY = ""
 for _l in (ROOT/".env").read_text(encoding="utf-8").splitlines():
     if _l.startswith("GITS_KEY="): KEY = _l.split("=", 1)[1].strip()
 if not KEY: sys.exit("GITS_KEY 없음. .env 에 넣을 것.")
+
+class GitsError(RuntimeError):
+    """headerCd 를 그대로 들고 다닌다. 8(요청 제한)을 백오프로 구분하기 위해."""
+    def __init__(self, code, msg):
+        super().__init__(f"headerCd={code} {msg}")
+        self.code = str(code)
 
 def call(op, **params):
     p = {"serviceKey": KEY, **{k: v for k, v in params.items() if v}}
@@ -53,16 +61,22 @@ def call(op, **params):
             root = ET.fromstring(r.text)
             cd = (root.findtext("msgHeader/headerCd") or "?").strip()
             if cd != "0":
-                raise RuntimeError(f"headerCd={cd} {root.findtext('msgHeader/headerMsg')}")
+                raise GitsError(cd, root.findtext("msgHeader/headerMsg"))
             body = root.find("msgBody")
             its = body.findall("itemList") if body is not None else []
-            return pd.DataFrame([{c.tag: c.text for c in it} for it in its])
+            return [{c.tag: c.text for c in it} for it in its]   # list[dict] — pandas 불필요
+        except GitsError as e:
+            if e.code in ("7", "8"):     # 키 정지·요청 제한은 재시도해도 소용없다
+                raise
+            last = e; time.sleep(3 * (a + 1))
         except Exception as e:
             last = e; time.sleep(3 * (a + 1))
     raise last
 
 def probe(**_):
-    av, inf = call(AVAIL), call(INFO)
+    import pandas as pd
+    av  = pd.DataFrame(call(AVAIL))
+    inf = pd.DataFrame(call(INFO))
     print(f"실시간 {len(av):,}곳 · 기본정보 {len(inf):,}곳")
     print("실시간 필드:", list(av.columns))
     print("기본정보 필드:", list(inf.columns))
@@ -77,14 +91,16 @@ def probe(**_):
           f"(안양 {len(nw[nw.laeNm=='안양시'])} / 외부 {len(nw[nw.laeNm!='안양시'])})")
 
 def info(**_):
-    d = call(INFO); f = RAW/"gits_info.csv"
+    import pandas as pd
+    d = pd.DataFrame(call(INFO)); f = RAW/"gits_info.csv"
     d.to_csv(f, index=False)
     print(f"기본정보 {len(d):,}곳 → {f.name}")
 
 def rt_test(wait=600, **_):
-    a = call(AVAIL); print(f"1차 {len(a)}곳 {time.strftime('%H:%M:%S')}")
+    import pandas as pd
+    a = pd.DataFrame(call(AVAIL)); print(f"1차 {len(a)}곳 {time.strftime('%H:%M:%S')}")
     time.sleep(wait)
-    b = call(AVAIL); print(f"2차 {len(b)}곳 {time.strftime('%H:%M:%S')}")
+    b = pd.DataFrame(call(AVAIL)); print(f"2차 {len(b)}곳 {time.strftime('%H:%M:%S')}")
     m = a.assign(k=a.laeId+"_"+a.pkplcId).merge(
         b.assign(k=b.laeId+"_"+b.pkplcId), on="k", suffixes=("_1","_2"))
     ch = m.avblPklotCnt_1 != m.avblPklotCnt_2
@@ -111,32 +127,74 @@ def poll(once=False, **_):
     from datetime import datetime, timezone, timedelta
     KST = timezone(timedelta(hours=9))
     c = db_init()
-    try:
-        d = call(INFO)
-        c.executemany("INSERT OR IGNORE INTO gits_lots VALUES ("+",".join("?"*23)+")",
-            [(r.laeId, r.laeNm, r.pkplcId, r.pkplcNm, r.pkplcDivNm, r.pkplcTypeNm,
-              r.latCrdn, r.lonCrdn, r.roadNmAddr, r.pklotCnt,
-              r.wkdayOprtStartTime, r.wkdayOprtEndTime, r.satOprtStartTime, r.satOprtEndTime,
-              r.hldyOprtStartTime, r.hldyOprtEndTime, r.parkingBscTime, r.parkingBscFare,
-              r.addUnitTime, r.addUnitFare, r.ddPktckFare, r.mmCmmtktFare,
-              datetime.now(KST).isoformat()) for r in d.itertuples()])
-        c.commit(); print(f"lots {len(d):,}곳 갱신", flush=True)
-    except Exception as e:
-        print(f"기본정보 실패(계속): {str(e)[:120]}", flush=True)
-    while True:
-        ts = datetime.now(KST).isoformat()
+
+    def log(m): print(m, flush=True)
+
+    def refresh_lots():
         try:
-            a = call(AVAIL)
-            c.executemany("INSERT OR IGNORE INTO gits_obs VALUES (?,?,?,?,?,?)",
-                [(ts, r.laeId, r.pkplcId, r.pklotCnt, r.avblPklotCnt, r.ocrnDt)
-                 for r in a.itertuples()])
-            c.commit()
-            n = c.execute("SELECT COUNT(*) FROM gits_obs").fetchone()[0]
-            print(f"{ts[:19]} +{len(a)}행 (누적 {n:,})", flush=True)
+            d = call(INFO)
+            now = datetime.now(KST).isoformat()
+            cols = ["laeId","laeNm","pkplcId","pkplcNm","pkplcDivNm","pkplcTypeNm",
+                    "latCrdn","lonCrdn","roadNmAddr","pklotCnt",
+                    "wkdayOprtStartTime","wkdayOprtEndTime","satOprtStartTime","satOprtEndTime",
+                    "hldyOprtStartTime","hldyOprtEndTime","parkingBscTime","parkingBscFare",
+                    "addUnitTime","addUnitFare","ddPktckFare","mmCmmtktFare"]
+            c.executemany("INSERT OR IGNORE INTO gits_lots VALUES ("+",".join("?"*23)+")",
+                [tuple(r.get(k) for k in cols) + (now,) for r in d])
+            c.commit(); log(f"[lots] {len(d):,}곳 갱신")
         except Exception as e:
-            print(f"{ts[:19]} 실패: {str(e)[:120]}", flush=True)
-        if once: break
-        time.sleep(INTERVAL)
+            log(f"[lots] 실패(계속): {str(e)[:120]}")
+
+    def fetch_once():
+        # ★ ts 는 fetch '시작' 시각이다. 응답 지연이 타임스탬프에 섞이지 않게.
+        ts = datetime.now(KST).replace(microsecond=0).isoformat()
+        a = call(AVAIL)
+        c.executemany("INSERT OR IGNORE INTO gits_obs VALUES (?,?,?,?,?,?)",
+            [(ts, r.get("laeId"), r.get("pkplcId"), r.get("pklotCnt"),
+              r.get("avblPklotCnt"), r.get("ocrnDt")) for r in a])
+        c.commit()
+        return ts, len(a)
+
+    refresh_lots()
+    if once:
+        ts, n = fetch_once()
+        total = c.execute("SELECT COUNT(*) FROM gits_obs").fetchone()[0]
+        log(f"[ok] {ts} +{n}행 (누적 {total:,})")
+        return
+
+    interval, ok_streak = INTERVAL_OK, 0
+    # 벽시계 격자에 정렬한다. sleep(INTERVAL) 을 쓰면 작업 시간이 누적돼 하루 15분씩 밀린다.
+    next_t = (time.time() // interval + 1) * interval
+    last_lots = time.time()
+    while True:
+        time.sleep(max(0, next_t - time.time()))
+        try:
+            ts, n = fetch_once()
+            total = c.execute("SELECT COUNT(*) FROM gits_obs").fetchone()[0]
+            ok_streak += 1
+            log(f"[ok] {ts} +{n}행 (누적 {total:,}) interval={interval}s streak={ok_streak}")
+            if interval != INTERVAL_OK and ok_streak >= BACKOFF_RECOVER:
+                interval = INTERVAL_OK; ok_streak = 0
+                log(f"[backoff] 연속 {BACKOFF_RECOVER}회 성공 → interval={interval}s 복귀")
+        except GitsError as e:
+            ok_streak = 0
+            if e.code == "8":
+                interval = INTERVAL_SLOW
+                log(f"[backoff] headerCd 8 (요청 제한 초과) → interval={interval}s 로 감속")
+            else:
+                log(f"[err] {e} interval={interval}s")
+        except Exception as e:
+            ok_streak = 0
+            log(f"[err] {type(e).__name__}: {str(e)[:150]} interval={interval}s")
+
+        if time.time() - last_lots > 86400:      # 기본정보는 하루 1회면 충분
+            refresh_lots(); last_lots = time.time()
+
+        next_t += interval
+        if next_t <= time.time():                # 밀렸으면 건너뛰고 격자 복귀
+            missed = int((time.time() - next_t) // interval) + 1
+            next_t += missed * interval
+            log(f"⚠️ {missed}주기 건너뜀 (다음 {datetime.fromtimestamp(next_t, KST):%H:%M:%S})")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

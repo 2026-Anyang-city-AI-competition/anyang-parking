@@ -1,5 +1,5 @@
 # 데이터 (라벨 DB는 비공식 내부 API 수집물 — 절대 커밋 금지)
-data/raw/*.db
+data/raw/*.db  # parking.db · gits.db · *_vm.db 전부
 data/raw/*.db-journal
 data/raw/*.db-wal
 data/raw/*.db-shm
