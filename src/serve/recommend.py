@@ -69,10 +69,14 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         arrive = depart + timedelta(seconds=drive_s or 0)
 
         # 4. 혼잡도 — 모델 전이면 비워 둔다
-        avail_pred = full_prob = None
+        avail_pred = full_prob = p10 = p90 = None
         if predictor is not None:
             try:
-                avail_pred, full_prob = predictor(d, arrive)
+                # ★ 예측 시점은 「차가 주차장에 도착하는 시각」이다. 도보를 더하지 않는다.
+                h = max(1, int(round((arrive - now).total_seconds() / 60)))
+                pr = predictor.predict(pid, arrive, h)
+                avail_pred, full_prob = pr.get("p50"), pr.get("full_prob")
+                p10, p90 = pr.get("p10"), pr.get("p90")
             except Exception:
                 pass
 
@@ -94,7 +98,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "fare_payg": f["total"], "fare_daily_pass": f["total_prepaid"],
             "daily_pass_better": bool(f["recommend_prepaid"]),
             "avail_now": d.get("avail_now"), "avail_pred": avail_pred,
-            "full_prob": full_prob,
+            "full_prob": full_prob, "pred_p10": p10, "pred_p90": p90,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
             "estimated": est,
             "cell_cnt": d.get("cell_cnt"), "straight_m": d.get("straight_m"),
