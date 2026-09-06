@@ -28,10 +28,12 @@ CACHE = ROOT / "data/interim/walk_cache.sqlite"
 URL   = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json"
 TIMEOUT, RETRY = 15, 2
 
-# 폴백 상수 — ⚠️ 실측하지 못했다(TMAP 키 거부). 도보 우회계수는 통상 1.2~1.4.
-#   TMAP 이 살아나면 `python3 src/serve/walking.py` 의 '직선거리 대비 비율' 로 확정할 것.
-#   상수를 맞추는 데 시간을 쓰지 않는다 — 폴백은 estimated=True 로 표시만 한다.
-WALK_DETOUR, WALK_KMH = 1.3, 4.0
+# 폴백 상수 — 2026-09-06 TMAP 실측 (안양 6개 목적지 × 최근접 4곳, n=23)
+#   우회계수  중앙 1.43 · 사분위 1.24~1.63 · 범위 1.04~2.24
+#   보행속도  중앙 4.2 km/h · 범위 3.1~4.6
+#   ⚠️ 직선거리 50m 미만은 우회비가 발산해 통계에서 제외했다(인덕원2노상 2m → 60배).
+#   상수를 더 맞추는 데 시간을 쓰지 않는다 — 폴백은 estimated=True 로 표시만 한다.
+WALK_DETOUR, WALK_KMH = 1.43, 4.2
 GRID_M = 100          # 목적지를 100m 격자로 반올림해 캐시 적중률을 올린다
 
 CALLS = {"tmap": 0, "cache_hit": 0, "fallback": 0}
@@ -113,7 +115,13 @@ def tmap_walk(start, end, start_name="주차장", end_name="목적지", key=None
                            f"TMAP HTTP {r.status_code} "
                            f"{' '.join(r.text.split())[:120]}")
                 return None
-            j = r.json()
+            # ★ TMAP 응답에 제어문자가 섞여 들어오는 경우가 있다(실측 22건 중 1건).
+            #   r.json() 은 strict 파서라 JSONDecodeError 로 죽고 조용히 폴백에 떨어진다.
+            try:
+                j = r.json()
+            except ValueError:
+                j = json.loads(r.text, strict=False)
+                _warn_once("ctrlchar", "TMAP 응답에 제어문자 — strict=False 로 재파싱")
             f = (j.get("features") or [])
             if not f:
                 print(f"[walk] features 비어 있음: {str(j)[:150]}", flush=True)
