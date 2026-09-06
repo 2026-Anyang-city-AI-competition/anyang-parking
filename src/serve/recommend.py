@@ -130,6 +130,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
     return {"cards": cards, "by_fare": by_fare, "by_walk": by_walk,
             "radius_used": cand["radius_used"], "exhausted": cand["exhausted"],
             "message": cand["message"], "unlabeled": cand["unlabeled"],
+            "dead_feeds": cand.get("dead_feeds") or [],   # 순위 밖 「실시간 미제공」
             "alternatives": alts,
             "depart_at": depart.strftime("%H:%M"), "park_minutes": minutes}
 

@@ -24,6 +24,13 @@ STD  = ROOT / "data/raw/std_parking.csv"
 
 RADII   = (1000, 2000, 3000)   # 3km 가 상한. 그 이상 확장 금지
 MIN_N   = 5
+DEAD_RANGE = 0.01              # 전 기간 점유율 변동폭이 이보다 작으면 '죽은 피드'
+
+# ★ 89곳 중 22곳은 실시간 피드가 안 돈다 (변동폭 정확히 0.00, 6일 확인).
+#   원인: **위탁 운영 14곳 전부**가 여기 해당하고 살아있는 67곳엔 위탁이 0곳이다.
+#   나머지 8곳은 직영인데 특정 시점 값에서 얼어붙었다(12곳은 park_count==cell_cnt).
+#   GITS 로도 못 살린다 — 같은 원천이라 GITS 역시 22곳 전부 변동폭 0.00 이다.
+#   → 순위에서 빼고 「실시간 미제공」으로 표시한다.
 
 def haversine_m(lat1, lon1, lat2, lon2):
     """직선거리(m). 후보를 추리는 용도다 — 표시용 거리가 아니다."""
@@ -46,13 +53,23 @@ def _labeled_lots():
         SELECT parking_id, park_count FROM obs
         WHERE ts_kst = (SELECT MAX(ts_kst) FROM obs)""").fetchall()}
     con.close()
+    # 죽은 피드 판정 — 전 기간 점유율 변동폭
+    rng = {}
+    for pid, mn, mx in con2.execute("""
+            SELECT parking_id, MIN(1.0*park_count/cell_cnt), MAX(1.0*park_count/cell_cnt)
+            FROM obs WHERE cell_cnt > 0 GROUP BY parking_id""").fetchall() \
+            if (con2 := sqlite3.connect(DB)) else []:
+        rng[pid] = (mx or 0) - (mn or 0)
+    con2.close()
     cols = ("parking_id","name","div","grade","cell_cnt","lat","lng",
             "wdays_start","wdays_end","wend_start","wend_end","oneday_amt")
     out = []
     for r in rows:
         d = dict(zip(cols, r))
         d["avail_now"] = cur.get(d["parking_id"])     # 현재 '주차 대수'
-        d["labeled"] = True
+        d["occ_range"] = rng.get(d["parking_id"])
+        d["dead_feed"] = (d["occ_range"] is not None and d["occ_range"] < DEAD_RANGE)
+        d["labeled"] = not d["dead_feed"]             # 죽은 피드는 라벨로 못 쓴다
         out.append(d)
     return out
 
@@ -77,11 +94,13 @@ def _unlabeled_lots():
 def find_candidates(lat, lon, min_n=MIN_N, labeled=None, unlabeled=None):
     """반환 {"lots": [...], "radius_used": m, "unlabeled": [...], "exhausted": bool}
     lots 는 직선거리 오름차순. `straight_m` 를 각 항목에 붙인다."""
-    labeled = _labeled_lots() if labeled is None else labeled
+    allp = _labeled_lots() if labeled is None else labeled
+    live = [d for d in allp if not d.get("dead_feed")]     # ★ 순위는 살아있는 곳만
+    dead_near = []
     picked, used = [], RADII[-1]
     for r in RADII:
         picked = []
-        for d in labeled:
+        for d in live:
             m = haversine_m(lat, lon, d["lat"], d["lng"])
             if m <= r:
                 picked.append({**d, "straight_m": round(m)})
@@ -98,7 +117,17 @@ def find_candidates(lat, lon, min_n=MIN_N, labeled=None, unlabeled=None):
             unl.append({**d, "straight_m": round(m)})
     unl.sort(key=lambda x: x["straight_m"])
 
+    # 죽은 피드는 순위 밖에서 「실시간 미제공」으로 보여준다
+    for d in allp:
+        if d.get("dead_feed"):
+            m = haversine_m(lat, lon, d["lat"], d["lng"])
+            if m <= used:
+                dead_near.append({**d, "straight_m": round(m),
+                                  "note": "실시간 미제공"})
+    dead_near.sort(key=lambda x: x["straight_m"])
+
     return {"lots": picked, "radius_used": used, "unlabeled": unl,
+            "dead_feeds": dead_near,
             "exhausted": len(picked) < min_n,
             "message": None if picked else "주변에 공영주차장이 없습니다"}
 
