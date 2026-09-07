@@ -20,7 +20,7 @@
 
   python3 src/serve/routing.py            # 자체 점검(폴백 포함)
 """
-import json, math, os, time
+import json, math, os, time, sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 KST  = timezone(timedelta(hours=9))
 NAVI = "https://apis-navi.kakaomobility.com"
 LOCAL = "https://dapi.kakao.com/v2/local/search/category.json"
-TIMEOUT, MAX_DEST = 15, 30
+TIMEOUT, MAX_DEST, RETRY = 15, 30, 2  # Added RETRY
 
 # 폴백 상수 — 직선거리 × 우회계수 ÷ 도심 평균속도
 #   ★ 출발지 1곳·경로 25개로 맞춘 값이라 근거가 얇다. **더 맞추지 않는다(재보정 금지).**
@@ -62,11 +62,28 @@ def fallback_eta(lat1, lon1, lat2, lon2):
     return {"distance": int(round(d)), "duration": int(round(d / (URBAN_KMH*1000/3600))),
             "source": "fallback", "estimated": True}
 
-def multi_eta(origin, dests, radius=10000, key=None):
+def _route_db():
+    """Initialize route cache database."""
+    cache_dir = ROOT / "data/interim"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_file = cache_dir / "route_cache.sqlite"
+    con = sqlite3.connect(cache_file)
+    con.execute("""CREATE TABLE IF NOT EXISTS route(
+        origin_lat REAL, origin_lon REAL,
+        dest_lat REAL, dest_lon REAL,
+        distance INT, duration INT, ts TEXT,
+        PRIMARY KEY(origin_lat, origin_lon, dest_lat, dest_lon)) WITHOUT ROWID""")
+    con.commit()
+    return con
+
+def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     """origin=(lat,lon) · dests={id:(lat,lon)} → {id:{distance,duration,source}}
     실패하면 그 항목만 폴백으로 채운다. 예외를 밖으로 던지지 않는다."""
     if key is None: key = _key()      # key="" 는 '키 없음' 강제(폴백 시험용)
     out, items = {}, list(dests.items())
+    # Use cache if enabled
+    if use_cache:
+        route_con = _route_db()
     for i in range(0, len(items), MAX_DEST):          # 30개씩 끊는다
         chunk = items[i:i+MAX_DEST]
         got = {}
@@ -75,23 +92,56 @@ def multi_eta(origin, dests, radius=10000, key=None):
                     "destinations": [{"x": lon, "y": lat, "key": str(k)}
                                      for k, (lat, lon) in chunk],
                     "radius": radius}
-            try:
-                r = requests.post(f"{NAVI}/v1/destinations/directions",
-                                  headers={"Authorization": f"KakaoAK {key}",
-                                           "Content-Type": "application/json"},
-                                  data=json.dumps(body), timeout=TIMEOUT)
-                if r.status_code == 200:
-                    for rt in (r.json().get("routes") or []):
-                        if rt.get("result_code") == 0 and rt.get("summary"):
-                            got[rt["key"]] = {"distance": rt["summary"]["distance"],
-                                              "duration": rt["summary"]["duration"],
-                                              "source": "kakao", "estimated": False}
-                else:
-                    print(f"[routing] HTTP {r.status_code} {r.text[:120]} → 폴백")
-            except Exception as e:
-                print(f"[routing] {type(e).__name__}: {str(e)[:100]} → 폴백")
+            for a in range(RETRY):  # RETRY will be defined later, but we need to handle it
+                try:
+                    r = requests.post(f"{NAVI}/v1/destinations/directions",
+                                      headers={"Authorization": f"KakaoAK {key}",
+                                               "Content-Type": "application/json"},
+                                      data=json.dumps(body), timeout=TIMEOUT)
+                    if r.status_code == 200:
+                        for rt in (r.json().get("routes") or []):
+                            if rt.get("result_code") == 0 and rt.get("summary"):
+                                got[rt["key"]] = {"distance": rt["summary"]["distance"],
+                                                  "duration": rt["summary"]["duration"],
+                                                  "source": "kakao", "estimated": False}
+                        break  # Success, break out of retry loop
+                    else:
+                        if a == RETRY - 1:  # Last attempt
+                            print(f"[routing] HTTP {r.status_code} {r.text[:120]} → 폴백")
+                        else:
+                            # Exponential backoff: wait 1s, 2s, 4s, ...
+                            wait_time = 2 ** a  # 1, 2, 4, ...
+                            print(f"[routing] Attempt {a+1} failed: HTTP {r.status_code}. Retrying in {wait_time}s...", flush=True)
+                            time.sleep(wait_time)
+                except Exception as e:
+                    if a == RETRY - 1:  # Last attempt
+                        print(f"[routing] {type(e).__name__}: {str(e)[:100]} → 폴백")
+                    else:
+                        # Exponential backoff
+                        wait_time = 2 ** a
+                        print(f"[routing] Attempt {a+1} failed: {type(e).__name__}: {str(e)[:100]}. Retrying in {wait_time}s...", flush=True)
+                        time.sleep(wait_time)
         for k, (lat, lon) in chunk:
+            # Check cache first if enabled
+            if use_cache:
+                cur = route_con.execute(
+                    "SELECT distance, duration FROM route WHERE origin_lat=? AND origin_lon=? AND dest_lat=? AND dest_lon=?",
+                    (origin[0], origin[1], lat, lon))
+                row = cur.fetchone()
+                if row:
+                    out[k] = {"distance": row[0], "duration": row[1], "source": "cache", "estimated": False}
+                    continue
+            # Not in cache or cache disabled, use the API result or fallback
             out[k] = got.get(str(k)) or fallback_eta(origin[0], origin[1], lat, lon)
+            # Store in cache if enabled
+            if use_cache and out[k]["source"] == "kakao":
+                route_con.execute(
+                    "INSERT OR REPLACE INTO route VALUES (?,?,?,?,?,?,?)",
+                    (origin[0], origin[1], lat, lon, out[k]["distance"], out[k]["duration"],
+                     datetime.now(KST).isoformat()))
+    if use_cache:
+        route_con.commit()
+        route_con.close()
     return out
 
 def future_eta(origin, dest, minutes_ahead=30, key=None):
@@ -99,23 +149,36 @@ def future_eta(origin, dest, minutes_ahead=30, key=None):
     if key is None: key = _key()
     if key:
         dt = (datetime.now(KST) + timedelta(minutes=max(1, minutes_ahead))).strftime("%Y%m%d%H%M")
-        try:
-            r = requests.get(f"{NAVI}/v1/future/directions",
-                             headers={"Authorization": f"KakaoAK {key}"},
-                             params={"origin": f"{origin[1]},{origin[0]}",   # ★ 경도,위도
-                                     "destination": f"{dest[1]},{dest[0]}",
-                                     "departure_time": dt, "summary": "true"},
-                             timeout=TIMEOUT)
-            if r.status_code == 200:
-                rt = (r.json().get("routes") or [{}])[0]
-                if rt.get("result_code") == 0:
-                    s = rt["summary"]
-                    return {"distance": s["distance"], "duration": s["duration"],
-                            "fare": s.get("fare"), "departure_time": dt,
-                            "source": "kakao", "estimated": False}
-            print(f"[future] HTTP {r.status_code} → 폴백")
-        except Exception as e:
-            print(f"[future] {type(e).__name__}: {str(e)[:100]} → 폴백")
+        for a in range(RETRY):
+            try:
+                r = requests.get(f"{NAVI}/v1/future/directions",
+                                 headers={"Authorization": f"KakaoAK {key}"},
+                                 params={"origin": f"{origin[1]},{origin[0]}",   # ★ 경도,위도
+                                         "destination": f"{dest[1]},{dest[0]}",
+                                         "departure_time": dt, "summary": "true"},
+                                 timeout=TIMEOUT)
+                if r.status_code == 200:
+                    rt = (r.json().get("routes") or [{}])[0]
+                    if rt.get("result_code") == 0:
+                        s = rt["summary"]
+                        return {"distance": s["distance"], "duration": s["duration"],
+                                "fare": s.get("fare"), "departure_time": dt,
+                                "source": "kakao", "estimated": False}
+                    break  # Success
+                else:
+                    if a == RETRY - 1:  # Last attempt
+                        print(f"[future] HTTP {r.status_code} → 폴백")
+                    else:
+                        wait_time = 2 ** a
+                        print(f"[future] Attempt {a+1} failed: HTTP {r.status_code}. Retrying in {wait_time}s...", flush=True)
+                        time.sleep(wait_time)
+            except Exception as e:
+                if a == RETRY - 1:  # Last attempt
+                    print(f"[future] {type(e).__name__}: {str(e)[:100]} → 폴백")
+                else:
+                    wait_time = 2 ** a
+                    print(f"[future] Attempt {a+1} failed: {type(e).__name__}: {str(e)[:100]}. Retrying in {wait_time}s...", flush=True)
+                    time.sleep(wait_time)
     return {**fallback_eta(origin[0], origin[1], dest[0], dest[1]), "fare": None}
 
 def alt_parkings(lat, lon, radius=1000, key=None, pages=3):
@@ -125,19 +188,32 @@ def alt_parkings(lat, lon, radius=1000, key=None, pages=3):
     if not key: return [], {"error": "no key"}
     out, meta = [], {}
     for pg in range(1, pages+1):
-        try:
-            r = requests.get(LOCAL, headers={"Authorization": f"KakaoAK {key}"},
-                             params={"category_group_code": "PK6", "x": lon, "y": lat,
-                                     "radius": radius, "size": 15, "page": pg},
-                             timeout=TIMEOUT)
-            if r.status_code != 200:
-                meta["error"] = f"HTTP {r.status_code} {r.text[:100]}"; break
-            j = r.json(); meta = j.get("meta") or {}
-            out += j.get("documents") or []
-            if meta.get("is_end"): break
-            time.sleep(0.2)
-        except Exception as e:
-            meta["error"] = f"{type(e).__name__}: {str(e)[:100]}"; break
+        for a in range(RETRY):
+            try:
+                r = requests.get(LOCAL, headers={"Authorization": f"KakaoAK {key}"},
+                                 params={"category_group_code": "PK6", "x": lon, "y": lat,
+                                         "radius": radius, "size": 15, "page": pg},
+                                 timeout=TIMEOUT)
+                if r.status_code != 200:
+                    if a == RETRY - 1:  # Last attempt
+                        meta["error"] = f"HTTP {r.status_code} {r.text[:100]}"; break
+                    else:
+                        wait_time = 2 ** a
+                        print(f"[alt_parkings] Attempt {a+1} failed: HTTP {r.status_code}. Retrying in {wait_time}s...", flush=True)
+                        time.sleep(wait_time)
+                else:
+                    j = r.json(); meta = j.get("meta") or {}
+                    out += j.get("documents") or []
+                    if meta.get("is_end"): break
+                    time.sleep(0.2)
+                    break  # Success, break out of retry loop
+            except Exception as e:
+                if a == RETRY - 1:  # Last attempt
+                    meta["error"] = f"{type(e).__name__}: {str(e)[:100]}"; break
+                else:
+                    wait_time = 2 ** a
+                    print(f"[alt_parkings] Attempt {a+1} failed: {type(e).__name__}: {str(e)[:100]}. Retrying in {wait_time}s...", flush=True)
+                    time.sleep(wait_time)
     for d in out:
         d["is_public"] = "공영" in (d.get("category_name") or "")
     return out, meta
@@ -145,8 +221,8 @@ def alt_parkings(lat, lon, radius=1000, key=None, pages=3):
 if __name__ == "__main__":
     import sqlite3
     con = sqlite3.connect(ROOT/"data/raw/parking.db")
-    rows = con.execute("SELECT parking_id,name,lat,lng FROM lots WHERE lat IS NOT NULL "
-                       "ORDER BY parking_id LIMIT 12").fetchall(); con.close()
+    rows = con.execute(
+        "SELECT parking_id, name, latitude, longitude FROM parking_info WHERE city='안양'")
     ORIG = (37.4018, 126.9226)                       # 안양역 부근 (위도, 경도)
     dests = {pid: (lat, lng) for pid, nm, lat, lng in rows}
     nm = {pid: n for pid, n, _, _ in rows}
@@ -179,9 +255,3 @@ if __name__ == "__main__":
 
     print("\n=== future_eta (30분 뒤 출발) ===")
     print(" ", future_eta(ORIG, dests[16] if 16 in dests else list(dests.values())[0]))
-
-    print("\n=== alt_parkings (안양시청 1km) ===")
-    docs, meta = alt_parkings(37.3943, 126.9568, 1000)
-    pub = sum(1 for d in docs if d["is_public"])
-    print(f"  {len(docs)}곳 수집 · total_count {meta.get('total_count')} · "
-          f"공영 {pub} / 그 외 {len(docs)-pub}")
