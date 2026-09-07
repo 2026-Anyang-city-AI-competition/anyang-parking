@@ -127,7 +127,9 @@ GITS `addUnitFare` 는 **첫 구간(30~60분) 값 하나**다. 전 구간에 곱
   **모델 선택 기준은 「안양 89곳 MAE 최소」**(외부가 해가 되면 자동으로 안 씀).
 - **leave-one-city-out 은 검증 방법이지 학습 방법이 아니다.**
 - 검증: **시간 순차 분할** + LOCO. 랜덤 분할 절대 금지.
-- **분위 예측**(LightGBM `objective='quantile'` 10/50/90) + **isotonic calibration** 필수.
+- 분위 예측은 Δ의 p10/p50/p90에 쓴다. `full_prob`는 분위 보간이나 계단형 isotonic이 아니라
+  **`occ(t+h) >= 90` 직접 LightGBM binary 분류기**의 확률을 쓴다. 품질은 AUC가 아니라
+  Brier score와 10-bin reliability diagram으로 persistence와 함께 점검한다.
 - **독립 표본은 lot 수.** 피처 15~20개, LightGBM/XGBoost 상한. 딥러닝 금지.
 - 모든 상관계수에 **n 과 95% 신뢰구간(Fisher z)** 병기. `spearman_ci()` 사용.
 - **학습 집단을 평가 집단과 같이 좁히지 말 것** — 타깃 조건을 재현할 대상은 평가지 학습이 아니다.
@@ -152,6 +154,12 @@ GITS `addUnitFare` 는 **첫 구간(30~60분) 값 하나**다. 전 구간에 곱
 - **`DEAD_FEED_IDS` — 실시간이 죽은 22곳은 순위에서 제외한다.**
   점유율 범위가 정확히 0.00 이다. 위탁 14곳이 전부 여기 들어간다.
   **GITS 로 되살릴 수 없다**(같은 소스라 똑같이 0.00). 학습·평가·추천 모두에서 뺀다.
+- 대표 성능 숫자는 **운영 중 × 살아있는 67곳**이며, 운영 외도 같은 표에서 항상 병기한다.
+  운영 외를 사용자 부재로 해석하지 않는다. 운영외 변화량이 작아 persistence가 유리할 수 있다는
+  가설은 validation의 (horizon, 운영 중/외) 8칸 MAE로만 선택한다(`data/processed/router.json`).
+  조건문으로 운영외 persistence를 고정하지 않는다.
+- 죽은 피드는 `by_fare`/`by_walk`에서는 제외하지만 `unavailable[]`에는 같은 카드 스키마로 반환한다.
+  점유율·예측·만차확률만 null이고, 요금·차/도보·면수·운영시간은 보여 준다.
 
 ### 피처
 - **A 자기회귀** `occ_lag_5m/30m/1h/1d/1w` · `occ_trend_30m` · `occ_ma_1h`

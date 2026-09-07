@@ -1,233 +1,221 @@
 #!/usr/bin/env python3
-"""
-예측기 — 추천 파이프라인에 꽂는 단일 진입점.
-
-  Predictor().predict(parking_id, target_time, horizon_min)
-    -> {"p10","p50","p90","full_prob","is_live","source"}
-
-★ 설계 (a17 실측 근거)
-  - 타깃은 **Δ**: y = occ(t+h) − occ(t) · 복원 `clip(occ + Δ̂, 0, 120)`
-  - 목적함수는 **L1**. 기본 L2 를 쓰면 15분 MAE 가 1.72 → 3.32 로 2배 나빠진다
-    (Δ 의 63.3% 가 정확히 0 인 뾰족한 분포라 L2 는 조건부 평균을 좇는다)
-  - **하이브리드 라우팅 없음.** a17 에서 Δ+L1 이 평일 15·30분에서도 persistence 를
-    이겼다(−2.8% · −10.1%). 지시서의 `horizon<=30 → persistence` 경계는 사라졌다.
-    주말은 아직 못 이기지만 그건 train 에 주말이 없어서다 — 9/12~13 후 재측정.
-  - `full_prob` 는 persistence 가 못 낸다. **분위 모델만 낼 수 있다.**
-
-★ 예측 시점은 「차가 주차장에 도착하는 시각」이다. 도보 시간을 더하지 않는다.
-
-  python3 src/serve/predictor.py     # 학습 + 캘리브레이션 + 자체 점검
-"""
-import pickle, sqlite3, sys, warnings
-from datetime import datetime, timedelta, timezone
+"""Δ 분위 회귀 + 직접 만차 이진분류 + validation 기반 라우터."""
+import json, pickle, sys, warnings
+from datetime import timedelta, timezone
 from pathlib import Path
-import numpy as np, pandas as pd
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from src.features.temporal import oprtime_features, OPR_COLS
 warnings.filterwarnings("ignore")
-
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
 MODEL_PATH = ROOT / "data/processed/predictor.pkl"
-KST = timezone(timedelta(hours=9))
-FULL_THRESHOLD = 90.0        # 점유율 %p. 이 이상이면 '만차'
-QUANTILES = (0.1, 0.5, 0.9)
-HORIZ_GRID = (15, 30, 60, 120)
+ROUTER_PATH = ROOT / "data/processed/router.json"
 
+
+def _logodds(p, eps=1e-6):
+    """★ Platt scaling 은 확률이 아니라 **log-odds** 에 fit 한다.
+    확률값에 직접 fit 하면 극단값이 [0,1] 양 끝에 뭉쳐 로지스틱이 꼬리를 못 편다."""
+    q = np.clip(np.asarray(p, dtype=float), eps, 1 - eps)
+    return np.log(q / (1 - q))
+KST = timezone(timedelta(hours=9))
+FULL_THRESHOLD, QUANTILES, HORIZ_GRID = 90.0, (.1, .5, .9), (15, 30, 60, 120)
 
 def _lazy():
     from src.analysis.a16_stratified_weekend import load, series, feats, PID, INTX
     return load, series, feats, PID, INTX
 
-
 class Predictor:
-    """학습된 분위 모델 + isotonic 보정을 들고 예측한다."""
-
+    """`full_prob`는 분위 보간이 아닌 직접 binary 모델의 연속 확률이다."""
     def __init__(self, path=MODEL_PATH):
         self.ok = False
         try:
-            with open(path, "rb") as f:
-                b = pickle.load(f)
-            self.models, self.iso, self.feat_cols = b["models"], b["iso"], b["feat_cols"]
-            self.dead, self.hist = set(b["dead"]), b["hist"]
-            self.meta = b.get("meta", {})
+            with open(path, "rb") as f: b = pickle.load(f)
+            self.models, self.full_models = b["models"], b["full_models"]
+            self.full_calibrators = b.get("full_calibrators", {})
+            self.feat_cols, self.dead, self.hist = b["feat_cols"], set(b["dead"]), b["hist"]
+            self.meta, self.router = b.get("meta", {}), b.get("router", {})
+            self.cqr = b.get("cqr", {})
             self.ok = True
         except Exception as e:
             print(f"[predictor] 모델 없음 ({str(e)[:60]}) — predict 는 None 을 돌려준다")
 
-    def is_live(self, parking_id):
-        return parking_id not in self.dead
+    def is_live(self, parking_id): return parking_id not in self.dead
 
-    def _row(self, parking_id, target_time, horizon_min):
-        """target_time 에서 horizon 만큼 **거슬러 올라간** 시점의 피처를 만든다.
-        즉 「지금 관측으로 target_time 을 맞힌다」."""
-        h = self.hist.get(parking_id)
-        if h is None or not len(h): return None, None
-        base_t = pd.Timestamp(target_time).tz_localize(None) - pd.Timedelta(minutes=horizon_min)
-        i = h.ts_kst.searchsorted(base_t, side="right") - 1
-        if i < 0: return None, None
-        r = h.iloc[i]
-        if pd.isna(r.get("occ_now")): return None, None
-        return r, float(r["occ_now"])
+    def _row(self, parking_id, target_time, h):
+        hist = self.hist.get(parking_id)
+        if hist is None or not len(hist): return None, None
+        base = pd.Timestamp(target_time).tz_localize(None) - pd.Timedelta(minutes=h)
+        i = hist.ts_kst.searchsorted(base, side="right") - 1
+        if i < 0 or pd.isna(hist.iloc[i].get("occ_now")): return None, None
+        return hist.iloc[i], float(hist.iloc[i]["occ_now"])
 
     def predict(self, parking_id, target_time, horizon_min):
         out = {"p10": None, "p50": None, "p90": None, "full_prob": None,
                "is_live": self.is_live(parking_id), "source": None}
         if not self.ok or not out["is_live"]:
-            out["source"] = "dead_feed" if not out["is_live"] else "no_model"
-            return out
-        H = min(HORIZ_GRID, key=lambda x: abs(x - horizon_min))
-        r, occ = self._row(parking_id, target_time, H)
-        if r is None:
-            out["source"] = "no_history"; return out
+            out["source"] = "dead_feed" if not out["is_live"] else "no_model"; return out
+        h = min(HORIZ_GRID, key=lambda x: abs(x-horizon_min)); r, occ = self._row(parking_id, target_time, h)
+        if r is None: out["source"]="no_history"; return out
         row = r[[c for c in self.feat_cols if not c.startswith("opr_")]].to_dict()
-        # ★ 운영시간 피처는 **도착 시각(target_time)** 기준이다. 관측 시각이 아니다.
-        lot = self.meta.get(parking_id, {})
-        for k, v in oprtime_features(lot, pd.Timestamp(target_time).to_pydatetime()).items():
-            row["opr_" + k] = v
-        X = pd.DataFrame([row])[self.feat_cols]
+        opr = oprtime_features(self.meta.get(parking_id, {}), pd.Timestamp(target_time).to_pydatetime())
+        row.update({"opr_"+k:v for k,v in opr.items()}); X = pd.DataFrame([row])[self.feat_cols]
         for c in ("parking_id_cat", "pid_we"):
             if c in X: X[c] = X[c].astype("category")
-        q = {}
-        for a in QUANTILES:
-            d = float(self.models[(H, a)].predict(X)[0])
-            q[a] = float(np.clip(occ + d, 0, 120))          # ★ 복원 시 클리핑 필수
-        p10, p50, p90 = sorted((q[0.1], q[0.5], q[0.9]))    # 분위 교차 방지
-        # 만차확률 — 분위수 사이 선형 보간
-        raw = self._interp_prob(p10, p50, p90, FULL_THRESHOLD)
-        iso = self.iso.get(H)
-        out.update({"p10": round(p10, 1), "p50": round(p50, 1), "p90": round(p90, 1),
-                    "full_prob": round(float(iso.predict([raw])[0]) if iso is not None else raw, 3),
-                    "source": f"quantile_delta_l1_h{H}"})
+        q = {a: float(np.clip(occ+self.models[(h,a)].predict(X)[0], 0, 120)) for a in QUANTILES}
+        p10,p50,p90 = sorted((q[.1],q[.5],q[.9]))
+        _tt = pd.Timestamp(target_time)
+        state = ("operating" if opr["is_operating"] else "outside") + \
+                ("|we" if _tt.weekday() >= 5 else "|wd")
+        # ★ CQR 폭 — val 에서 구한 값. 이걸 빼면 80% 구간이 아니다.
+        adj = float(self.cqr.get(f"{h}|{state}", 0.0))
+        p10, p90 = max(0.0, p10-adj), min(120.0, p90+adj)
+        chosen = self.router.get(str(h), {}).get(state, "ml")
+        if chosen == "persistence": p10=p50=p90=occ
+        raw_prob = self.full_models[h].predict_proba(X)[:,1]
+        calibrator = self.full_calibrators.get(h)
+        prob = float(calibrator.predict_proba(_logodds(raw_prob).reshape(-1,1))[0,1]
+                     if calibrator else raw_prob[0])
+        # API에는 확률 정밀도를 남긴다. UI가 표시 자릿수를 정한다.
+        out.update(p10=round(p10,1), p50=round(p50,1), p90=round(p90,1), full_prob=round(prob,6),
+                   source=f"{chosen}_h{h}+binary_full_prob")
         return out
 
-    @staticmethod
-    def _interp_prob(p10, p50, p90, thr):
-        """P(occ >= thr) 를 세 분위수로 근사. CDF 는 (p10,0.1)(p50,0.5)(p90,0.9)."""
-        xs, ys = [p10, p50, p90], [0.1, 0.5, 0.9]
-        if thr <= xs[0]: return float(min(1.0, 1 - 0.1 * (thr / max(xs[0], 1e-9))))
-        if thr >= xs[2]: return 0.05
-        cdf = float(np.interp(thr, xs, ys))
-        return float(np.clip(1 - cdf, 0.0, 1.0))
+def _add_opr(sub, h, meta):
+    rows = [oprtime_features(meta.get(pid, {}), (pd.Timestamp(t)+pd.Timedelta(minutes=h)).to_pydatetime())
+            for pid,t in zip(sub.parking_id.values,sub.ts_kst.values)]
+    return pd.concat([sub, pd.DataFrame(rows,index=sub.index).rename(columns=lambda c:"opr_"+c)],axis=1)
 
-
-# ── 학습 ──────────────────────────────────────────────────
 def train(save=True):
-    from lightgbm import LGBMRegressor
-    from sklearn.isotonic import IsotonicRegression
-    from sklearn.metrics import roc_auc_score, precision_score
-    load, series, feats, PID, INTX = _lazy()
-    o, L, dead = load()
-    d = feats(series(o), L)
-    ut = d.ts_kst.dropna().sort_values().unique()
-    cut = pd.Timestamp(ut[int(len(ut) * 0.8)])
-    meta = {r["parking_id"]: r for r in L.to_dict("records")}
-    OC = ["opr_" + c for c in OPR_COLS]
-    _c = {}
-    def add_opr(sub, H):
-        """★ 도착 시각(ts + H분) 기준으로 붙인다. a17 에서 주말 MAE −33% 를 준 피처다."""
-        rows = []
-        for pid, tt in zip(sub.parking_id.values, sub.ts_kst.values):
-            tgt = pd.Timestamp(tt) + pd.Timedelta(minutes=H)
-            key = (pid, tgt.weekday(), tgt.hour * 60 + tgt.minute)
-            v = _c.get(key)
-            if v is None:
-                v = oprtime_features(meta.get(pid, {}), tgt.to_pydatetime()); _c[key] = v
-            rows.append(v)
-        f = pd.DataFrame(rows, index=sub.index)
-        return pd.concat([sub, f.rename(columns={c: "opr_" + c for c in f.columns})], axis=1)
-    F = INTX + OC
-    models, iso, rep = {}, {}, []
-    for H in HORIZ_GRID:
-        k = H // 5
-        t = d.copy()
-        t["nx"] = t.groupby("parking_id")["occ"].shift(-k)
-        t["y"] = t.nx - t.occ
-        t = t.dropna(subset=["nx"] + [c for c in INTX if c not in ("parking_id_cat", "pid_we")])
-        tr, te = t[t.ts_kst < cut], t[t.ts_kst >= cut]
-        te = te[~te.parking_id.isin(dead)]
-        if len(tr) < 500 or len(te) < 100: continue
-        tr, te = add_opr(tr, H), add_opr(te, H)
+    from lightgbm import LGBMClassifier, LGBMRegressor
+    from sklearn.metrics import brier_score_loss, mean_absolute_error
+    from sklearn.linear_model import LogisticRegression
+    load,series,feats,PID,INTX = _lazy(); o,L,dead=load(); d=feats(series(o),L)
+    ut=d.ts_kst.dropna().sort_values().unique(); cut=pd.Timestamp(ut[int(len(ut)*.8)]); vcut=pd.Timestamp(ut[int(len(ut)*.64)])
+    meta={r["parking_id"]:r for r in L.to_dict("records")}; F=INTX+["opr_"+c for c in OPR_COLS]
+    models={}; full_models={}; full_calibrators={}; router={}; rep=[]; cov=[]; cqr={}
+    for h in HORIZ_GRID:
+        t=d.copy(); t["nx"]=t.groupby("parking_id").occ.shift(-(h//5)); t["y"]=t.nx-t.occ
+        t=t.dropna(subset=["nx"]+[c for c in INTX if c not in ("parking_id_cat","pid_we")]); t=_add_opr(t,h,meta)
+        fit=t[(t.ts_kst<cut)&~t.parking_id.isin(dead)]; val=fit[fit.ts_kst>=vcut]
+        base=fit[fit.ts_kst<vcut]                      # ★ val 을 뺀 학습 구간
         for a in QUANTILES:
-            m = LGBMRegressor(objective="quantile", alpha=a, n_estimators=400,
-                              learning_rate=0.05, num_leaves=63, min_child_samples=40,
-                              random_state=42, n_jobs=-1, verbose=-1).fit(tr[F], tr.y)
-            models[(H, a)] = m
-        base = te.occ_now.values
-        qs = {a: np.clip(base + models[(H, a)].predict(te[F]), 0, 120) for a in QUANTILES}
-        P = np.sort(np.vstack([qs[0.1], qs[0.5], qs[0.9]]), axis=0)
-        raw = np.array([Predictor._interp_prob(P[0, i], P[1, i], P[2, i], FULL_THRESHOLD)
-                        for i in range(P.shape[1])])
-        yb = (te.nx.values >= FULL_THRESHOLD).astype(int)
-        ir = IsotonicRegression(out_of_bounds="clip", y_min=0, y_max=1).fit(raw, yb)
-        iso[H] = ir
-        cal = ir.predict(raw)
-        wk = te.is_weekend.values
-        def sc(mask):
-            if mask.sum() < 30 or len(set(yb[mask])) < 2: return (np.nan, np.nan)
-            pr = (cal[mask] >= 0.5).astype(int)
-            return (roc_auc_score(yb[mask], cal[mask]),
-                    precision_score(yb[mask], pr, zero_division=0))
-        a_all, p_all = sc(np.ones(len(yb), bool))
-        a_wd, p_wd = sc(wk == 0)
-        a_we, p_we = sc(wk == 1)
-        rep.append({"h": H, "n": len(te), "만차비율": yb.mean(),
-                    "AUC": a_all, "정밀도": p_all,
-                    "AUC_평일": a_wd, "AUC_주말": a_we,
-                    "정밀도_평일": p_wd, "정밀도_주말": p_we,
-                    "raw": raw, "cal": cal, "y": yb})
-    # 최신 이력 (예측 시 피처 조회용)
-    hist = {pid: g.sort_values("ts_kst").tail(600).reset_index(drop=True)
-            for pid, g in d.groupby("parking_id")}
+            m=LGBMRegressor(objective="quantile",alpha=a,n_estimators=120,learning_rate=.08,num_leaves=31,min_child_samples=40,random_state=42,n_jobs=-1,verbose=-1)
+            m.fit(fit[F],fit.y); models[(h,a)]=m
+        # ★ 라우터 선택에 models[(h,.5)] 를 쓰면 안 된다 — val 을 포함해 학습했으므로
+        #   in-sample 예측이고, ML 이 이기는 게 당연해진다(2.221 vs test 9.378).
+        #   선택 전용 모델을 base 로만 학습해 out-of-sample 로 고른다.
+        sel=LGBMRegressor(objective="quantile",alpha=.5,n_estimators=400,learning_rate=.05,
+                          num_leaves=63,min_child_samples=40,random_state=42,n_jobs=-1,
+                          verbose=-1).fit(base[F],base.y)
+        pm=np.clip(val.occ_now.values+sel.predict(val[F]),0,120); choices={}
+        # ★ U8-3 · CQR — val(모델이 안 본 구간)에서 구간을 넓힐 폭을 구한다.
+        #   상수를 손으로 맞추는 게 아니라 「목표 커버리지를 만족하는 분위수」를 읽는 것이다.
+        slo=LGBMRegressor(objective="quantile",alpha=.1,n_estimators=400,learning_rate=.05,
+              num_leaves=63,min_child_samples=40,random_state=42,n_jobs=-1,verbose=-1).fit(base[F],base.y)
+        shi=LGBMRegressor(objective="quantile",alpha=.9,n_estimators=400,learning_rate=.05,
+              num_leaves=63,min_child_samples=40,random_state=42,n_jobs=-1,verbose=-1).fit(base[F],base.y)
+        vlo=np.clip(val.occ_now.values+slo.predict(val[F]),0,120)
+        vhi=np.clip(val.occ_now.values+shi.predict(val[F]),0,120)
+        vlo,vhi=np.minimum(vlo,vhi),np.maximum(vlo,vhi)
+        vy_=val.nx.values
+        vop=val.opr_is_operating.eq(1).values
+        _we=val.is_weekend.eq(1).values
+        for st,mk in (("operating|wd",vop&~_we),("operating|we",vop&_we),
+                      ("outside|wd",(~vop)&~_we),("outside|we",(~vop)&_we)):
+            if mk.sum()<50: cqr[(h,st)]=0.0; continue
+            sc=np.maximum(vlo[mk]-vy_[mk], vy_[mk]-vhi[mk])      # CQR 비적합 점수
+            n=len(sc); lvl=min(1.0,np.ceil((n+1)*0.80)/n)
+            cqr[(h,st)]=float(max(0.0,np.quantile(sc,lvl)))
+        # ★ base 는 주말 0% · val 50.5% · test 100% 다. 운영여부만으로 고르면
+        #   평일에서 고른 선택이 주말 test 에 그대로 적용돼 뒤집힌다(실측: 라우팅 3.338 vs persistence 3.213).
+        #   배포 조건과 맞추려면 주말 여부까지 층화해 고른다.
+        _vop=val.opr_is_operating.eq(1).values; _vwe=val.is_weekend.eq(1).values
+        for state,mask in (("operating|wd",_vop&~_vwe),("operating|we",_vop&_vwe),
+                           ("outside|wd",(~_vop)&~_vwe),("outside|we",(~_vop)&_vwe)):
+            ml=mean_absolute_error(val.nx.values[mask],pm[mask]) if mask.any() else np.inf
+            pe=mean_absolute_error(val.nx.values[mask],val.occ_now.values[mask]) if mask.any() else np.inf
+            # ★ 「평균이 더 낮다」만으로 고르면 마진 2% 짜리 노이즈를 고른다.
+            #   실측: 그렇게 고른 라우터가 test 에서 persistence 에 +3.2% 졌다.
+            #   대응표본 차이의 95% 신뢰구간이 0보다 확실히 작을 때만 ML 을 쓴다.
+            #   동률이면 단순한 쪽(persistence)을 남긴다.
+            sig=False
+            if mask.sum()>=50:
+                dif=(np.abs(pm[mask]-val.nx.values[mask])
+                     -np.abs(val.occ_now.values[mask]-val.nx.values[mask]))
+                se=dif.std(ddof=1)/np.sqrt(len(dif))
+                sig=(dif.mean()+1.96*se)<0            # 상한이 0 미만 = 유의하게 우세
+            choices[state]="ml" if sig else "persistence"
+            rep.append({"horizon":h,"segment":state,"n":int(mask.sum()),"ml_mae":ml,"persistence_mae":pe,"selected":choices[state]})
+        router[str(h)]=choices
+        # 연속적인 Platt calibration. isotonic처럼 소수의 계단값으로 붕괴하지 않는다.
+        clf=LGBMClassifier(objective="binary",n_estimators=120,learning_rate=.08,num_leaves=31,min_child_samples=45,random_state=42,n_jobs=-1,verbose=-1)
+        clf.fit(base[F],(base.nx>=FULL_THRESHOLD).astype(int)); full_models[h]=clf
+        vp=clf.predict_proba(val[F])[:,1]; vy=(val.nx>=FULL_THRESHOLD).astype(int).values
+        calibrator=LogisticRegression(C=1.0, max_iter=500).fit(_logodds(vp).reshape(-1,1),vy); full_calibrators[h]=calibrator
+        # ★ U8-3 · 80% 구간 커버리지를 **test**(out-of-sample) 에서 잰다.
+        te_=t[(t.ts_kst>=cut)&~t.parking_id.isin(dead)]
+        if len(te_):
+            lo=np.clip(te_.occ_now.values+models[(h,.1)].predict(te_[F]),0,120)
+            hi=np.clip(te_.occ_now.values+models[(h,.9)].predict(te_[F]),0,120)
+            lo,hi=np.minimum(lo,hi),np.maximum(lo,hi)
+            op=te_.opr_is_operating.eq(1).values
+            _twe=te_.is_weekend.eq(1).values
+            adj=np.array([cqr.get((h,("operating" if a_ else "outside")+("|we" if b_ else "|wd")),0.0)
+                          for a_,b_ in zip(op,_twe)])
+            lo=np.clip(lo-adj,0,120); hi=np.clip(hi+adj,0,120)     # ★ CQR 적용
+            inside=(te_.nx.values>=lo)&(te_.nx.values<=hi); we=te_.is_weekend.eq(1).values
+            for sn,mk in (("전체",np.ones(len(te_),bool)),("운영중",op),("운영외",~op),
+                          ("평일",~we),("주말",we),("운영중·평일",op&~we),("운영중·주말",op&we),
+                          ("운영외·평일",(~op)&~we),("운영외·주말",(~op)&we)):
+                if mk.sum()>30:
+                    cov.append({"horizon":h,"segment":sn,"n":int(mk.sum()),
+                                "coverage":float(inside[mk].mean()),
+                                "width":float((hi-lo)[mk].mean())})
+        test=t[(t.ts_kst>=cut)&~t.parking_id.isin(dead)]; y=(test.nx>=FULL_THRESHOLD).astype(int).values; p=calibrator.predict_proba(_logodds(clf.predict_proba(test[F])[:,1]).reshape(-1,1))[:,1]
+        rep[-1].update(test_n=len(test),brier_binary=brier_score_loss(y,p),brier_persistence=brier_score_loss(y,(test.occ_now.values>=FULL_THRESHOLD).astype(float)),prob=p,y=y)
+    hist={pid:g.sort_values("ts_kst").tail(600).reset_index(drop=True) for pid,g in d.groupby("parking_id")}
     if save:
-        MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(MODEL_PATH, "wb") as f:
-            pickle.dump({"models": models, "iso": iso, "feat_cols": F, "meta": meta,
-                         "dead": list(dead), "hist": hist}, f)
-    return rep, cut, dead
+        MODEL_PATH.parent.mkdir(parents=True,exist_ok=True)
+        with open(MODEL_PATH,"wb") as f: pickle.dump({"models":models,"full_models":full_models,"full_calibrators":full_calibrators,"feat_cols":F,"meta":meta,"dead":list(dead),"hist":hist,"router":router,"cqr":{f"{k[0]}|{k[1]}":v for k,v in cqr.items()}},f)
+        ROUTER_PATH.write_text(json.dumps(router,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    return rep,cut,dead,cov
 
+def _seg(x):
+    a,_,b = x.partition("|")
+    return ("운영 중" if a=="operating" else "운영 외") + (" · 주말" if b=="we" else " · 평일")
+
+
+def _write_reports(rep, cov=()):
+    rows=[r for r in rep if "ml_mae" in r]; out=["# U3 검증 기반 라우터","","validation은 시간순 train 영역의 뒤 20%이며 test는 선택에 쓰지 않았다.",
+        "선택용 모델은 **val을 제외한 base로만** 학습한다(U8-2). val을 포함해 학습하면",
+        "in-sample 예측으로 고르게 되어 ML이 항상 이긴다.",
+        "base는 주말 0% · val 50.5% · test 100% 라 **주말/평일까지 층화**해 고른다.","","| horizon | 구간 | n | ML MAE | persistence MAE | 선택 |","|---:|---|---:|---:|---:|---|"]
+    for r in rows: out.append(f"| {r['horizon']} | {_seg(r['segment'])} | {r['n']:,} | {r['ml_mae']:.3f} | {r['persistence_mae']:.3f} | {r['selected']} |")
+    (ROOT/"reports/tables/u3_router.md").write_text("\n".join(out)+"\n",encoding="utf-8")
+    if cov:
+        cv=["# U8-3 · 분위 구간 커버리지 (test · out-of-sample)","",
+            "`coverage = mean(p10 <= 실제값 <= p90)` · 목표 **0.80**","",
+            "| horizon | 구간 | n | 커버리지 | 평균 폭(%p) |","|---:|---|---:|---:|---:|"]
+        for r in cov:
+            cv.append(f"| {r['horizon']} | {r['segment']} | {r['n']:,} | "
+                      f"{r['coverage']:.3f} | {r['width']:.1f} |")
+        (ROOT/"reports/tables/u8_coverage.md").write_text("\n".join(cv)+"\n",encoding="utf-8")
 
 if __name__ == "__main__":
-    rep, cut, dead = train()
-    print(f"학습 완료 · cut {cut} · 죽은 피드 {len(dead)}곳 제외 · → {MODEL_PATH.name}")
-    print(f"\n{'h':>4}{'n':>8}{'만차비율':>9}{'AUC':>7}{'정밀도':>7}"
-          f"{'AUC평일':>8}{'AUC주말':>8}")
-    for r in rep:
-        f = lambda v: "  -  " if v is None or (isinstance(v, float) and np.isnan(v)) else f"{v:.3f}"
-        print(f"{r['h']:>4}{r['n']:>8,}{r['만차비율']:>9.3f}{f(r['AUC']):>7}"
-              f"{f(r['정밀도']):>7}{f(r['AUC_평일']):>8}{f(r['AUC_주말']):>8}")
-
-    # calibration plot
+    rep,cut,dead,cov=train(); _write_reports(rep,cov)
     import matplotlib; matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    for _f in ("AppleGothic", "NanumGothic"):
-        if any(_f == x.name for x in matplotlib.font_manager.fontManager.ttflist):
-            plt.rcParams["font.family"] = _f; break
-    plt.rcParams["axes.unicode_minus"] = False
-    fig, ax = plt.subplots(1, len(rep), figsize=(4*len(rep), 3.6), squeeze=False)
-    for i, r in enumerate(rep):
-        a = ax[0][i]
-        for arr, lb, c in ((r["raw"], "보정 전", "tab:orange"), (r["cal"], "보정 후", "tab:blue")):
-            bins = np.linspace(0, 1, 11)
-            idx = np.digitize(arr, bins) - 1
-            xs, ys = [], []
-            for b in range(10):
-                m = idx == b
-                if m.sum() >= 20: xs.append(arr[m].mean()); ys.append(r["y"][m].mean())
-            a.plot(xs, ys, "o-", color=c, label=lb, ms=4)
-        a.plot([0, 1], [0, 1], "--", color="gray", lw=.8)
-        a.set_title(f"h={r['h']}분  AUC {r['AUC']:.3f}")
-        a.set_xlabel("예측 만차확률"); a.set_ylabel("실제 만차 비율" if i == 0 else "")
-        a.legend(fontsize=8)
-    fig.tight_layout()
-    fig.savefig(ROOT/"reports/figures/calibration.png", dpi=130)
-    print("\n→ reports/figures/calibration.png")
-
-    print("\n=== 자체 점검 ===")
-    P = Predictor()
-    tgt = datetime(2026, 9, 7, 14, 0, tzinfo=KST)
-    for pid in (16, 10, 46):
-        r = P.predict(pid, tgt, 60)
-        print(f"  id {pid:>4} live={str(r['is_live']):<5} p50={r['p50']} "
-              f"[{r['p10']}, {r['p90']}] full_prob={r['full_prob']} · {r['source']}")
+    byh={h:next(r for r in reversed(rep) if r["horizon"]==h and "prob" in r) for h in HORIZ_GRID}; fig,axes=plt.subplots(1,4,figsize=(16,3.8))
+    for ax,h in zip(axes,HORIZ_GRID):
+        r=byh[h]; p,y=r["prob"],r["y"]; ix=np.digitize(p,np.linspace(0,1,11),right=True)-1; xs=[];ys=[]
+        for b in range(10):
+            m=ix==b
+            if m.any():
+                x,yy=p[m].mean(),y[m].mean();xs.append(x);ys.append(yy);ax.annotate(f"n={m.sum()}",(x,yy),fontsize=7)
+        ax.plot([0,1],[0,1],"--",color="gray");ax.plot(xs,ys,"o-",color="tab:blue");ax.set(title=f"h={h} Brier {r['brier_binary']:.3f}\nPersistence {r['brier_persistence']:.3f}",xlabel="예측 만차확률",ylabel="실제 비율");ax.set(xlim=(0,1),ylim=(0,1))
+    fig.tight_layout();fig.savefig(ROOT/"reports/figures/calibration.png",dpi=150)
+    print(f"학습 완료 · test cut {cut} · 죽은 피드 {len(dead)}곳 제외")
+    for h,r in byh.items():print(f"h={h}: Brier binary={r['brier_binary']:.4f}, persistence={r['brier_persistence']:.4f}")
+    print("→ reports/figures/calibration.png · reports/tables/u3_router.md")
