@@ -1,6 +1,6 @@
-# U9 Fixtures Schema
+# U10 Fixtures Schema
 
-This directory contains the JSON fixtures for the three U9 demo scenarios.
+This directory contains the JSON fixtures for the three U10 demo scenarios.
 
 ## Files
 
@@ -35,6 +35,7 @@ Each file contains a JSON object with the following keys:
   - `unavailable_note` (string or null): Note if real-time feed is unavailable (e.g., "실시간 정보를 제공하지 않는 주차장입니다")
   - `arrive_at` (string): Estimated arrival time at lot in "HH:MM" format
   - `fare_reason` (string or null): Reason for fare calculation (if any)
+  - `pred_p10`, `pred_p90`: Prediction interval bounds (p10, p90) are **omitted or set to null** until coverage calibration passes (see U10-4). They are not included in the card schema for U10 fixtures.
 
 - `radius_used` (integer): Search radius used to find candidate lots (meters)
 
@@ -43,7 +44,13 @@ Each file contains a JSON object with the following keys:
 
 - `unlabeled`: Array of candidate lots that could not be matched to known lots (should be empty in normal operation).
 
-- `alternatives`: Array of alternative parking lots beyond the top recommendations (same structure as cards).
+- `alternatives`: Array of alternative parking lots beyond the top recommendations.
+  Each alternative has the following fields:
+  - `name` (string): Parking lot name
+  - `lat` (float): Latitude
+  - `lng` (float): Longitude
+  - `is_public` (boolean): Whether it's a public parking lot
+  - `distance_m` (integer): Straight-line distance from destination to lot (meters)
 
 ## Notes
 
@@ -51,3 +58,5 @@ Each file contains a JSON object with the following keys:
 - The `estimated` flag is true if any of the driving ETAs were estimated due to Kakao/TMAP API failure.
 - All times are in minutes, distances in meters, fares in KRW (Korean Won).
 - The fixtures were generated with the model and data as of the commit that generated them.
+- **Unavailable feeds** (22 dead feeds with zero occupancy variance) are listed in `dead_feeds` with full metadata but null occupancy/prediction fields.
+- **Alternatives** are provided for UI to show additional options beyond the top recommendations.

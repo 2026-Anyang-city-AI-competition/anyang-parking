@@ -1,0 +1,26 @@
+{
+  "15": {
+    "operating|wd": "ml",
+    "operating|we": "persistence",
+    "outside|wd": "ml",
+    "outside|we": "ml"
+  },
+  "30": {
+    "operating|wd": "ml",
+    "operating|we": "persistence",
+    "outside|wd": "ml",
+    "outside|we": "persistence"
+  },
+  "60": {
+    "operating|wd": "ml",
+    "operating|we": "persistence",
+    "outside|wd": "ml",
+    "outside|we": "persistence"
+  },
+  "120": {
+    "operating|wd": "ml",
+    "operating|we": "persistence",
+    "outside|wd": "ml",
+    "outside|we": "persistence"
+  }
+}

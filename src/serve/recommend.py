@@ -134,7 +134,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
     if with_alternatives:
         try:
             docs, _ = routing.alt_parkings(dest[0], dest[1], radius=min(cand["radius_used"], 2000))
-            alts = [{"name": x["place_name"], "lat": float(x["y"]), "lon": float(x["x"]),
+            alts = [{"name": x["place_name"], "lat": float(x["y"]), "lng": float(x["x"]),
                      "is_public": x["is_public"], "distance_m": int(x.get("distance") or 0)}
                     for x in docs]
         except Exception:
@@ -143,7 +143,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
     return {"cards": live_cards, "by_fare": by_fare, "by_walk": by_walk, "unavailable": unavailable,
             "radius_used": cand["radius_used"], "exhausted": cand["exhausted"],
             "message": cand["message"], "unlabeled": cand["unlabeled"],
-            "dead_feeds": cand.get("dead_feeds") or [],   # 하위 호환용 메타데이터
+            "dead_feeds": cand.get("dead_feeds") or [],
             "alternatives": alts,
             "depart_at": depart.strftime("%H:%M"), "park_minutes": minutes}
 
