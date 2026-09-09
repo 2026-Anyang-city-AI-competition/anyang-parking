@@ -1,0 +1,11 @@
+{
+  "status": "partial",
+  "coverage_total": 216,
+  "passed": 22,
+  "failed": 30,
+  "unavailable": 164,
+  "gate_open": 0,
+  "gate_total": 16,
+  "checks": "pass",
+  "probability_slope_pass": false
+}

@@ -1,5 +1,12 @@
 # U10 Fixtures Schema
 
+> U11 주의: 기존 JSON은 U10 당시 산출물이다. 확률 클래스 참조 오류 수정 이전이므로 AI 성과 근거로 사용하지 않는다.
+> 새 생성기는 서비스의 구간 게이트를 따른다. `interval_status != "pass"`이면
+> 모든 배열에서 `pred_p10`/`pred_p90`은 null이다. 최신 게이트와 판정은 `reports/tables/u11_status.json`에 있다.
+> `avail_now`는 **주차된 대수**, `avail_pred`는 **예측 점유율(%)**이다. 둘 다 빈자리 수가 아니다.
+> UI는 null을 0으로 바꾸지 않고 정보 없음으로 표시한다.
+> 미래 시나리오 재현은 별도 작업이다. 생성기는 현재 실행 시각 기준이며 파일명 요일을 실제 예측 시각으로 해석하지 않는다.
+
 This directory contains the JSON fixtures for the three U10 demo scenarios.
 
 ## Files
@@ -22,8 +29,8 @@ Each file contains a JSON object with the following keys:
   - `fare_payg` (integer): Pay-as-you-go fare (KRW)
   - `fare_daily_pass` (integer): Daily pass fare (KRW)
   - `daily_pass_better` (boolean): True if daily pass is cheaper than pay-as-you-go
-  - `avail_now` (integer): Current available spaces (derived from real-time feed)
-  - `avail_pred` (integer or null): Predicted available spaces at arrival time (null if real-time feed unavailable)
+  - `avail_now` (integer or null): 현재 주차된 대수
+  - `avail_pred` (float or null): 도착 시점 예측 점유율(%)
   - `full_prob` (float or null): Probability of full occupancy (0.0~1.0) at arrival time (null if real-time feed unavailable)
   - `walk_far_warning` (boolean): True if walk_min > 15 (≈1km)
   - `estimated` (boolean): True if any ETA value was estimated due to API failure
@@ -39,8 +46,8 @@ Each file contains a JSON object with the following keys:
 
 - `radius_used` (integer): Search radius used to find candidate lots (meters)
 
-- `dead_feeds`: Array of parking lot objects that have dead feeds (always zero occupancy) but are included for fare/walk cards.
-  Each object has the same structure as a card but with `avail_pred` and `full_prob` always null.
+- `unavailable`: 실시간 미제공 완전 카드. `avail_now`, `avail_pred`, `full_prob`는 null이며 순위에서 제외한다.
+- `dead_feeds`: 하위 호환용 원시 메타데이터. UI 카드는 `unavailable`을 사용한다. 고정 피드는 항상 빈 주차장을 뜻하지 않는다.
 
 - `unlabeled`: Array of candidate lots that could not be matched to known lots (should be empty in normal operation).
 

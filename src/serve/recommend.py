@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 from src.serve.candidates import find_candidates, haversine_m
 from src.serve import walking, routing
 from src.serve.fare import calc_fare, resolve_type
+from src.serve.ranking import rank_cards
 
 KST = timezone(timedelta(hours=9))
 WALK_FAR_MIN = 15          # 도보 15분(≈1km) 초과면 경고. 1km 를 걷게 하면서 추천이라 할 수 없다
@@ -73,6 +74,8 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         # 4. 혼잡도 — 모델 전이면 비워 둔다
         is_live = not d.get("dead_feed", False)
         avail_pred = full_prob = p10 = p90 = None
+        interval_status = "unavailable"
+        prediction_source = "dead_feed" if not is_live else "no_model"
         if predictor is not None:
             try:
                 # ★ 예측 시점은 「차가 주차장에 도착하는 시각」이다. 도보를 더하지 않는다.
@@ -81,6 +84,8 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                 if is_live:
                     avail_pred, full_prob = pr.get("p50"), pr.get("full_prob")
                     p10, p90 = pr.get("p10"), pr.get("p90")
+                    interval_status = pr.get("interval_status", "unverified")
+                    prediction_source = pr.get("source")
             except Exception:
                 pass
 
@@ -103,6 +108,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "daily_pass_better": bool(f["recommend_prepaid"]),
             "avail_now": d.get("avail_now") if is_live else None, "avail_pred": avail_pred,
             "full_prob": full_prob, "pred_p10": p10, "pred_p90": p90,
+            "interval_status": interval_status, "prediction_source": prediction_source,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
             "estimated": est,
             "cell_cnt": d.get("cell_cnt"), "straight_m": d.get("straight_m"),
@@ -114,20 +120,10 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         })
 
     # 7. 정렬 — 두 축을 따로 낸다. 가중합으로 섞지 않는다.
-    def demote(c):
-        """만차확률이 컷오프를 넘으면 강등. 단 추정치(폴백)엔 적용하지 않는다 — 근거가 약하다."""
-        if full_prob_cutoff is None or c["estimated"] or c["full_prob"] is None:
-            return 0
-        return 1 if c["full_prob"] > full_prob_cutoff else 0
-
     live_cards = [c for c in cards if c["is_live"]]
     unavailable = [c for c in cards if not c["is_live"]]
-    by_fare = sorted(live_cards, key=lambda c: (demote(c),
-                                           c["fare_payg"] if c["fare_payg"] is not None else 10**9,
-                                           c["walk_min"] if c["walk_min"] is not None else 10**9))
-    by_walk = sorted(live_cards, key=lambda c: (demote(c),
-                                           c["walk_min"] if c["walk_min"] is not None else 10**9,
-                                           c["fare_payg"] if c["fare_payg"] is not None else 10**9))
+    by_fare = rank_cards(live_cards, "fare", full_prob_cutoff)
+    by_walk = rank_cards(live_cards, "walk", full_prob_cutoff)
 
     # 8. 대체 주차장 — 순위 밖, 위치만
     alts = []

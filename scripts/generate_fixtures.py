@@ -22,11 +22,14 @@ predictor = Predictor()
 
 for name, dest, when, mins, fname in CASES:
     result = recommend(dest, mins, start=(37.4018, 126.9226), predictor=predictor)
-    # Remove pred_p10 and pred_p90 from each card as per U9-4 warning
-    if "cards" in result:
-        for card in result["cards"]:
-            card.pop("pred_p10", None)
-            card.pop("pred_p90", None)
+    # Predictor가 검증한 구간만 같은 스키마로 export한다. 모든 배열을 검사한다.
+    for key in ("cards", "by_walk", "by_fare", "unavailable"):
+        for card in result.get(key, []):
+            if card.get("interval_status") != "pass":
+                assert card.get("pred_p10") is None and card.get("pred_p90") is None
+    result["model_version"] = predictor.model_version if predictor.ok else None
+    result["generated_at"] = datetime.now(KST).isoformat()
+    result["scenario_note"] = "실행 시점 추천 결과. 파일명의 요일은 시나리오 구분이며 과거/미래 재현 결과가 아님."
     # Convert numpy types to Python native types for JSON serialization
     def convert(obj):
         if isinstance(obj, dict):
