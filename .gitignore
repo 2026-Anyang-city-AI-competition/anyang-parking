@@ -15,3 +15,10 @@ logs/
 # OS
 .DS_Store
 .cache.sqlite
+
+# 프론트엔드 빌드 산출물
+web/node_modules/
+web/dist/
+web/*.tsbuildinfo
+web/vite.config.js
+web/vite.config.d.ts

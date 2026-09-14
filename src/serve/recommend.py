@@ -110,6 +110,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         walk_min = round(walk_s / 60) if walk_s is not None else None
         cards.append({
             "name": d["name"], "parking_id": pid,
+            "lat": d.get("lat"), "lng": d.get("lng"),
             "drive_min": round(drive_s / 60) if drive_s is not None else None,
             "walk_min": walk_min,
             "total_min": (round((drive_s + walk_s) / 60)

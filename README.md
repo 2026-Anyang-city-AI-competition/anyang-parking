@@ -48,8 +48,10 @@ python3 src/analysis/a05_shape_check.py   # 게이트 재실행
 
 ## 추천 API
 
-모델은 서버 프로세스 시작 때 한 번만 로드하고, 최근 관측 피처는 `parking.db`가
-갱신될 때 다시 읽는다. 메모리 중복을 막기 위해 데모 환경에서는 worker를 1개로 둔다.
+모델은 서버 프로세스 시작 때 한 번만 로드한다. 추천 요청이 오면 `parking.db`의
+최신 관측을 확인하고 5분 이상 지났을 때만 원천을 한 번 폴링한 뒤 최근 피처를
+갱신한다. 동시 요청은 한 번으로 합치며, 폴링 실패 시 기존 DB로 응답한다.
+메모리 중복을 막기 위해 데모 환경에서는 worker를 1개로 둔다.
 
 ```bash
 pip install -r requirements.txt
@@ -74,6 +76,7 @@ bash scripts/run_api.sh
 
 응답의 `service.data_status`는 `fresh`/`stale`/`unavailable`이며 카드마다
 `observation_at`, `observation_age_min`, `observation_status`가 포함된다.
+`poll.status`는 `polled`/`skipped`/`failed` 중 하나다.
 예측에 필요한 최근 이력이 부족하면 수치를 꾸며내지 않고
 `prediction_source: "no_fresh_history"`와 null 예측값을 반환한다.
 

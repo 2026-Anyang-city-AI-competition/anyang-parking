@@ -24,9 +24,16 @@ class FakePredictor:
         return STATUS.copy()
 
 
+class FakePoller:
+    def poll_if_due(self):
+        return {"status": "polled", "attempted": True, "reason": None,
+                "observation_at": "2026-09-15T01:00:00+09:00", "lots": 89,
+                "duration_ms": 10, "error": None}
+
+
 class ApiTests(unittest.TestCase):
     def setUp(self):
-        self.client_context = TestClient(create_app(FakePredictor()))
+        self.client_context = TestClient(create_app(FakePredictor(), FakePoller()))
         self.client = self.client_context.__enter__()
 
     def tearDown(self):
@@ -54,6 +61,7 @@ class ApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["request_id"], "demo-1")
         self.assertEqual(body["service"]["data_status"], "fresh")
+        self.assertEqual(body["poll"]["status"], "polled")
         self.assertEqual(body["request"]["parking_minutes"], 120)
         self.assertEqual(called.call_args.args[0], (37.394259, 126.956861))
 

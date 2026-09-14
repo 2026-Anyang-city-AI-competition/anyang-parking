@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.serve.predictor import Predictor
 from src.serve.recommend import recommend
+from src.serve.request_polling import RequestPoller
 from src.serve import fare_tables
 
 LOG = logging.getLogger(__name__)
@@ -62,13 +63,15 @@ def _problem(request, status, code, message, details=None):
     })
 
 
-def create_app(predictor=None):
+def create_app(predictor=None, poller=None):
     supplied = predictor
+    supplied_poller = poller
 
     @asynccontextmanager
     async def lifespan(application):
         service = supplied or Predictor()  # 프로세스당 모델 1회 로드
         application.state.predictor = service
+        application.state.poller = supplied_poller or RequestPoller()
         await run_in_threadpool(service.refresh_from_db, force=True)
         yield
 
@@ -79,6 +82,8 @@ def create_app(predictor=None):
     )
     if supplied is not None:
         application.state.predictor = supplied
+    if supplied_poller is not None:
+        application.state.poller = supplied_poller
 
     allowed = [x.strip() for x in os.getenv(
         "CORS_ORIGINS", "http://localhost:3000,http://localhost:5173"
@@ -133,7 +138,9 @@ def create_app(predictor=None):
             raise ApiProblem(422, "unknown_discount", "지원하지 않는 감면 유형입니다",
                              {"allowed": sorted(fare_tables.DISCOUNTS)})
         service = request.app.state.predictor
-        service_status = await run_in_threadpool(service.refresh_from_db)
+        poll_status = await run_in_threadpool(request.app.state.poller.poll_if_due)
+        service_status = await run_in_threadpool(
+            service.refresh_from_db, force=poll_status["status"] == "polled")
         origin = ((body.origin.lat, body.origin.lng) if body.origin else None)
         work = partial(
             recommend,
@@ -151,6 +158,7 @@ def create_app(predictor=None):
         result.update({
             "request_id": _request_id(request),
             "service": service_status,
+            "poll": poll_status,
             "request": body.model_dump(),
         })
         return result
