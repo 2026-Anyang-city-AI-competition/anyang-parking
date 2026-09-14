@@ -1,4 +1,4 @@
-"""DB의 89곳을 빠짐없이 출입조건 조사 우선순위표로 만든다. 조사 결과가 아닌 작업 목록."""
+"""실시간 값이 움직이는 주차장의 출입조건 조사 우선순위표를 만든다."""
 import math
 import sqlite3
 from pathlib import Path
@@ -56,30 +56,50 @@ def main():
     with sqlite3.connect(f"file:{ROOT/'data/raw/parking.db'}?mode=ro",uri=True) as c:
         c.row_factory=sqlite3.Row
         lots=[dict(r) for r in c.execute('SELECT * FROM lots ORDER BY parking_id')]
+        # 전체 수집 구간에서 park_count가 한 번도 바뀌지 않은 피드는
+        # 입출차 조건 조사 대상에서 제외한다. 향후 값이 움직이면 자동 재포함된다.
+        fixed_ids={r['parking_id'] for r in c.execute(
+            'SELECT parking_id FROM obs GROUP BY parking_id '
+            'HAVING MIN(park_count) = MAX(park_count)'
+        )}
+        fixed_values=dict(c.execute(
+            'SELECT parking_id, MIN(park_count) FROM obs '
+            'GROUP BY parking_id HAVING MIN(park_count) = MAX(park_count)'
+        ))
+        obs_end=c.execute('SELECT MAX(ts_kst) AS ts FROM obs').fetchone()['ts']
     assert len(lots)==89 and len({r['parking_id'] for r in lots})==89
+    fixed_lots=[r for r in lots if r['parking_id'] in fixed_ids]
+    lots=[r for r in lots if r['parking_id'] not in fixed_ids]
     first_order={pid:i for i,pid in enumerate(FIRST)}
     lots.sort(key=lambda r:(classify(r)[0],first_order.get(r['parking_id'],999),distance(r),r['parking_id']))
     counts={p:sum(classify(r)[0]==p for r in lots) for p in (1,2,3)}
-    out=['# 안양 89곳 · 실제 입출차 조건 조사 우선순위','',
-         '작성 기준: 2026-09-13 · 로컬 parking.db lots 89곳. 아래 시간은 DB 원문이며 실제 입출차 시간으로 검증된 값이 아니다.',
-         '조사 완료 0/89로 시작하는 체크리스트다. 현재 조사 사실·차단기 유무를 확인했다는 보고가 아니다. 기존 조사 결과가 있으면 근거와 함께 반영한다.','',
+    out=[f'# 안양 {len(lots)}곳 · 실제 입출차 조건 조사 우선순위','',
+         f'작성 기준: 로컬 parking.db lots 89곳 · 관측 종료 `{obs_end}`. 아래 시간은 DB 원문이며 실제 입출차 시간으로 검증된 값이 아니다.',
+         f'전체 89곳 중 수집 기간 내 `park_count`가 한 번도 바뀌지 않은 {len(fixed_lots)}곳은 조사 대상에서 제외했다. 값이 움직이는 {len(lots)}곳만 조사한다.',
+         f'조사 완료 0/{len(lots)}로 시작하는 체크리스트다. 현재 조사 사실·차단기 유무를 확인했다는 보고가 아니다. 기존 조사 결과가 있으면 근거와 함께 반영한다.','',
          f"P1 즉시 확인 {counts[1]}곳 → P2 출입 제한 확인 우선 {counts[2]}곳 → P3 일반 노상 등 {counts[3]}곳. 총 {sum(counts.values())}곳.",
          '우선순위는 조사 판단이다. P1은 표기 이상·영업/이용대상 불확실성과 핵심 데모를 먼저 배치했다. P2/P3 안에서는 3개 데모 목적지까지의 최소 직선거리가 가까운 순, 동률은 ID순이다.',
          '직선거리는 조사 순서를 정하는 보조값이며 실제 추천 빈도나 방문 최적 동선이 아니다.',
          '같은 시설군을 묶어 문의·방문해도 확인 결과는 parking_id별로 따로 남긴다. 노상/노외만으로 차단기 유무를 결정하지 않는다.','',
          '## 조사 방법','',
          '1. 공식 주차장 안내·최근 공지 검색 → 일반 시간제 차량 기준 입차/출차 시간 확인.',
-         '2. 시간 표기가 모호하거나 출처가 충돌하면 운영기관에 전화·문의. 89곳 목록을 묶어 확인해도 된다.',
+         f'2. 시간 표기가 모호하거나 출처가 충돌하면 운영기관에 전화·문의. 조사 대상 {len(lots)}곳을 묶어 확인해도 된다.',
          '3. 답변을 얻지 못한 곳·현장과 다른 곳만 방문해 안내판과 출입구 확인. 낮에 차단기가 열려 있다는 사실만으로 야간 개방을 확정하지 않는다.',
          '4. 현재 영업 여부, 시간제/월정기 전용, 차량 종류 제한, 과금 시간, 평일/토/일/공휴일 입차·출차 시간, 야간 주차·임시폐쇄를 구분해 기록한다.',
          '5. 확인 불가는 미확인으로 남긴다. 차단기 없음·입출차 24시간으로 채우지 않는다.','',
          '공통 질문: “일반 시간제 승용차가 이용할 수 있나요? 안내된 운영시간이 끝나도 들어갈 수 있나요? 주차한 차는 언제든 나올 수 있나요? 토요일·일요일·공휴일도 같은가요?”','',
-         '## 89곳 전수 목록','',
+         f'## 조사 대상 {len(lots)}곳','',
          '| 순서 | 급 | ID | 주차장 | DB 구분 | DB 평일 시간 | DB 주말 시간 | 우선 확인 이유 | 확인 |',
          '|---:|---|---:|---|---|---|---|---|---|']
     for i,r in enumerate(lots,1):
         p,why=classify(r)
         out.append(f"| {i} | P{p} | {r['parking_id']} | {r['name']} | {r['div']} | {r['wdays_start']}~{r['wdays_end']} | {r['wend_start']}~{r['wend_end']} | {why} | ⬜ |")
+    out+=['',f'## 조사 제외 {len(fixed_lots)}곳 — 데이터 고정','',
+          f'관측 종료 `{obs_end}` 기준 전체 수집 구간에서 `park_count`의 최솟값과 최댓값이 같은 곳이다. 출입조건 조사 대상에는 포함하지 않는다.','',
+          '| ID | 주차장 | DB 구분 | 고정값 |','|---:|---|---|---:|']
+    fixed_lots.sort(key=lambda r:r['parking_id'])
+    for r in fixed_lots:
+        out.append(f"| {r['parking_id']} | {r['name']} | {r['div']} | {fixed_values[r['parking_id']]} |")
     out+=['','## 주소·검색 바로가기','',
           'DB 주소는 현장 위치를 찾는 단서다. 이름이 바뀌었거나 구역이 나뉜 경우 ID·좌표·주소를 함께 대조한다. 검색 링크는 조사 도구이며 확인된 근거 링크가 아니다.','',
           '| 순서 | ID | 주차장 | DB 주소 | 검색 |','|---:|---:|---|---|---|']
@@ -98,7 +118,7 @@ def main():
           '- 야간 주차·장시간 주차·월정기·차종 제한:',
           '- 임시 폐쇄·공사 / 적용 기간:', '- 충돌 정보·추가 확인 필요 사항:','']
     OUT.write_text('\n'.join(out),encoding='utf-8')
-    print('89 unique IDs verified; tiers:',counts)
+    print(f'89 unique IDs verified; target={len(lots)} fixed_excluded={len(fixed_lots)}; tiers:',counts)
     for i,r in enumerate(lots[:15],1):print(i,r['parking_id'],r['name'])
     print(OUT)
 
