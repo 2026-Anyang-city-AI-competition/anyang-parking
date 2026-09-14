@@ -17,6 +17,7 @@ LOGS = ROOT / "logs"
 
 # 원천
 PARKING_DB = RAW / "parking.db"                 # 폴링 라벨 (비공식 내부 API)
+ACCESS_RULES_CSV = RAW / "parking_access_rules.csv"  # 조사 확정 출입·과금 규칙
 STD_PARKING_CSV = RAW / "std_parking.csv"       # 경기데이터드림 제공표준 107곳
 SHOPS_CSV = RAW / "gg_shops.csv"
 APT_CSV = RAW / "gg_apt.csv"
@@ -29,6 +30,7 @@ LOTS_PARQUET = INTERIM / "lots.parquet"
 OBS_PARQUET = INTERIM / "obs.parquet"
 GEOCODE_CACHE = INTERIM / "geocode_cache.csv"
 FEATURES_PARQUET = PROCESSED / "features.parquet"
+# 기존 A18/A19 분석용 가로형 CSV. 서비스의 raw/ACCESS_RULES_CSV와 스키마가 다르다.
 PARKING_ACCESS_RULES_CSV = PROCESSED / "parking_access_rules.csv"
 
 # 수집

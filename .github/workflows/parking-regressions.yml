@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-python@v7.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install offline test dependencies
         run: python -m pip install numpy pandas
       - name: Validate changed Python modules
@@ -31,3 +31,5 @@ jobs:
         run: python -m unittest discover -s tests -p test_review_regressions.py -v
       - name: Run existing request polling tests
         run: python -m unittest discover -s tests -p test_request_polling.py -v
+      - name: Run service access schema tests
+        run: python -m unittest discover -s tests -p test_access_rules.py -v

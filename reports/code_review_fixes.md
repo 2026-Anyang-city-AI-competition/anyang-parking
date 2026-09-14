@@ -12,7 +12,9 @@
 
 ## 데이터 적용 순서
 
-코드 변경만으로 기존 CSV나 모델 파일이 갱신되지는 않는다. 프로젝트 루트에서 실행한다.
+코드 변경만으로 기존 CSV나 모델 파일이 갱신되지는 않는다. 아래 명령은 기존 A18/A19용 가로형 CSV인 data/processed/parking_access_rules.csv에 적용한다.
+새 서비스 검증기에서 쓰는 data/raw/parking_access_rules.csv는 요일별 한 행의 별도 스키마이며, 두 파일을 서로 덮어쓰지 않는다.
+프로젝트 루트에서 실행한다.
 
 ```bash
 python scripts/fill_access_schedule.py
@@ -26,7 +28,7 @@ DB 기반 조사표에는 각각 38, 33으로 적혀 있다. 실제 CSV가 잘�
 
 ## 검증 범위와 남은 작업
 
-GitHub Actions는 합성 데이터로 회귀 테스트와 기존 폴링 테스트를 실행한다.
+GitHub Actions는 Python 3.12에서 합성 데이터 회귀 테스트, 기존 폴링 테스트와 새 서비스 출입 규칙 검증기 테스트를 실행한다.
 실제 parking_access_rules.csv 및 최신 parking.db의 내용·성능 수치는 별도 검증이 필요하다.
 
 - 첨부 CSV/마크다운/HTML은 이번 실행 환경의 파일 읽기 기능 부재로 열람하지 못했다.

@@ -80,6 +80,20 @@ bash scripts/run_api.sh
 예측에 필요한 최근 이력이 부족하면 수치를 꾸며내지 않고
 `prediction_source: "no_fresh_history"`와 null 예측값을 반환한다.
 
+## 입출차 조사 데이터
+
+`reports/태영.txt` 같은 조사 메모는 서비스가 직접 읽지 않는다. 조사 완료분을
+`data/raw/parking_access_rules.csv`에 구조화해서 적고 아래 명령으로 검증한다.
+
+```bash
+python3 scripts/validate_access_rules.py
+```
+
+새 환경에서는 `schemas/parking_access_rules.template.csv`를
+`data/raw/parking_access_rules.csv`로 복사해 시작한다. 검증기는 DB에 없는 ID,
+주차장명 불일치, 요일 누락·중복, 잘못되거나 겹치는 시간, 근거 없는 확정값,
+겹치는 적용기간을 실패 처리한다. `00:00-00:00`은 의미를 추정하지 않고 오류로 처리한다.
+
 ## 구조
 ```
 data/raw/        parking.db(폴링 라벨) · kotsa_v2_*.jsonl(공단 시설정보)

@@ -137,13 +137,13 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 
 ### 1.5 데이터 적재·검증 TODO
 
-- [ ] 위 스키마로 `parking_access_rules.csv` 생성
+- [x] 위 스키마로 `parking_access_rules.csv` 생성
 - [ ] 조사 완료된 항목만 `reports/태영.txt`에서 수동 전환
-- [ ] ID가 `parking.db.lots` 89곳에 존재하는지 검사
-- [ ] 주차장별 `weekday/saturday/sunday_holiday` 중복·누락 검사
-- [ ] 시간 형식, 겹치는 구간, 역전 구간, 자정 통과 검사
-- [ ] `confirmed_*`인데 근거가 비어 있는 행을 실패 처리
-- [ ] 24시간/무료/미확인을 자동 추정하지 않는 검사
+- [x] ID가 `parking.db.lots` 89곳에 존재하는지 검사
+- [x] 주차장별 `weekday/saturday/sunday_holiday` 중복·누락 검사
+- [x] 시간 형식, 겹치는 구간, 역전 구간, 자정 통과 검사
+- [x] `confirmed_*`인데 근거가 비어 있는 행을 실패 처리
+- [x] 24시간/무료/미확인을 자동 추정하지 않는 검사
 - [ ] CSV를 서비스 시작 시 읽는 로더 구현
 - [ ] 조사 변경 이력과 `effective_from/to` 적용
 
@@ -420,8 +420,8 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 
 ## 11. 실제 구현 순서
 
-1. `parking_access_rules.csv` 스키마와 검증기
-2. 확인된 조사 결과 수동 적재
+1. ✅ `parking_access_rules.csv` 스키마와 검증기
+2. CSV 로더 구현 — 빈 데이터셋에서도 기동하고, 확인된 행만 읽도록 구성
 3. 도착·출차 시각 기반 출입 판정기와 단위 테스트
 4. 추천 API에서 이용 불가 후보 제외 및 후보 반경 재확장
 5. `prediction_availability.csv`와 시간대별 예측 차단
@@ -433,4 +433,5 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 11. 필요 시 카카오 OAuth와 설정 동기화
 12. 배포·모니터링·반복 예측 검증
 
+조사 결과 수동 적재는 개발 단계와 병렬로 계속하며, 실제 서비스 검증 전까지 완료한다.
 기능 동결 전 필수 범위는 1~9다. OAuth·정기권·사용자 제보는 핵심 추천 흐름이 안정된 뒤 진행한다.
