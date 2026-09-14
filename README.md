@@ -46,6 +46,37 @@ python3 scripts/check_gaps.py   # 폴링 결측 구간 확인 (venv 필요)
 python3 src/analysis/a05_shape_check.py   # 게이트 재실행
 ```
 
+## 추천 API
+
+모델은 서버 프로세스 시작 때 한 번만 로드하고, 최근 관측 피처는 `parking.db`가
+갱신될 때 다시 읽는다. 메모리 중복을 막기 위해 데모 환경에서는 worker를 1개로 둔다.
+
+```bash
+pip install -r requirements.txt
+bash scripts/run_api.sh
+```
+
+- API 문서: `http://127.0.0.1:8000/docs`
+- 상태 확인: `GET /api/v1/health`
+- 추천: `POST /api/v1/recommend`
+
+```json
+{
+  "destination": {"lat": 37.394259, "lng": 126.956861},
+  "origin": {"lat": 37.4018, "lng": 126.9226},
+  "parking_minutes": 120,
+  "depart_in_minutes": 0,
+  "minimum_candidates": 5,
+  "full_probability_cutoff": 0.5,
+  "include_alternatives": true
+}
+```
+
+응답의 `service.data_status`는 `fresh`/`stale`/`unavailable`이며 카드마다
+`observation_at`, `observation_age_min`, `observation_status`가 포함된다.
+예측에 필요한 최근 이력이 부족하면 수치를 꾸며내지 않고
+`prediction_source: "no_fresh_history"`와 null 예측값을 반환한다.
+
 ## 구조
 ```
 data/raw/        parking.db(폴링 라벨) · kotsa_v2_*.jsonl(공단 시설정보)

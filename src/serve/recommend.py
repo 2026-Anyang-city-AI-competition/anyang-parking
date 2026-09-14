@@ -24,6 +24,7 @@ from src.serve.candidates import find_candidates, haversine_m
 from src.serve import walking, routing
 from src.serve.fare import calc_fare, resolve_type
 from src.serve.ranking import rank_cards
+from src.features.temporal import oprtime_features
 
 KST = timezone(timedelta(hours=9))
 WALK_FAR_MIN = 15          # 도보 15분(≈1km) 초과면 경고. 1km 를 걷게 하면서 추천이라 할 수 없다
@@ -31,12 +32,16 @@ WALK_FAR_MIN = 15          # 도보 15분(≈1km) 초과면 경고. 1km 를 걷�
 
 def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
               full_prob_cutoff=0.5, predictor=None, discount=None,
-              with_alternatives=True):
+              with_alternatives=True, now=None):
     """dest=(lat,lon) · minutes=주차할 분 · start=(lat,lon) 출발지(없으면 목적지에서 출발)
     depart_in_min>0 이면 카카오 미래운행(단건)으로 목적지 ETA 하나를 공통 적용한다.
     predictor(lot, arrive_dt) -> (예측 점유율, 만차확률) — 모델이 준비되면 주입."""
     start = start or dest
-    now = datetime.now(KST)
+    now = now or datetime.now(KST)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=KST)
+    else:
+        now = now.astimezone(KST)
     depart = now + timedelta(minutes=depart_in_min)
 
     # 1. 후보
@@ -44,9 +49,13 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
     lots = cand["lots"]
     # 죽은 피드도 경로·요금 카드에는 포함하되 랭킹 입력에서는 끝까지 제외한다.
     service_lots = lots + (cand.get("dead_feeds") or [])
-    if not lots:
-        return {"cards": [], "radius_used": cand["radius_used"],
-                "message": cand["message"], "unlabeled": [], "alternatives": []}
+    if not service_lots:
+        return {"cards": [], "by_fare": [], "by_walk": [], "unavailable": [],
+                "radius_used": cand["radius_used"], "exhausted": cand["exhausted"],
+                "message": cand["message"], "unlabeled": cand.get("unlabeled") or [],
+                "dead_feeds": [], "alternatives": [],
+                "depart_at": depart.strftime("%H:%M"), "depart_at_iso": depart.isoformat(),
+                "park_minutes": minutes}
 
     # 2. 차 ETA — 지금 출발이면 다중목적지 1회, 미래 출발이면 미래운행 1회(단건)
     if depart_in_min > 0:
@@ -87,7 +96,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                     interval_status = pr.get("interval_status", "unverified")
                     prediction_source = pr.get("source")
             except Exception:
-                pass
+                prediction_source = "prediction_error"
 
         # 6. 요금 — 후불/선불 병기
         lot = {"type": resolve_type(d["name"], d.get("div")), "name": d["name"],
@@ -95,6 +104,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                "wdays_end": d.get("wdays_end"), "wend_start": d.get("wend_start"),
                "wend_end": d.get("wend_end")}
         f = calc_fare(lot, arrive, minutes, discount=discount)
+        op = oprtime_features(d, arrive)
 
         est = bool((dv and dv.get("estimated")) or (wk and wk.get("estimated")))
         walk_min = round(walk_s / 60) if walk_s is not None else None
@@ -107,6 +117,8 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "fare_payg": f["total"], "fare_daily_pass": f["total_prepaid"],
             "daily_pass_better": bool(f["recommend_prepaid"]),
             "avail_now": d.get("avail_now") if is_live else None, "avail_pred": avail_pred,
+            "occ_now": (min(120, 100*d["avail_now"]/d["cell_cnt"])
+                        if is_live and d.get("avail_now") is not None and d.get("cell_cnt") else None),
             "full_prob": full_prob, "pred_p10": p10, "pred_p90": p90,
             "interval_status": interval_status, "prediction_source": prediction_source,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
@@ -114,8 +126,14 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "cell_cnt": d.get("cell_cnt"), "straight_m": d.get("straight_m"),
             "grade": d.get("grade"), "is_live": is_live,
             "operating_hours": f"{d.get('wdays_start') or '-'}~{d.get('wdays_end') or '-'}",
+            "weekday_hours": f"{d.get('wdays_start') or '-'}~{d.get('wdays_end') or '-'}",
+            "weekend_hours": f"{d.get('wend_start') or '-'}~{d.get('wend_end') or '-'}",
+            "is_operating": bool(op["is_operating"]),
+            "observation_at": d.get("observation_at"),
+            "observation_age_min": d.get("observation_age_min"),
+            "observation_status": d.get("observation_status", "unavailable"),
             "unavailable_note": None if is_live else "실시간 정보를 제공하지 않는 주차장입니다",
-            "arrive_at": arrive.strftime("%H:%M"),
+            "arrive_at": arrive.strftime("%H:%M"), "arrive_at_iso": arrive.isoformat(),
             "fare_reason": f.get("reason"),
         })
 
@@ -141,7 +159,8 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "message": cand["message"], "unlabeled": cand["unlabeled"],
             "dead_feeds": cand.get("dead_feeds") or [],
             "alternatives": alts,
-            "depart_at": depart.strftime("%H:%M"), "park_minutes": minutes}
+            "depart_at": depart.strftime("%H:%M"), "depart_at_iso": depart.isoformat(),
+            "park_minutes": minutes}
 
 
 def _fmt(c):

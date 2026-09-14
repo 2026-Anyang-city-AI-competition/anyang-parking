@@ -16,6 +16,7 @@
   python3 src/serve/candidates.py     # 6개 목적지 자체 점검
 """
 import sqlite3
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,12 +26,12 @@ STD  = ROOT / "data/raw/std_parking.csv"
 RADII   = (1000, 2000, 3000)   # 3km 가 상한. 그 이상 확장 금지
 MIN_N   = 5
 DEAD_RANGE = 0.01              # 전 기간 점유율 변동폭이 이보다 작으면 '죽은 피드'
+KST = timezone(timedelta(hours=9))
+STALE_MIN = 20
 
-# ★ 89곳 중 22곳은 실시간 피드가 안 돈다 (변동폭 정확히 0.00, 6일 확인).
-#   원인: **위탁 운영 14곳 전부**가 여기 해당하고 살아있는 67곳엔 위탁이 0곳이다.
-#   나머지 8곳은 직영인데 특정 시점 값에서 얼어붙었다(12곳은 park_count==cell_cnt).
-#   GITS 로도 못 살린다 — 같은 원천이라 GITS 역시 22곳 전부 변동폭 0.00 이다.
-#   → 순위에서 빼고 「실시간 미제공」으로 표시한다.
+# 고정 피드 수는 수집 기간이 늘면 달라질 수 있으므로 하드코딩하지 않는다.
+# 현재 DB 전체 구간에서 점유율 변동폭이 1%p 미만인 곳은 순위에서 빼고
+# 「실시간 미제공」으로 표시한다. 값이 움직이기 시작하면 자동 재포함된다.
 
 def haversine_m(lat1, lon1, lat2, lon2):
     """직선거리(m). 후보를 추리는 용도다 — 표시용 거리가 아니다."""
@@ -44,31 +45,44 @@ def haversine_m(lat1, lon1, lat2, lon2):
 def _labeled_lots():
     """라벨 있는 안양 89곳. 실시간 관측이 있는 곳만."""
     if not DB.exists(): return []
-    con = sqlite3.connect(DB)
-    rows = con.execute("""
-        SELECT l.parking_id, l.name, l.div, l.grade, l.cell_cnt, l.lat, l.lng,
-               l.wdays_start, l.wdays_end, l.wend_start, l.wend_end, l.oneday_amt
-        FROM lots l WHERE l.lat IS NOT NULL AND l.lng IS NOT NULL""").fetchall()
-    cur = {r[0]: r[1] for r in con.execute("""
-        SELECT parking_id, park_count FROM obs
-        WHERE ts_kst = (SELECT MAX(ts_kst) FROM obs)""").fetchall()}
-    con.close()
-    # 죽은 피드 판정 — 전 기간 점유율 변동폭
-    rng = {}
-    for pid, mn, mx in con2.execute("""
+    # 같은 읽기 트랜잭션에서 메타·최신 관측·변동폭을 읽는다.
+    with sqlite3.connect(f"file:{DB}?mode=ro", uri=True) as con:
+        con.execute("BEGIN")
+        rows = con.execute("""
+            SELECT l.parking_id, l.name, l.div, l.grade, l.cell_cnt, l.lat, l.lng,
+                   l.wdays_start, l.wdays_end, l.wend_start, l.wend_end, l.oneday_amt
+            FROM lots l WHERE l.lat IS NOT NULL AND l.lng IS NOT NULL""").fetchall()
+        cur = {r[0]: (r[1], r[2]) for r in con.execute("""
+            SELECT o.parking_id, o.park_count, o.ts_kst
+            FROM obs o
+            JOIN (SELECT parking_id, MAX(ts_kst) AS ts_kst FROM obs GROUP BY parking_id) x
+              ON x.parking_id=o.parking_id AND x.ts_kst=o.ts_kst""").fetchall()}
+        rng = {pid: (mx or 0) - (mn or 0) for pid, mn, mx in con.execute("""
             SELECT parking_id, MIN(1.0*park_count/cell_cnt), MAX(1.0*park_count/cell_cnt)
-            FROM obs WHERE cell_cnt > 0 GROUP BY parking_id""").fetchall() \
-            if (con2 := sqlite3.connect(DB)) else []:
-        rng[pid] = (mx or 0) - (mn or 0)
-    con2.close()
+            FROM obs WHERE cell_cnt > 0 GROUP BY parking_id""").fetchall()}
     cols = ("parking_id","name","div","grade","cell_cnt","lat","lng",
             "wdays_start","wdays_end","wend_start","wend_end","oneday_amt")
     out = []
     for r in rows:
         d = dict(zip(cols, r))
-        d["avail_now"] = cur.get(d["parking_id"])     # 현재 '주차 대수'
+        current = cur.get(d["parking_id"])
+        d["avail_now"] = current[0] if current else None  # 현재 '주차 대수'
+        d["observation_at"] = current[1] if current else None
+        try:
+            observed = datetime.fromisoformat(current[1]) if current else None
+            if observed and observed.tzinfo is None:
+                observed = observed.replace(tzinfo=KST)
+            age = max(0.0, (datetime.now(KST) - observed).total_seconds() / 60)
+        except (TypeError, ValueError):
+            age = None
+        d["observation_age_min"] = round(age, 1) if age is not None else None
         d["occ_range"] = rng.get(d["parking_id"])
         d["dead_feed"] = (d["occ_range"] is not None and d["occ_range"] < DEAD_RANGE)
+        d["observation_status"] = (
+            "fixed_feed" if d["dead_feed"] else
+            "unavailable" if age is None else
+            "stale" if age > STALE_MIN else "fresh"
+        )
         d["labeled"] = not d["dead_feed"]             # 죽은 피드는 라벨로 못 쓴다
         out.append(d)
     return out

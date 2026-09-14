@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """U11과 동일한 Δ 분위 모델, 양성 클래스 확률, 검증된 구간 노출 정책."""
 import pickle
+import sqlite3
 import sys
-from datetime import timedelta, timezone
+import threading
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +16,10 @@ sys.path.insert(0, str(ROOT))
 from src.features.temporal import oprtime_features
 
 MODEL_PATH = ROOT / "data/processed/predictor.pkl"
+DB_PATH = ROOT / "data/raw/parking.db"
 KST = timezone(timedelta(hours=9))
+STALE_MIN = 20
+LIVE_HISTORY_HOURS = 4
 FULL_THRESHOLD = 90.0
 QUANTILES = (.1, .5, .9)
 HORIZ_GRID = (15, 30, 60, 120)
@@ -33,6 +39,14 @@ class Predictor:
     def __init__(self, path=MODEL_PATH):
         self.ok = False
         self.dead, self.hist = set(), {}
+        self._refresh_lock = threading.Lock()
+        self._last_refresh_attempt = 0.0
+        self.observation_at = None
+        self.refreshed_at = None
+        self.last_refresh_error = None
+        self.refresh_count = 0
+        self.prediction_ready_lots = None
+        self.total_lots = None
         try:
             with open(path, "rb") as f:
                 b = pickle.load(f)
@@ -41,11 +55,111 @@ class Predictor:
             self.feat_cols = b["feat_cols"]
             self.dead, self.hist = set(b["dead"]), b["hist"]
             self.meta, self.cqr = b.get("meta", {}), b.get("cqr", {})
+            self.total_lots = len(self.meta) or None
             self.interval_gate = b.get("interval_gate", {})
             self.model_version = b.get("model_version", "unverified")
             self.ok = True
         except (OSError, KeyError, pickle.UnpicklingError) as e:
             print(f"[predictor] 예측 모델을 읽을 수 없습니다: {type(e).__name__}")
+
+    def service_status(self):
+        """API가 그대로 내보낼 수 있는 모델·관측 최신성 상태."""
+        age = None
+        if self.observation_at:
+            try:
+                observed = datetime.fromisoformat(self.observation_at)
+                if observed.tzinfo is None:
+                    observed = observed.replace(tzinfo=KST)
+                age = max(0.0, (datetime.now(KST)-observed).total_seconds()/60)
+            except (TypeError, ValueError):
+                pass
+        data_status = ("unavailable" if age is None else
+                       "stale" if age > STALE_MIN else "fresh")
+        return {
+            "model_status": "ready" if self.ok else "unavailable",
+            "model_version": getattr(self, "model_version", None) if self.ok else None,
+            "data_status": data_status,
+            "observation_at": self.observation_at,
+            "observation_age_min": round(age, 1) if age is not None else None,
+            "refreshed_at": self.refreshed_at,
+            "refresh_error": self.last_refresh_error,
+            "live_lots": self.total_lots-len(self.dead) if self.total_lots is not None else None,
+            "fixed_feeds": len(self.dead),
+            "prediction_ready_lots": self.prediction_ready_lots,
+        }
+
+    def refresh_from_db(self, path=DB_PATH, force=False, min_interval_seconds=30):
+        """재학습 없이 최신 DB로 최근 lag/rolling 피처만 다시 만든다.
+
+        모델 객체는 건드리지 않는다. API 요청마다 호출해도 실제 DB 읽기는 최대
+        `min_interval_seconds`마다 한 번이고, 같은 최신 시각이면 즉시 끝난다.
+        """
+        now_mono = time.monotonic()
+        if not force and now_mono-self._last_refresh_attempt < min_interval_seconds:
+            return self.service_status()
+        with self._refresh_lock:
+            now_mono = time.monotonic()
+            if not force and now_mono-self._last_refresh_attempt < min_interval_seconds:
+                return self.service_status()
+            self._last_refresh_attempt = now_mono
+            try:
+                with sqlite3.connect(f"file:{Path(path)}?mode=ro", uri=True) as db:
+                    db.execute("BEGIN")
+                    raw_max = db.execute("SELECT MAX(ts_kst) FROM obs").fetchone()[0]
+                    if not raw_max:
+                        raise ValueError("obs 테이블에 관측이 없습니다")
+                    if not force and raw_max == self.observation_at:
+                        self.last_refresh_error = None
+                        return self.service_status()
+                    latest = datetime.fromisoformat(raw_max)
+                    cutoff = (latest-timedelta(hours=LIVE_HISTORY_HOURS)).isoformat()
+                    obs = pd.read_sql_query(
+                        "SELECT parking_id,ts_kst,park_count,cell_cnt FROM obs "
+                        "WHERE ts_kst>=? ORDER BY parking_id,ts_kst", db, params=(cutoff,))
+                    lots = pd.read_sql_query("SELECT * FROM lots", db)
+                    ranges = pd.read_sql_query(
+                        "SELECT parking_id,MIN(1.0*park_count/cell_cnt) AS lo,"
+                        "MAX(1.0*park_count/cell_cnt) AS hi FROM obs "
+                        "WHERE cell_cnt>0 GROUP BY parking_id", db)
+                if obs.empty:
+                    raise ValueError("최근 관측 구간이 비었습니다")
+                obs = obs[(obs.cell_cnt > 0) & (obs.park_count >= 0)].copy()
+                obs["occ"] = (100*obs.park_count/obs.cell_cnt).clip(0, 120)
+                obs["ts_kst"] = (pd.to_datetime(obs.ts_kst, format="mixed")
+                                  .dt.tz_localize(None).dt.ceil("5min"))
+                parts = []
+                for pid, group in obs.groupby("parking_id"):
+                    series = (group.groupby("ts_kst").occ.last().asfreq("5min")
+                              .rename("occ").reset_index())
+                    series["parking_id"] = pid
+                    parts.append(series)
+                _, _, feats, _, _ = _lazy()
+                frame = feats(pd.concat(parts, ignore_index=True), lots)
+                self.hist = {int(pid): group.reset_index(drop=True)
+                             for pid, group in frame.groupby("parking_id")}
+                self.meta = {int(row["parking_id"]): row
+                             for row in lots.to_dict("records")}
+                self.total_lots = len(lots)
+                self.dead = set(ranges.loc[(ranges.hi-ranges.lo) < .01, "parking_id"].astype(int))
+                required = [c for c in self.feat_cols if not c.startswith("opr_")] if self.ok else []
+                base_time = pd.Timestamp(latest).tz_localize(None)
+                ready = 0
+                for pid, group in self.hist.items():
+                    if pid in self.dead:
+                        continue
+                    eligible = group[group.ts_kst <= base_time]
+                    if eligible.empty or base_time-eligible.iloc[-1].ts_kst > pd.Timedelta(minutes=5):
+                        continue
+                    if not required or eligible.iloc[-1][required].notna().all():
+                        ready += 1
+                self.prediction_ready_lots = ready
+                self.observation_at = raw_max
+                self.refreshed_at = datetime.now(KST).isoformat()
+                self.last_refresh_error = None
+                self.refresh_count += 1
+            except Exception as e:
+                self.last_refresh_error = f"{type(e).__name__}: {str(e)[:160]}"
+            return self.service_status()
 
     def is_live(self, parking_id):
         return parking_id not in self.dead
