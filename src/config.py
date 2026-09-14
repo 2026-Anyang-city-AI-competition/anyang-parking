@@ -29,6 +29,7 @@ LOTS_PARQUET = INTERIM / "lots.parquet"
 OBS_PARQUET = INTERIM / "obs.parquet"
 GEOCODE_CACHE = INTERIM / "geocode_cache.csv"
 FEATURES_PARQUET = PROCESSED / "features.parquet"
+PARKING_ACCESS_RULES_CSV = PROCESSED / "parking_access_rules.csv"
 
 # 수집
 LABEL_API = "https://parking.auc.or.kr/api/parking/searchParkingList"

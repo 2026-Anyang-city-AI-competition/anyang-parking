@@ -182,6 +182,12 @@ class Predictor:
         out = dict(p10=None, p50=None, p90=None, full_prob=None,
                    is_live=self.is_live(parking_id), source=None,
                    interval_status="unverified", model_version=self.model_version if self.ok else None)
+        out["model_horizon_min"] = None
+        # 학습 범위를 넘는 요청을 120분 예측으로 가장하지 않는다.
+        if not np.isfinite(horizon_min) or not 1 <= horizon_min <= max(HORIZ_GRID):
+            out["source"] = "unsupported_horizon"
+            out["interval_status"] = "unavailable"
+            return out
         if not out["is_live"]:
             out["source"]="dead_feed"
             return out
@@ -189,6 +195,7 @@ class Predictor:
             out["source"]="no_model"
             return out
         h = min(HORIZ_GRID,key=lambda x:abs(x-horizon_min))
+        out["model_horizon_min"] = h
         # 관측 시각은 실제 horizon으로 찾고 모델만 가장 가까운 격자를 사용한다.
         row,occ = self._row(parking_id,target_time,horizon_min)
         if row is None:

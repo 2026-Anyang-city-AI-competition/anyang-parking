@@ -20,6 +20,8 @@ class RequestPoller:
         self.path = Path(path)
         self.min_interval_seconds = min_interval_seconds
         self._lock = threading.Lock()
+        self._last_attempt = None
+        self._last_error = None
 
     def _latest(self):
         try:
@@ -54,13 +56,21 @@ class RequestPoller:
                         "reason": "concurrent_request_completed", "observation_at": latest,
                         "lots": None, "duration_ms": 0, "error": None}
             started = time.monotonic()
+            # 실패하거나 빈 응답을 받아도 다음 요청이 즉시 원천을 다시 호출하지 않는다.
+            if self._last_attempt is not None and started-self._last_attempt < self.min_interval_seconds:
+                return {"status": "skipped", "attempted": False,
+                        "reason": "retry_backoff", "observation_at": latest,
+                        "lots": None, "duration_ms": 0, "error": self._last_error}
+            self._last_attempt = started
             try:
                 with sqlite3.connect(self.path, timeout=30) as db:
                     ts, count = poll_once(db)
+                self._last_error = None
                 return {"status": "polled", "attempted": True, "reason": None,
                         "observation_at": ts, "lots": count,
                         "duration_ms": round((time.monotonic()-started)*1000), "error": None}
             except Exception as exc:
+                self._last_error = type(exc).__name__
                 # 추천 자체는 기존 DB로 계속한다. 원천 응답 본문이나 경로는 노출하지 않는다.
                 return {"status": "failed", "attempted": True, "reason": "poll_failed",
                         "observation_at": latest, "lots": None,

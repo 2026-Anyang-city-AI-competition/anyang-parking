@@ -1,68 +1,29 @@
 #!/usr/bin/env python3
 
 import sqlite3
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-DB = ROOT / "data/raw/parking.db"
-RULES = ROOT / "data/processed/parking_access_rules.csv"
+sys.path.insert(0, str(ROOT))
+from src.config import PARKING_DB, PARKING_ACCESS_RULES_CSV
+from src.features.observation_grid import observation_grid
+
+DB = PARKING_DB
+RULES = PARKING_ACCESS_RULES_CSV
 
 FREQ = "5min"
 HORIZONS = [15, 30, 60, 120]
 
 
-def hhmm_to_min(x):
-    if pd.isna(x):
-        return None
-
-    s = str(x).strip()
-
-    if not s or s.lower() == "nan":
-        return None
-
-    try:
-        h, m = s.split(":")[:2]
-        return int(h) * 60 + int(m)
-    except Exception:
-        return None
-
-
-
-
 def build_series(raw):
-    """
-    논리적으로 불가능한 값 제거 후 5분 grid 생성.
+    """실제 관측만 다음 5분 격자에 배치한다. 보간하지 않는다."""
+    return observation_grid(raw)
 
-    interpolation 하지 않음.
-    Persistence 평가에서는 실제 관측값만 사용.
-    """
 
-    raw = raw.copy()
-
-    raw["bad"] = (
-        raw["cell_cnt"].isna()
-        | (raw["cell_cnt"] <= 0)
-        | raw["park_count"].isna()
-        | (raw["park_count"] < 0)
-        | (raw["park_count"] > raw["cell_cnt"])
-    )
-
-    raw["occ"] = np.where(
-        ~raw["bad"],
-        raw["park_count"] / raw["cell_cnt"] * 100,
-        np.nan,
-    )
-
-    g = (
-        raw.set_index("ts_kst")[["occ"]]
-        .resample(FREQ)
-        .mean()
-    )
-
-    return g
 def hhmm_to_min(x):
     if pd.isna(x):
         return None
@@ -73,8 +34,11 @@ def hhmm_to_min(x):
         return None
 
     try:
-        h, m = s.split(":")[:2]
-        return int(h) * 60 + int(m)
+        h, m = s.split(":")
+        h, m = int(h), int(m)
+        if not (0 <= h <= 24 and 0 <= m < 60) or (h == 24 and m != 0):
+            return None
+        return h * 60 + m
     except Exception:
         return None
 
@@ -97,6 +61,12 @@ def accessible_at(rule, ts):
 
     elif kind == "SAME_AS_FEE_HOURS":
         day = ts.weekday()
+        prefix = "weekday" if day <= 4 else "saturday" if day == 5 else "sunday"
+        status = str(rule.get(prefix + "_access_status", "")).strip()
+        if status == "closed":
+            return False
+        if status == "unknown":
+            return None
 
         if day <= 4:  # 월~금
             start = hhmm_to_min(
@@ -122,9 +92,9 @@ def accessible_at(rule, ts):
                 rule.get("sunday_access_end")
             )
 
-        # SAME_AS_FEE_HOURS인데 시간이 비어 있으면 해당 요일 미운영
+        # 빈 시간은 미확인이다. 휴무는 *_access_status=closed로만 확정한다.
         if start is None or end is None:
-            return False
+            return None
 
     else:
         return None
@@ -132,7 +102,7 @@ def accessible_at(rule, ts):
     pos = ts.hour * 60 + ts.minute
 
     if start == end:
-        return False
+        return None
 
     if end > start:
         return start <= pos < end
@@ -146,7 +116,7 @@ def main():
     # LOAD
     # --------------------------------------------------
 
-    con = sqlite3.connect(DB)
+    con = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
 
     obs = pd.read_sql(
         """
@@ -159,6 +129,8 @@ def main():
     con.close()
 
     rules = pd.read_csv(RULES)
+    if rules["parking_id"].isna().any() or rules["parking_id"].duplicated().any():
+        raise ValueError("출입 규칙의 parking_id가 비어 있거나 중복됩니다.")
 
     obs["ts_kst"] = pd.to_datetime(
         obs["ts_kst"],
