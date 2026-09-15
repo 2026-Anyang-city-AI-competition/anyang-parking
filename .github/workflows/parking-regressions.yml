@@ -23,8 +23,8 @@ jobs:
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: "3.12"
-      - name: Install offline test dependencies
-        run: python -m pip install numpy pandas
+      - name: Install test dependencies
+        run: python -m pip install numpy pandas scikit-learn lightgbm
       - name: Validate changed Python modules
         run: python -m compileall -q src scripts/fill_access_schedule.py tests/test_review_regressions.py
       - name: Run access and prediction regressions
@@ -33,3 +33,5 @@ jobs:
         run: python -m unittest discover -s tests -p test_request_polling.py -v
       - name: Run service access schema tests
         run: python -m unittest discover -s tests -p test_access_rules.py -v
+      - name: Run matched model comparison tests
+        run: python -m unittest discover -s tests -p test_a20_comparison.py -v
