@@ -121,6 +121,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         is_live = not d.get("dead_feed", False)
         avail_pred = full_prob = p10 = p90 = None
         interval_status = "unavailable"
+        model_horizon_min = None
         prediction_source = "dead_feed" if not is_live else "no_model"
         gate = (prediction_gate.check(pid, now, arrive) if prediction_gate is not None else
                 {"allowed": True, "status": "unverified", "reason": "no_gate"})
@@ -140,6 +141,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                     p10, p90 = pr.get("p10"), pr.get("p90")
                     interval_status = pr.get("interval_status", "unverified")
                     prediction_source = pr.get("source")
+                    model_horizon_min = pr.get("model_horizon_min")
             except Exception:
                 prediction_source = "prediction_error"
         prediction_status = ("available" if avail_pred is not None else
@@ -179,6 +181,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                         if not hide_current and d.get("avail_now") is not None and d.get("cell_cnt") else None),
             "full_prob": full_prob, "pred_p10": p10, "pred_p90": p90,
             "interval_status": interval_status, "prediction_source": prediction_source,
+            "model_horizon_min": model_horizon_min,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
             "estimated": est,
             "cell_cnt": d.get("cell_cnt"), "straight_m": d.get("straight_m"),

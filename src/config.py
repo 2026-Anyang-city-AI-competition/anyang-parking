@@ -31,6 +31,8 @@ LOTS_PARQUET = INTERIM / "lots.parquet"
 OBS_PARQUET = INTERIM / "obs.parquet"
 GEOCODE_CACHE = INTERIM / "geocode_cache.csv"
 FEATURES_PARQUET = PROCESSED / "features.parquet"
+# 기존 A18/A19 분석용 가로형 CSV. 서비스의 raw/ACCESS_RULES_CSV와 스키마가 다르다.
+PARKING_ACCESS_RULES_CSV = PROCESSED / "parking_access_rules.csv"
 
 # 수집
 LABEL_API = "https://parking.auc.or.kr/api/parking/searchParkingList"

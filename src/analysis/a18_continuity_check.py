@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 
 import sqlite3
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-DB = ROOT / "data/raw/parking.db"
-RULES = ROOT / "data/processed/parking_access_rules.csv"
+sys.path.insert(0, str(ROOT))
+from src.config import PARKING_DB, PARKING_ACCESS_RULES_CSV
+from src.features.observation_grid import observation_grid
+
+DB = PARKING_DB
+RULES = PARKING_ACCESS_RULES_CSV
 
 HORIZONS = [15, 30, 60, 120]
 FREQ_MIN = 5
 
 
 def main():
-    con = sqlite3.connect(DB)
+    con = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
 
     obs = pd.read_sql(
         """
@@ -30,10 +35,22 @@ def main():
 
     obs["ts_kst"] = pd.to_datetime(obs["ts_kst"], format="mixed")
     obs = obs.sort_values(["parking_id", "ts_kst"])
+    if obs.empty:
+        raise ValueError("DB에 관측이 없습니다.")
+    if rules["parking_id"].isna().any() or rules["parking_id"].duplicated().any():
+        raise ValueError("출입 규칙의 parking_id가 비어 있거나 중복됩니다.")
+    # 전체 DB의 공통 기간으로 진단해야 앞/뒤 수집 중단도 결측으로 잡힌다.
+    analysis_index = pd.date_range(
+        obs["ts_kst"].min().ceil("5min"),
+        obs["ts_kst"].max().ceil("5min"),
+        freq="5min", name="ts_kst",
+    )
 
     active_ids = set(
         rules.loc[rules["predict_ok"] == 1, "parking_id"].astype(int)
     )
+    if not active_ids:
+        raise ValueError("predict_ok=1인 주차장이 없습니다.")
     obs = obs[obs["parking_id"].isin(active_ids)].copy()
 
     print("=== 기본 현황 ===")
@@ -50,6 +67,7 @@ def main():
     )
 
     # 이상치 규칙
+    obs["bad_missing_count"] = obs["park_count"].isna()
     obs["bad_negative"] = obs["park_count"] < 0
     obs["bad_capacity"] = obs["park_count"] > obs["cell_cnt"]
     obs["bad_cell_cnt"] = obs["cell_cnt"].isna() | (obs["cell_cnt"] <= 0)
@@ -58,6 +76,7 @@ def main():
         obs["bad_negative"]
         | obs["bad_capacity"]
         | obs["bad_cell_cnt"]
+        | obs["bad_missing_count"]
     )
 
     # 학습/평가에 실제 사용할 점유율
@@ -79,6 +98,7 @@ def main():
             "bad_negative",
             "bad_capacity",
             "bad_cell_cnt",
+            "bad_missing_count",
         ]
     ].to_csv(
         bad_save,
@@ -88,19 +108,14 @@ def main():
 
     results = []
 
-    for pid, raw in obs.groupby("parking_id"):
-        raw = raw.sort_values("ts_kst").copy()
+    for pid in sorted(active_ids):
+        # 대상이지만 관측이 한 건도 없는 주차장도 보고서에 남긴다.
+        raw = obs.loc[obs["parking_id"].eq(pid)].sort_values("ts_kst").copy()
 
         # --------------------------------------------------
         # 1. 5분 grid 생성
         # --------------------------------------------------
-        g = raw.set_index("ts_kst")[["occ"]]
-
-        grid = (
-            g.resample("5min")
-            .mean()
-            .reset_index()
-        )
+        grid = observation_grid(raw, index=analysis_index).reset_index()
 
         grid["has_valid_obs"] = grid["occ"].notna()
 
@@ -118,6 +133,7 @@ def main():
             "n_slots_5m": total_slots,
             "n_valid_slots": valid_slots,
             "missing_ratio": missing_ratio,
+            "has_observations": not raw.empty,
         }
 
         # --------------------------------------------------
@@ -168,6 +184,7 @@ def main():
         row["bad_total_count"] = int(
             raw["bad_row"].sum()
         )
+        row["missing_park_count"] = int(raw["bad_missing_count"].sum())
 
         row["zero_occ_count"] = int(
             ((raw["occ_raw"] == 0) & ~raw["bad_row"]).sum()
