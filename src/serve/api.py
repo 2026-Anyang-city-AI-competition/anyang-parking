@@ -23,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from src.serve.predictor import Predictor
 from src.serve.recommend import recommend
 from src.serve.request_polling import RequestPoller
+from src.serve.access_rules import AccessRulesRepository
 from src.serve import fare_tables
 
 LOG = logging.getLogger(__name__)
@@ -63,16 +64,19 @@ def _problem(request, status, code, message, details=None):
     })
 
 
-def create_app(predictor=None, poller=None):
+def create_app(predictor=None, poller=None, access_rules=None):
     supplied = predictor
     supplied_poller = poller
+    supplied_access_rules = access_rules
 
     @asynccontextmanager
     async def lifespan(application):
         service = supplied or Predictor()  # 프로세스당 모델 1회 로드
         application.state.predictor = service
         application.state.poller = supplied_poller or RequestPoller()
+        application.state.access_rules = supplied_access_rules or AccessRulesRepository()
         await run_in_threadpool(service.refresh_from_db, force=True)
+        await run_in_threadpool(application.state.access_rules.refresh, force=True)
         yield
 
     application = FastAPI(
@@ -84,6 +88,8 @@ def create_app(predictor=None, poller=None):
         application.state.predictor = supplied
     if supplied_poller is not None:
         application.state.poller = supplied_poller
+    if supplied_access_rules is not None:
+        application.state.access_rules = supplied_access_rules
 
     allowed = [x.strip() for x in os.getenv(
         "CORS_ORIGINS", "http://localhost:3000,http://localhost:5173"
@@ -124,13 +130,16 @@ def create_app(predictor=None, poller=None):
     async def health(request: Request):
         service = request.app.state.predictor
         status = await run_in_threadpool(service.refresh_from_db)
+        access_status = request.app.state.access_rules.status()
         ready = status.get("prediction_ready_lots")
         overall = ("ok" if status["model_status"] == "ready"
                    and status["data_status"] == "fresh"
                    and status.get("refresh_error") is None
                    and ready is not None and ready >= (status.get("live_lots") or 1)
+                   and access_status["status"] not in {"invalid", "unavailable"}
                    else "degraded")
-        return {"status": overall, "service": status, "request_id": _request_id(request)}
+        return {"status": overall, "service": status, "access_rules": access_status,
+                "request_id": _request_id(request)}
 
     @application.post("/api/v1/recommend")
     async def recommend_endpoint(body: RecommendRequest, request: Request):

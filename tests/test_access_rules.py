@@ -2,9 +2,10 @@ import csv
 import sqlite3
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
-from src.serve.access_rules import FIELDS, validate_access_rules
+from src.serve.access_rules import AccessRulesRepository, FIELDS, validate_access_rules
 
 
 def make_db(path):
@@ -110,6 +111,82 @@ class AccessRulesValidationTests(unittest.TestCase):
         self.csv.write_text("\n".join(lines) + "\n", encoding="utf-8")
         result = validate_access_rules(self.csv, self.db)
         self.assertIn("extra_values", self.codes(result))
+
+
+class AccessRulesRepositoryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.directory = Path(self.temp.name)
+        self.db = self.directory / "parking.db"
+        self.csv = self.directory / "rules.csv"
+        make_db(self.db)
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def test_empty_dataset_starts_normally(self):
+        write_csv(self.csv, [])
+        repository = AccessRulesRepository(self.csv, self.db)
+        status = repository.refresh()
+        self.assertEqual(status["status"], "empty")
+        self.assertEqual(status["rules_loaded"], 0)
+        self.assertIsNone(repository.lookup(39, date(2026, 9, 15)))
+
+    def test_only_confirmed_rows_load_and_day_group_is_selected(self):
+        write_csv(self.csv, valid_rows())
+        repository = AccessRulesRepository(self.csv, self.db)
+        status = repository.refresh()
+        weekday = repository.lookup(39, date(2026, 9, 15))
+        saturday = repository.lookup(39, date(2026, 9, 19))
+        holiday = repository.lookup(39, date(2026, 9, 16), is_holiday=True)
+        self.assertEqual(status["status"], "ready")
+        self.assertEqual(status["rules_loaded"], 3)
+        self.assertEqual(weekday.fee_mode, "paid_window_free_outside")
+        self.assertEqual((weekday.fee_windows[0].start_min, weekday.fee_windows[0].end_min),
+                         (540, 1020))
+        self.assertEqual(saturday.day_group, "saturday")
+        self.assertEqual(holiday.day_group, "sunday_holiday")
+
+    def test_unknown_rows_are_valid_but_not_loaded(self):
+        rows = valid_rows()
+        for row in rows:
+            row.update({"entry_windows": "", "exit_windows": "", "fee_windows": "",
+                        "fee_mode": "unknown", "access_status": "unknown",
+                        "evidence_method": "", "evidence_ref": "", "checked_at": ""})
+        write_csv(self.csv, rows)
+        repository = AccessRulesRepository(self.csv, self.db)
+        status = repository.refresh()
+        self.assertEqual(status["status"], "empty")
+        self.assertEqual(status["ignored_unconfirmed"], 3)
+        self.assertIsNone(repository.lookup(39, date(2026, 9, 15)))
+
+    def test_effective_period_selects_historical_or_current_rule(self):
+        old = valid_rows()
+        for row in old:
+            row["effective_from"] = "2026-09-01"
+            row["effective_to"] = "2026-09-14"
+            row["note"] = "old"
+        current = valid_rows()
+        for row in current:
+            row["note"] = "current"
+        write_csv(self.csv, old + current)
+        repository = AccessRulesRepository(self.csv, self.db)
+        repository.refresh()
+        self.assertEqual(repository.lookup(39, date(2026, 9, 10)).note, "old")
+        self.assertEqual(repository.lookup(39, date(2026, 9, 15)).note, "current")
+
+    def test_invalid_refresh_preserves_last_known_good_rules(self):
+        rows = valid_rows()
+        write_csv(self.csv, rows)
+        repository = AccessRulesRepository(self.csv, self.db)
+        repository.refresh()
+        rows[0]["name"] = "잘못된이름"
+        write_csv(self.csv, rows)
+        status = repository.refresh(force=True)
+        self.assertEqual(status["status"], "invalid")
+        self.assertTrue(status["using_previous"])
+        self.assertIn("parking_name_mismatch", status["validation_errors"])
+        self.assertEqual(repository.lookup(39, date(2026, 9, 15)).name, "안양7동노외")
 
 
 if __name__ == "__main__":

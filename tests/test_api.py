@@ -31,9 +31,20 @@ class FakePoller:
                 "duration_ms": 10, "error": None}
 
 
+class FakeAccessRules:
+    def refresh(self, force=False):
+        return self.status()
+
+    def status(self):
+        return {"status": "empty", "rows_total": 0, "rules_loaded": 0,
+                "lots_loaded": 0, "ignored_unconfirmed": 0,
+                "using_previous": False, "validation_errors": [], "loaded_at": None}
+
+
 class ApiTests(unittest.TestCase):
     def setUp(self):
-        self.client_context = TestClient(create_app(FakePredictor(), FakePoller()))
+        self.client_context = TestClient(
+            create_app(FakePredictor(), FakePoller(), FakeAccessRules()))
         self.client = self.client_context.__enter__()
 
     def tearDown(self):
@@ -44,6 +55,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
         self.assertEqual(response.json()["service"]["live_lots"], 68)
+        self.assertEqual(response.json()["access_rules"]["status"], "empty")
         self.assertTrue(response.headers["X-Request-ID"])
 
     def test_recommend_validates_and_returns_service_metadata(self):

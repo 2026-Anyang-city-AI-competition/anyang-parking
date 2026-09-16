@@ -1,16 +1,16 @@
 """주차장 출입·과금 조사 CSV 스키마와 검증기.
 
 조사 메모를 서비스가 직접 해석하지 않도록 구조화된 CSV만 입력으로 받는다.
-이 모듈은 아직 추천 판정을 수행하지 않는다. 1단계의 책임은 잘못된 규칙이
-서비스에 들어오기 전에 스키마와 의미 오류를 차단하는 것이다.
+검증과 안전한 적재까지만 담당하며 실제 추천 가능 판정은 별도 단계에서 수행한다.
 """
 from __future__ import annotations
 
 import csv
 import re
 import sqlite3
+import threading
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from src.config import ACCESS_RULES_CSV, PARKING_DB
@@ -49,6 +49,36 @@ class ValidationResult:
     @property
     def valid(self):
         return not self.errors
+
+
+@dataclass(frozen=True)
+class TimeWindow:
+    start_min: int
+    end_min: int
+
+
+@dataclass(frozen=True)
+class AccessRule:
+    parking_id: int
+    name: str
+    day_group: str
+    entry_windows: tuple[TimeWindow, ...]
+    exit_windows: tuple[TimeWindow, ...]
+    fee_windows: tuple[TimeWindow, ...]
+    fee_mode: str
+    overnight_allowed: bool
+    access_status: str
+    general_public: bool
+    effective_from: date
+    effective_to: date | None
+    checked_at: date
+    evidence_method: str
+    evidence_ref: str
+    note: str
+
+    def applies_on(self, value):
+        return self.effective_from <= value and (
+            self.effective_to is None or value <= self.effective_to)
 
 
 def _issue(result, line, column, code, message, warning=False):
@@ -295,3 +325,140 @@ def format_result(result):
         location = f"{issue.line}행" if issue.line else "파일"
         lines.append(f"- 경고 [{issue.code}] {location} {issue.field}: {issue.message}")
     return "\n".join(lines)
+
+
+def day_group_for(value, is_holiday=False):
+    """날짜를 조사 CSV의 요일 그룹으로 바꾼다."""
+    value = value.date() if isinstance(value, datetime) else value
+    if is_holiday or value.weekday() == 6:
+        return "sunday_holiday"
+    if value.weekday() == 5:
+        return "saturday"
+    return "weekday"
+
+
+def _decode_windows(value):
+    if not value or value == "closed":
+        return ()
+    decoded = []
+    for token in value.split("|"):
+        match = WINDOW_RE.fullmatch(token)
+        sh, sm, eh, em = map(int, match.groups())
+        decoded.append(TimeWindow(sh * 60 + sm, 1440 if eh == 24 else eh * 60 + em))
+    return tuple(decoded)
+
+
+def _read_confirmed_rules(path):
+    rules = []
+    with Path(path).open("r", encoding="utf-8-sig", newline="") as handle:
+        for raw in csv.DictReader(handle):
+            row = {key: (value or "").strip() for key, value in raw.items() if key is not None}
+            if not any(row.values()) or row["access_status"] == "unknown":
+                continue
+            rules.append(AccessRule(
+                parking_id=int(row["parking_id"]), name=row["name"], day_group=row["day_group"],
+                entry_windows=_decode_windows(row["entry_windows"]),
+                exit_windows=_decode_windows(row["exit_windows"]),
+                fee_windows=_decode_windows(row["fee_windows"]), fee_mode=row["fee_mode"],
+                overnight_allowed=row["overnight_allowed"] == "true",
+                access_status=row["access_status"], general_public=row["general_public"] == "true",
+                effective_from=date.fromisoformat(row["effective_from"]),
+                effective_to=(date.fromisoformat(row["effective_to"])
+                              if row["effective_to"] else None),
+                checked_at=date.fromisoformat(row["checked_at"]),
+                evidence_method=row["evidence_method"], evidence_ref=row["evidence_ref"],
+                note=row["note"],
+            ))
+    return rules
+
+
+class AccessRulesRepository:
+    """검증을 통과한 확정 규칙만 원자적으로 교체하는 메모리 저장소."""
+
+    def __init__(self, path=ACCESS_RULES_CSV, parking_db=PARKING_DB):
+        self.path = Path(path)
+        self.parking_db = Path(parking_db)
+        self._lock = threading.RLock()
+        self._rules = {}
+        self._attempted_fingerprint = object()
+        self._status = {
+            "status": "not_loaded", "rows_total": 0, "rules_loaded": 0,
+            "lots_loaded": 0, "ignored_unconfirmed": 0, "using_previous": False,
+            "validation_errors": [], "loaded_at": None,
+        }
+
+    def _fingerprint(self):
+        try:
+            stat = self.path.stat()
+            return stat.st_mtime_ns, stat.st_size
+        except OSError:
+            return None
+
+    def refresh(self, force=False):
+        """변경된 CSV를 검증 후 적재한다. 실패하면 마지막 정상 규칙을 보존한다."""
+        with self._lock:
+            fingerprint = self._fingerprint()
+            if not force and fingerprint == self._attempted_fingerprint:
+                return self.status()
+            self._attempted_fingerprint = fingerprint
+
+            validation = validate_access_rules(self.path, self.parking_db)
+            if not validation.valid:
+                self._status = {
+                    "status": "unavailable" if fingerprint is None else "invalid",
+                    "rows_total": validation.rows,
+                    "rules_loaded": sum(len(values) for values in self._rules.values()),
+                    "lots_loaded": len({key[0] for key in self._rules}),
+                    "ignored_unconfirmed": 0,
+                    "using_previous": bool(self._rules),
+                    "validation_errors": sorted({issue.code for issue in validation.errors}),
+                    "loaded_at": self._status.get("loaded_at"),
+                }
+                return self.status()
+
+            loaded = _read_confirmed_rules(self.path)
+            indexed = {}
+            for rule in loaded:
+                indexed.setdefault((rule.parking_id, rule.day_group), []).append(rule)
+            self._rules = {key: tuple(sorted(values, key=lambda item: item.effective_from))
+                           for key, values in indexed.items()}
+            self._status = {
+                "status": "ready" if loaded else "empty",
+                "rows_total": validation.rows,
+                "rules_loaded": len(loaded),
+                "lots_loaded": len({rule.parking_id for rule in loaded}),
+                "ignored_unconfirmed": validation.rows - len(loaded),
+                "using_previous": False,
+                "validation_errors": [],
+                "loaded_at": datetime.now(timezone.utc).isoformat(),
+            }
+            return self.status()
+
+    def status(self):
+        with self._lock:
+            return self._status.copy()
+
+    def lookup(self, parking_id, value, is_holiday=False):
+        """해당 날짜에 적용되는 확정 규칙을 반환한다. 없으면 None이다."""
+        value = value.date() if isinstance(value, datetime) else value
+        group = day_group_for(value, is_holiday=is_holiday)
+        with self._lock:
+            for rule in self._rules.get((int(parking_id), group), ()):
+                if rule.applies_on(value):
+                    return rule
+        return None
+
+    def rules_for_date(self, value, is_holiday=False):
+        """해당 날짜에 적용되는 확정 규칙을 parking_id별로 반환한다."""
+        value = value.date() if isinstance(value, datetime) else value
+        group = day_group_for(value, is_holiday=is_holiday)
+        active = {}
+        with self._lock:
+            for (parking_id, day_group), rules in self._rules.items():
+                if day_group != group:
+                    continue
+                for rule in rules:
+                    if rule.applies_on(value):
+                        active[parking_id] = rule
+                        break
+        return active

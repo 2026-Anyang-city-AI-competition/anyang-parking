@@ -93,6 +93,9 @@ python3 scripts/validate_access_rules.py
 `data/raw/parking_access_rules.csv`로 복사해 시작한다. 검증기는 DB에 없는 ID,
 주차장명 불일치, 요일 누락·중복, 잘못되거나 겹치는 시간, 근거 없는 확정값,
 겹치는 적용기간을 실패 처리한다. `00:00-00:00`은 의미를 추정하지 않고 오류로 처리한다.
+API 서버는 시작할 때 검증된 확정 규칙만 메모리에 올린다. 빈 CSV에서도 정상 기동하며,
+잘못된 파일로 갱신되면 마지막 정상 규칙을 유지하고 `/api/v1/health`의
+`access_rules.status`를 `invalid`로 표시한다.
 
 ## 구조
 ```
