@@ -105,7 +105,7 @@ def _unlabeled_lots():
     return out
 
 
-def find_candidates(lat, lon, min_n=MIN_N, labeled=None, unlabeled=None):
+def find_candidates(lat, lon, min_n=MIN_N, labeled=None, unlabeled=None, min_radius=None):
     """반환 {"lots": [...], "radius_used": m, "unlabeled": [...], "exhausted": bool}
     lots 는 직선거리 오름차순. `straight_m` 를 각 항목에 붙인다."""
     allp = _labeled_lots() if labeled is None else labeled
@@ -113,6 +113,8 @@ def find_candidates(lat, lon, min_n=MIN_N, labeled=None, unlabeled=None):
     dead_near = []
     picked, used = [], RADII[-1]
     for r in RADII:
+        if min_radius is not None and r < min_radius:
+            continue
         picked = []
         for d in live:
             m = haversine_m(lat, lon, d["lat"], d["lng"])

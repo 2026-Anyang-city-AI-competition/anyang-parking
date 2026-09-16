@@ -96,6 +96,30 @@ python3 scripts/validate_access_rules.py
 API 서버는 시작할 때 검증된 확정 규칙만 메모리에 올린다. 빈 CSV에서도 정상 기동하며,
 잘못된 파일로 갱신되면 마지막 정상 규칙을 유지하고 `/api/v1/health`의
 `access_rules.status`를 `invalid`로 표시한다.
+추천 요청마다 CSV 변경을 검사하고 실제 도착·출차시간에 이용 불가한 후보는
+`excluded`로 분리한다. 부족하면 최대 3km까지 확대하며 미확인은 카드의 `access`에
+경고로 반환한다. `access_safety_margin_minutes`로 출차 안전여유(기본 0분)를 지정할 수 있다.
+
+## 예측 제공 시간 게이트
+
+`schemas/prediction_availability.template.csv`의 형식으로
+`data/processed/prediction_availability.csv`에 진단된 허용시간을 적는다.
+`prediction_windows`는 **예측 허용시간**이며, `frozen`·`anomaly` 행도 정상 시간창만
+넣으면 그 안에서는 예측이 가능하다. `evaluation_pending`·`dead_feed`는 시간창을 비운다.
+관측 시각과 도착 시각이 모두 허용시간에 있어야 모델을 호출한다.
+
+API는 파일 변경을 확인하고 `prediction_status/reason`을 카드에 반환한다.
+빈 파일·누락 규칙·불량 파일은 예측을 허용하지 않는다. 현재 빈 파일이므로
+API 예측은 미검증 상태로 null을 반환하며 위치·요금 추천은 유지한다.
+실제 진단 행 적재와 기존 학습·평가 배치의 `validity_mask()` 연결은 별도 작업이다.
+
+## 조사된 유료시간 요금 계산
+
+추천 API는 출입 규칙 CSV의 `fee_windows`로 실제 과금 구간만 계산한다.
+카드 `fare`에 누진 내역, `billable_min`, `free_minutes_outside_fee_window`,
+날짜별 `fee_schedule`을 반환하며 후불과 선불 일일권은 계속 별도로 표시한다.
+조사 규칙이 없으면 `fee_source=legacy_db_unverified`, 혼합되면 `mixed`를 표시한다.
+복수 날짜의 유료주차는 적용 규칙을 검증할 때까지 요금을 null과 사유로 반환한다.
 
 ## 구조
 ```

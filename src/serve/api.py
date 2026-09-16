@@ -24,6 +24,7 @@ from src.serve.predictor import Predictor
 from src.serve.recommend import recommend
 from src.serve.request_polling import RequestPoller
 from src.serve.access_rules import AccessRulesRepository
+from src.serve.prediction_gate import PredictionGate
 from src.serve import fare_tables
 
 LOG = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class RecommendRequest(BaseModel):
     full_probability_cutoff: float = Field(default=.5, ge=0, le=1)
     discount: str | None = None
     include_alternatives: bool = True
+    access_safety_margin_minutes: int = Field(default=0, ge=0, le=60)
 
 
 class ApiProblem(Exception):
@@ -75,8 +77,10 @@ def create_app(predictor=None, poller=None, access_rules=None):
         application.state.predictor = service
         application.state.poller = supplied_poller or RequestPoller()
         application.state.access_rules = supplied_access_rules or AccessRulesRepository()
+        application.state.prediction_gate = PredictionGate()
         await run_in_threadpool(service.refresh_from_db, force=True)
         await run_in_threadpool(application.state.access_rules.refresh, force=True)
+        await run_in_threadpool(application.state.prediction_gate.refresh, force=True)
         yield
 
     application = FastAPI(
@@ -139,6 +143,7 @@ def create_app(predictor=None, poller=None, access_rules=None):
                    and access_status["status"] not in {"invalid", "unavailable"}
                    else "degraded")
         return {"status": overall, "service": status, "access_rules": access_status,
+                "prediction_gate": request.app.state.prediction_gate.status(),
                 "request_id": _request_id(request)}
 
     @application.post("/api/v1/recommend")
@@ -150,6 +155,8 @@ def create_app(predictor=None, poller=None, access_rules=None):
         poll_status = await run_in_threadpool(request.app.state.poller.poll_if_due)
         service_status = await run_in_threadpool(
             service.refresh_from_db, force=poll_status["status"] == "polled")
+        access_status = await run_in_threadpool(request.app.state.access_rules.refresh)
+        gate_status = await run_in_threadpool(request.app.state.prediction_gate.refresh)
         origin = ((body.origin.lat, body.origin.lng) if body.origin else None)
         work = partial(
             recommend,
@@ -162,12 +169,17 @@ def create_app(predictor=None, poller=None, access_rules=None):
             predictor=service,
             discount=body.discount,
             with_alternatives=body.include_alternatives,
+            access_rules=request.app.state.access_rules,
+            access_safety_margin_minutes=body.access_safety_margin_minutes,
+            prediction_gate=request.app.state.prediction_gate,
         )
         result = await run_in_threadpool(work)
         result.update({
             "request_id": _request_id(request),
             "service": service_status,
             "poll": poll_status,
+            "access_rules": access_status,
+            "prediction_gate": gate_status,
             "request": body.model_dump(),
         })
         return result

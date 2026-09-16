@@ -15,7 +15,7 @@ lot 은 dict 다 (필요한 키만 쓴다):
 
   python3 src/serve/fare.py     # 예시 출력
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 try:
     from src.serve import fare_tables as T
@@ -96,6 +96,44 @@ def operating_minutes(lot, start_dt, minutes, sunday_free=None):
     return billable
 
 
+def surveyed_fee_schedule(lot, start_dt, minutes, access_rules, parking_id,
+                         sunday_free=None, holiday_checker=None):
+    """조사된 과금창 우선. 누락·미확인 요금은 DB 창으로 폴백하고 출처를 표시한다."""
+    from src.serve.access_check import is_korean_holiday
+    holiday_checker = holiday_checker or is_korean_holiday
+    sunday_free = T.SUNDAY_HOLIDAY_FREE if sunday_free is None else sunday_free
+    kst = timezone(timedelta(hours=9))
+    start = start_dt.replace(tzinfo=kst) if start_dt.tzinfo is None else start_dt.astimezone(kst)
+    end = start + timedelta(minutes=minutes)
+    day = start.replace(hour=0, minute=0, second=0, microsecond=0)
+    schedule = []
+    while day < end:
+        tomorrow = day + timedelta(days=1)
+        rule = access_rules.lookup(parking_id, day.date(), is_holiday=holiday_checker(day.date()))
+        verified = rule is not None and rule.fee_mode != "unknown"
+        if verified:
+            windows = [(w.start_min, w.end_min) for w in rule.fee_windows]
+        elif sunday_free and (day.weekday() == 6 or holiday_checker(day.date())):
+            windows = []
+        else:
+            a, b = _open_window(lot, day.weekday())
+            windows = [(a, b)] if b > a else []
+        segments = []
+        for a, b in windows:
+            lo = max(start, day + timedelta(minutes=a))
+            hi = min(end, tomorrow, day + timedelta(minutes=b))
+            if hi > lo:
+                segments.append({"start": lo.isoformat(), "end": hi.isoformat(),
+                                 "minutes": (hi - lo).total_seconds() / 60})
+        schedule.append({"date": day.date().isoformat(),
+                         "source": "survey" if verified else "legacy_db_unverified",
+                         "window_minutes": sum(b-a for a, b in windows),
+                         "billable_minutes": sum(s["minutes"] for s in segments),
+                         "segments": segments})
+        day = tomorrow
+    return schedule
+
+
 def _progressive(rate, billable):
     """누진 계산. 첫 구간은 정액, 이후는 10분 단위 올림."""
     first30, *tiers = rate
@@ -118,7 +156,8 @@ def _progressive(rate, billable):
 
 
 def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
-              apply_daily_pass_cap=False):
+              apply_daily_pass_cap=False, access_rules=None, parking_id=None,
+              holiday_checker=None):
     """반환 dict. 계산 불가면 None 이 아니라 reason 을 담은 dict 를 준다
     (서비스가 죽으면 안 된다)."""
     out = {"total": None, "reason": None, "breakdown": [], "capped": False,
@@ -145,8 +184,20 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
         out["reason"] = f"요금표에 없는 조합 (유형={typ!r}, 급지={grade})"
         return out
 
-    billable = operating_minutes(lot, start_dt, minutes, sunday_free)
+    schedule = (surveyed_fee_schedule(lot, start_dt, minutes, access_rules, parking_id,
+                                     sunday_free, holiday_checker)
+                if access_rules is not None and parking_id is not None else None)
+    billable = (sum(day["billable_minutes"] for day in schedule) if schedule is not None
+                else operating_minutes(lot, start_dt, minutes, sunday_free))
+    out["fee_schedule"] = schedule or []
+    sources = {day["source"] for day in schedule} if schedule is not None else {"legacy_db_unverified"}
+    out["fee_source"] = next(iter(sources)) if len(sources) == 1 else "mixed"
+    out["free_minutes_outside_fee_window"] = max(0, minutes - billable)
     out["billable_min"] = billable
+    paid_days = [day for day in schedule or [] if day["billable_minutes"] > 0]
+    if len(paid_days) > 1:
+        out["reason"] = "복수 날짜 유료주차의 누진·감면·일일권 적용 규칙 미검증"
+        return out
 
     # 별표 2-1 · 15분 미만 전액 면제
     if billable < T.FREE_UNDER_MIN:
@@ -170,10 +221,11 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
 
     # 일일주차권 (별표 5) — 운영시간 길이 기준
     a, b = _open_window(lot, start_dt.weekday())
-    dp = T.daily_pass((b - a) / 60, grade)
+    open_hours = paid_days[0]["window_minutes"] / 60 if paid_days else (b-a) / 60
+    dp = T.daily_pass(open_hours, grade) if float(open_hours).is_integer() else None
     out["daily_pass"] = dp
     if dp is None:
-        out["reason"] = (f"일일주차권 표 밖 (운영시간 {(b-a)/60:.0f}h, 급지 {grade}) "
+        out["reason"] = (f"일일주차권 표 밖 (유료시간 {open_hours:g}h, 급지 {grade}) "
                          f"— 상한 없음으로 처리")
 
     # 비고 10 · 누진 일 최대 상한 25,000. 일일권은 여기 포함하지 않는다(비고 8).

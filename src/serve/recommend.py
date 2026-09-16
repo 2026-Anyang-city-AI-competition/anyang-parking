@@ -20,7 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from src.serve.candidates import find_candidates, haversine_m
+from src.serve.candidates import find_candidates, haversine_m, RADII
+from src.serve.access_check import check_access
 from src.serve import walking, routing
 from src.serve.fare import calc_fare, resolve_type
 from src.serve.ranking import rank_cards
@@ -32,7 +33,8 @@ WALK_FAR_MIN = 15          # 도보 15분(≈1km) 초과면 경고. 1km 를 걷�
 
 def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
               full_prob_cutoff=0.5, predictor=None, discount=None,
-              with_alternatives=True, now=None):
+              with_alternatives=True, now=None, access_rules=None, access_safety_margin_minutes=0,
+              prediction_gate=None):
     """dest=(lat,lon) · minutes=주차할 분 · start=(lat,lon) 출발지(없으면 목적지에서 출발)
     depart_in_min>0 이면 카카오 미래운행(단건)으로 목적지 ETA 하나를 공통 적용한다.
     predictor(lot, arrive_dt) -> (예측 점유율, 만차확률) — 모델이 준비되면 주입."""
@@ -46,25 +48,60 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
 
     # 1. 후보
     cand = find_candidates(dest[0], dest[1], min_n=min_n)
-    lots = cand["lots"]
-    # 죽은 피드도 경로·요금 카드에는 포함하되 랭킹 입력에서는 끝까지 제외한다.
-    service_lots = lots + (cand.get("dead_feeds") or [])
+    drive, access, excluded = {}, {}, {}
+    future = None
+    while True:
+        pool = cand["lots"] + (cand.get("dead_feeds") or [])
+        pending = [d for d in pool if d["parking_id"] not in drive]
+        if pending:
+            if depart_in_min > 0:
+                if future is None:
+                    future = routing.future_eta(start, dest, depart_in_min)
+                drive.update({d["parking_id"]: {**future, "shared": True} for d in pending})
+            else:
+                fetched = routing.multi_eta(start, {
+                    d["parking_id"]: (d["lat"], d["lng"]) for d in pending})
+                drive.update({d["parking_id"]: fetched.get(d["parking_id"]) for d in pending})
+        service_lots = []
+        for d in pool:
+            pid = d["parking_id"]
+            dv = drive.get(pid)
+            duration = dv.get("duration") if dv else None
+            if pid not in access:
+                if access_rules is not None and duration is not None:
+                    access[pid] = check_access(
+                        access_rules, pid, depart + timedelta(seconds=duration), minutes,
+                        safety_margin_minutes=access_safety_margin_minutes).to_dict()
+                else:
+                    access[pid] = {"available": None, "excluded": False,
+                                   "reason": "arrival_time_unknown" if duration is None else "access_schedule_unknown",
+                                   "message": "입출차 조건 또는 도착 시각을 확인할 수 없어요.",
+                                   "safety_margin_minutes": access_safety_margin_minutes}
+            if access[pid]["excluded"]:
+                excluded[pid] = {"parking_id": pid, "name": d["name"], **access[pid]}
+            else:
+                service_lots.append(d)
+        live_count = sum(not d.get("dead_feed", False) for d in service_lots)
+        next_radius = next((r for r in RADII if r > cand["radius_used"]), None)
+        if access_rules is None or live_count >= min_n or next_radius is None:
+            break
+        cand = find_candidates(dest[0], dest[1], min_n=min_n, min_radius=next_radius)
+        # 조회 결과가 증가하지 않아도 최대 반경에서 반드시 종료한다.
+        if cand["radius_used"] < next_radius:
+            cand = {**cand, "radius_used": next_radius}
+    exhausted = live_count < min_n
+    message = ("입출차 조건에 맞는 주변 공영주차장이 없습니다" if not live_count and excluded
+               else cand["message"] if not live_count else
+               f"{cand['radius_used']/1000:g}km 안에서 이용 가능한 추천 후보가 {live_count}곳뿐입니다"
+               if exhausted else None)
     if not service_lots:
         return {"cards": [], "by_fare": [], "by_walk": [], "unavailable": [],
-                "radius_used": cand["radius_used"], "exhausted": cand["exhausted"],
-                "message": cand["message"], "unlabeled": cand.get("unlabeled") or [],
+                "excluded": list(excluded.values()), "candidate_count": 0,
+                "radius_used": cand["radius_used"], "exhausted": exhausted,
+                "message": message, "unlabeled": cand.get("unlabeled") or [],
                 "dead_feeds": [], "alternatives": [],
                 "depart_at": depart.strftime("%H:%M"), "depart_at_iso": depart.isoformat(),
                 "park_minutes": minutes}
-
-    # 2. 차 ETA — 지금 출발이면 다중목적지 1회, 미래 출발이면 미래운행 1회(단건)
-    if depart_in_min > 0:
-        fe = routing.future_eta(start, dest, depart_in_min)     # ★ 미래운행은 단건만 지원
-        drive = {d["parking_id"]: {"duration": fe["duration"], "distance": fe["distance"],
-                                   "source": fe["source"], "estimated": fe["estimated"],
-                                   "shared": True} for d in service_lots}
-    else:
-        drive = routing.multi_eta(start, {d["parking_id"]: (d["lat"], d["lng"]) for d in service_lots})
 
     # 5. 도보 — 주차장 → 목적지
     walk = walking.walk_times(
@@ -85,7 +122,15 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         avail_pred = full_prob = p10 = p90 = None
         interval_status = "unavailable"
         prediction_source = "dead_feed" if not is_live else "no_model"
-        if predictor is not None:
+        gate = (prediction_gate.check(pid, now, arrive) if prediction_gate is not None else
+                {"allowed": True, "status": "unverified", "reason": "no_gate"})
+        if not is_live:
+            gate = {"allowed": False, "status": "dead_feed", "reason": "dead_feed"}
+        elif drive_s is None:
+            gate = {"allowed": False, "status": "unavailable", "reason": "arrival_time_unknown"}
+        if not gate["allowed"]:
+            prediction_source = gate["reason"]
+        if predictor is not None and gate["allowed"]:
             try:
                 # ★ 예측 시점은 「차가 주차장에 도착하는 시각」이다. 도보를 더하지 않는다.
                 h = max(1, int(round((arrive - now).total_seconds() / 60)))
@@ -97,19 +142,27 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                     prediction_source = pr.get("source")
             except Exception:
                 prediction_source = "prediction_error"
+        prediction_status = ("available" if avail_pred is not None else
+                             gate["status"] if not gate["allowed"] else "unavailable")
+        hide_current = not is_live or gate["status"] in {"frozen", "anomaly", "dead_feed"}
 
         # 6. 요금 — 후불/선불 병기
         lot = {"type": resolve_type(d["name"], d.get("div")), "name": d["name"],
                "grade": d.get("grade"), "wdays_start": d.get("wdays_start"),
                "wdays_end": d.get("wdays_end"), "wend_start": d.get("wend_start"),
                "wend_end": d.get("wend_end")}
-        f = calc_fare(lot, arrive, minutes, discount=discount)
+        f = calc_fare(lot, arrive, minutes, discount=discount,
+                      access_rules=access_rules, parking_id=pid)
         op = oprtime_features(d, arrive)
 
         est = bool((dv and dv.get("estimated")) or (wk and wk.get("estimated")))
         walk_min = round(walk_s / 60) if walk_s is not None else None
         cards.append({
             "name": d["name"], "parking_id": pid,
+            "access": access[pid],
+            "access_status": ("unknown" if access[pid]["available"] is None else "available"),
+            "expected_departure_at": ((arrive + timedelta(minutes=minutes)).isoformat()
+                                      if drive_s is not None else None),
             "lat": d.get("lat"), "lng": d.get("lng"),
             "drive_min": round(drive_s / 60) if drive_s is not None else None,
             "walk_min": walk_min,
@@ -117,9 +170,13 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                           if None not in (drive_s, walk_s) else None),
             "fare_payg": f["total"], "fare_daily_pass": f["total_prepaid"],
             "daily_pass_better": bool(f["recommend_prepaid"]),
-            "avail_now": d.get("avail_now") if is_live else None, "avail_pred": avail_pred,
+            "fare": f,
+            "fee_source": f.get("fee_source", "legacy_db_unverified"),
+            "prediction_status": prediction_status,
+            "prediction_reason": gate["reason"] if not gate["allowed"] else prediction_source,
+            "avail_now": d.get("avail_now") if not hide_current else None, "avail_pred": avail_pred,
             "occ_now": (min(120, 100*d["avail_now"]/d["cell_cnt"])
-                        if is_live and d.get("avail_now") is not None and d.get("cell_cnt") else None),
+                        if not hide_current and d.get("avail_now") is not None and d.get("cell_cnt") else None),
             "full_prob": full_prob, "pred_p10": p10, "pred_p90": p90,
             "interval_status": interval_status, "prediction_source": prediction_source,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
@@ -132,7 +189,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "is_operating": bool(op["is_operating"]),
             "observation_at": d.get("observation_at"),
             "observation_age_min": d.get("observation_age_min"),
-            "observation_status": d.get("observation_status", "unavailable"),
+            "observation_status": gate["status"] if hide_current else d.get("observation_status", "unavailable"),
             "unavailable_note": None if is_live else "실시간 정보를 제공하지 않는 주차장입니다",
             "arrive_at": arrive.strftime("%H:%M"), "arrive_at_iso": arrive.isoformat(),
             "fare_reason": f.get("reason"),
@@ -156,9 +213,10 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             alts = []
 
     return {"cards": live_cards, "by_fare": by_fare, "by_walk": by_walk, "unavailable": unavailable,
-            "radius_used": cand["radius_used"], "exhausted": cand["exhausted"],
-            "message": cand["message"], "unlabeled": cand["unlabeled"],
-            "dead_feeds": cand.get("dead_feeds") or [],
+            "excluded": list(excluded.values()), "candidate_count": len(live_cards),
+            "radius_used": cand["radius_used"], "exhausted": exhausted,
+            "message": message, "unlabeled": cand["unlabeled"],
+            "dead_feeds": [d for d in service_lots if d.get("dead_feed")],
             "alternatives": alts,
             "depart_at": depart.strftime("%H:%M"), "depart_at_iso": depart.isoformat(),
             "park_minutes": minutes}
