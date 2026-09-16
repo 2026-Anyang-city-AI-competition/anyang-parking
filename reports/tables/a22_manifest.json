@@ -1,0 +1,169 @@
+{
+  "raw_n": 375580,
+  "raw_hash": "7885d2243fa77b8e5b90e72506cdf066dc4cb6fe8f6a700cb4d31d6b058682e9",
+  "lots_hash": "ecbfb96d71beb10305bed0fac1731a67cfaf31c02d917cc647a4caa0fe0a0d20",
+  "rules_hash": "92f7426a37b13d916c822401e0a3525d6f39a94a3539b43bb885235d2e492ef4",
+  "active_lots": 68,
+  "active_raw_n": 286960,
+  "start": "2026-08-31 04:56:37+09:00",
+  "end": "2026-09-15 01:22:18+09:00",
+  "absent_ids": [],
+  "protocol": "a22_label_valid_v1",
+  "status": "complete",
+  "fixed_test_dates": [
+    "2026-09-12",
+    "2026-09-13",
+    "2026-09-14"
+  ],
+  "fixed_data_end_kst": "2026-09-15 01:22:18+09:00",
+  "data_rows_truncated_after_fixed_end": 0,
+  "holidays_kst": [
+    "2026-09-24",
+    "2026-09-25",
+    "2026-09-26",
+    "2026-10-03",
+    "2026-10-05",
+    "2026-10-09"
+  ],
+  "holiday_grid_rows_affected": {
+    "2026-09-24": 0,
+    "2026-09-25": 0,
+    "2026-09-26": 0,
+    "2026-10-03": 0,
+    "2026-10-05": 0,
+    "2026-10-09": 0
+  },
+  "anomaly_jump_threshold_pp": 50.0,
+  "anomaly_candidates_n": 143,
+  "anomaly_note": "제거하지 않고 기록만 함(a22_anomalies.csv)",
+  "opr_is_operating_constant_lots_n": 76,
+  "opr_is_operating_note": "이번 실행에서 FEATURES에서 제거하지 않음(a22_opr_constant_lots.csv에 목록)",
+  "open_transition_exclusion": [
+    {
+      "horizon": 15,
+      "opened_recently_n": 3300,
+      "excluded_rate": 1.0
+    },
+    {
+      "horizon": 30,
+      "opened_recently_n": 3300,
+      "excluded_rate": 1.0
+    },
+    {
+      "horizon": 60,
+      "opened_recently_n": 3300,
+      "excluded_rate": 1.0
+    },
+    {
+      "horizon": 120,
+      "opened_recently_n": 3300,
+      "excluded_rate": 1.0
+    }
+  ],
+  "a20_predictions_path": "C:\\cpp\\anyang parking\\anyang-parking\\data\\processed\\a20\\predictions.csv.gz",
+  "a20_predictions_found": true,
+  "a22_test_rows_unmatched_to_a20_predictions": 0,
+  "enterable_used_for_scoring": false,
+  "pass_criteria": "A22 평가 행(label_valid)에서 60·120분 AI MAE가 persistence보다 평일·주말 모두 낮을 것 (enterable/출입가능 조건 미적용)",
+  "pass_checks": [
+    {
+      "horizon": 60,
+      "weekday_group": "weekday",
+      "pass_": true,
+      "persistence_mae": 6.082318523589842,
+      "ml_mae": 4.44642005282942
+    },
+    {
+      "horizon": 60,
+      "weekday_group": "weekend",
+      "pass_": true,
+      "persistence_mae": 4.867941827962153,
+      "ml_mae": 4.001581384005146
+    },
+    {
+      "horizon": 120,
+      "weekday_group": "weekday",
+      "pass_": true,
+      "persistence_mae": 9.532558982731528,
+      "ml_mae": 5.515629560555621
+    },
+    {
+      "horizon": 120,
+      "weekday_group": "weekend",
+      "pass_": true,
+      "persistence_mae": 7.87910186736221,
+      "ml_mae": 5.670535446365625
+    }
+  ],
+  "pass": true,
+  "model": {
+    "objective": "quantile",
+    "alpha": 0.5,
+    "n_estimators": 120,
+    "learning_rate": 0.08,
+    "num_leaves": 31,
+    "min_child_samples": 40,
+    "random_state": 42,
+    "n_jobs": 4,
+    "verbosity": -1
+  },
+  "features": [
+    "occ_now",
+    "lag_5",
+    "lag_10",
+    "lag_15",
+    "lag_30",
+    "lag_60",
+    "delta_5",
+    "delta_15",
+    "delta_30",
+    "roll_mean_15",
+    "roll_mean_30",
+    "roll_mean_60",
+    "hour",
+    "minute",
+    "minute_of_day",
+    "hour_sin",
+    "hour_cos",
+    "day_of_week",
+    "is_weekend",
+    "parking_id_cat",
+    "is_sunday",
+    "we_hour_sin",
+    "we_hour_cos",
+    "pid_we",
+    "opr_is_operating",
+    "opr_min_to_open",
+    "opr_min_to_close",
+    "opr_is_free_now"
+  ],
+  "prediction_clip": [
+    0,
+    100
+  ],
+  "matched_n": 106034,
+  "source_hashes": {
+    "a22_baseline_api_alive.py": "e40580221839fddd70fc62ce26161c3b52a2fe7afdaa23d2da856e32c2d173c8",
+    "a20_matched_model_comparison.py": "48e840aba70aa86f512e1641b6e07bfcf96d3e3e5663daee6ad10d56db62157f",
+    "a19_persistence_baseline.py": "0bcf6adb84214ed0285d94439d8943d8fbb587b2dcbae6b21dd52afab899a98e",
+    "a16_stratified_weekend.py": "321db462125797a0ace3f6a4714b9efc0c8c497e9e79aa5b97d433659807ac77",
+    "observation_grid.py": "b0955c47a0ebcc8abb67a77f8275263db8576883623ca598cd74a7fbf0d9dab1",
+    "temporal.py": "1d440736c91125b6c853c415bb3de88671cac5919e79a02452d42bd27f95be07"
+  },
+  "versions": {
+    "pandas": "3.0.5",
+    "numpy": "2.5.3",
+    "lightgbm": "4.7.0",
+    "scikit-learn": "1.9.1"
+  },
+  "notes": [
+    "label_valid = accessible_at(access_rule/*_access_status, ts) is True. enterable_status는 이 스크립트에서 쓰지 않는다(추천 필터링 개념).",
+    "occ는 observation_grid 직후, feats() 호출 전에 label_valid가 아닌 시각만 NaN 처리. history_complete/future_complete/eligible 공식은 A20과 동일(수정 없음).",
+    "test 날짜·데이터 절단 시각은 A20 manifest 값으로 고정(재계산하지 않음).",
+    "이상값은 제거하지 않고 a22_anomalies.csv에 후보만 기록.",
+    "합격 기준은 label_valid 행 기준이며 enterable(출입 가능) 조건은 포함하지 않는다.",
+    "open_transition_exclusion의 excluded_rate는 정의상 항상 1.0이다(opened_recently 자체가 history_complete를 반드시 깨는 조건이라 동어반복) — opened_recently_n(오픈 직후 손실 행 수)만 의미 있다.",
+    "(a)->(b) persistence MAE 변화 방향은 horizon/요일에 따라 다르다(a22_a20_dropped_diagnostic.csv 참고). 평일 30/60/120분은 감소하는데, label_valid로 빠지는 행이 운영시간 밖 관측을 입력으로 쓴 행(주로 개장 전 이른 아침 시간대)이라 persistence 오차가 원래 훨씬 컸기 때문이다(재개장 전 정지값으로 재개장 후 실제값을 맞히려다 크게 틀림). 주말은 반대로 모든 horizon에서 증가하는데, 빠지는 행이 주말 내내 닫혀 있는 노상 주차장의 정지값(거의 0에 가까운 persistence 오차)이라 쉬운 행이 빠지기 때문이다.",
+    "기존 U11 학습 산출물과 서비스 predictor.pkl을 갱신하지 않는다."
+  ]
+}
