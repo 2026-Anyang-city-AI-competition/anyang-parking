@@ -3,6 +3,8 @@
 작성일: 2026-09-15  
 목적: 현장 조사 결과를 서비스용 데이터로 바꾸고, 추천·요금·할인·검색·회원 기능까지 남은 개발을 한 문서에서 관리한다.
 
+성능 실험의 목표·순서·합격 기준은 [`performance_plan.md`](performance_plan.md)가 정본이다. 현재 수치는 [`../reports/performance_status.md`](../reports/performance_status.md)를 따른다.
+
 ## 0. 현재 구현 상태
 
 - [x] `POST /api/v1/recommend`: 좌표·주차시간을 받아 도보순/요금순 추천
@@ -391,6 +393,15 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 ---
 
 ## 8. 예측 검증을 꾸준히 돌리는 작업 — P0/P1
+
+### 재정립한 P0 목표
+
+- [ ] A23: 15/30/60/120/180/240/360/720/1440분 직접 예측
+- [ ] MAE 10%p 이하이면서 최강 기준선보다 우수한 최대 지평선 산출
+- [ ] `lag_24h`, `lag_7d`, time-of-week를 현재 글로벌 모델과 비교
+- [ ] 360분 이상에서 Prophet을 비교군으로만 평가
+- [ ] A24: 글로벌 vs 개별 vs 글로벌+주차장별 잔차 보정 비교
+- [ ] GITS는 QA → 지역별 의미 검증 → 다지역 사전학습 순으로 실험
 
 ### 매일
 
