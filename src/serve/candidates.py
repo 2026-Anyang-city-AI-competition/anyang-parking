@@ -88,6 +88,22 @@ def _labeled_lots():
     return out
 
 
+LOT_COLUMNS = ("parking_id", "name", "div", "grade", "cell_cnt", "lat", "lng",
+               "wdays_start", "wdays_end", "wend_start", "wend_end", "oneday_amt")
+
+
+def load_lot(parking_id, db_path=None):
+    """요금 견적처럼 후보 탐색 없이 한 곳만 필요할 때 쓴다. 없으면 None."""
+    path = Path(db_path) if db_path else DB
+    if not path.exists():
+        return None
+    with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as con:
+        row = con.execute(
+            f"SELECT {', '.join(LOT_COLUMNS)} FROM lots WHERE parking_id = ?",
+            (int(parking_id),)).fetchone()
+    return dict(zip(LOT_COLUMNS, row)) if row else None
+
+
 def _unlabeled_lots():
     """표준데이터에만 있는 곳 — 라벨이 없어 순위에 못 넣는다."""
     if not STD.exists(): return []

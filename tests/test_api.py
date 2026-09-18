@@ -1,5 +1,6 @@
 import unittest
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,6 +10,8 @@ sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 
 from src.serve.api import create_app
+from src.serve.fare_quote import (MultipleBenefitsUnsupported, UnknownBenefit,
+                                  UnknownParking)
 
 
 STATUS = {
@@ -91,6 +94,40 @@ class ApiTests(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["error"]["code"], "unknown_discount")
+
+    def test_fare_quote_returns_quote_and_request_echo(self):
+        stub = {"parking_id": 39, "fare": {"payg": 1000}}
+        payload = {"parking_id": 39, "arrival_at": "2026-09-16T16:00:00+09:00",
+                   "parking_minutes": 240, "benefit_codes": []}
+        with patch("src.serve.api.quote_fare", return_value=stub) as called:
+            response = self.client.post("/api/v1/fare/quote", json=payload,
+                                        headers={"X-Request-ID": "quote-1"})
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["request_id"], "quote-1")
+        self.assertEqual(body["fare"]["payg"], 1000)
+        self.assertEqual(body["access_rules"]["status"], "empty")
+        self.assertEqual(body["request"]["parking_minutes"], 240)
+        self.assertEqual(called.call_args.args[:3], (39, datetime(
+            2026, 9, 16, 16, tzinfo=timezone(timedelta(hours=9))), 240))
+
+    def test_fare_quote_maps_domain_errors_to_status_codes(self):
+        payload = {"parking_id": 999999, "arrival_at": "2026-09-16T16:00:00+09:00",
+                   "parking_minutes": 60}
+        cases = [(UnknownParking(999999), 404, "unknown_parking"),
+                 (UnknownBenefit({"없는코드"}), 422, "unknown_benefit"),
+                 (MultipleBenefitsUnsupported(), 422, "multiple_benefits_unsupported")]
+        for error, status, code in cases:
+            with self.subTest(code=code), patch("src.serve.api.quote_fare", side_effect=error):
+                response = self.client.post("/api/v1/fare/quote", json=payload)
+            self.assertEqual(response.status_code, status)
+            self.assertEqual(response.json()["error"]["code"], code)
+
+    def test_fare_quote_rejects_bad_payload(self):
+        response = self.client.post("/api/v1/fare/quote", json={
+            "parking_id": 39, "arrival_at": "어제", "parking_minutes": 0})
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
 
 
 if __name__ == "__main__":

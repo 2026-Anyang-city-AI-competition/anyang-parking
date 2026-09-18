@@ -111,7 +111,8 @@ def build_features(obs, lots, progress=False):
 
 def build_horizon_frame(base, horizon, rules, lots):
     """A19의 미래 연속성, U11의 과거 피처, 실제 출입 분류를 별도로 만든다."""
-    if horizon not in HORIZONS:
+    # A23이 180~1440분까지 같은 공식을 재사용한다. 5분 격자에 놓이는 양수면 허용한다.
+    if horizon <= 0 or horizon % 5:
         raise ValueError(f"지원하지 않는 horizon: {horizon}")
     d = base.copy()
     steps = horizon // 5

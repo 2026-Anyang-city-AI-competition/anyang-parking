@@ -1,0 +1,70 @@
+{
+  "raw_n": 472323,
+  "raw_hash": "48a2bc6df6aa4a306b8b28bddcb0d747f948a80dd29ac27eecebd46ecc8d8f64",
+  "lots_hash": "210bf8f85cfd1901409e880313769aaf86e7de38c6d98a16e5fe69738cd65252",
+  "rules_hash": "bdd46f2f2d1d2035260fdcfd79df6edcaf7b2480d8ee5c40b4d96d66333f7ef1",
+  "active_lots": 68,
+  "active_raw_n": 360876,
+  "start": "2026-08-31 04:56:37+09:00",
+  "end": "2026-09-18 23:40:22+09:00",
+  "absent_ids": [],
+  "protocol": "a23_coverage_v1",
+  "status": "diagnostic",
+  "horizons": [
+    15,
+    30,
+    60,
+    120,
+    180,
+    240,
+    360,
+    720,
+    1440
+  ],
+  "baselines": [
+    "persistence",
+    "lag_24h",
+    "lag_7d",
+    "seasonal_naive"
+  ],
+  "row_sets": {
+    "core": [
+      "persistence",
+      "lag_24h",
+      "seasonal_naive"
+    ],
+    "all": [
+      "persistence",
+      "lag_24h",
+      "lag_7d",
+      "seasonal_naive"
+    ]
+  },
+  "seasonal_naive_history_end_kst": "2026-09-15 00:00:00+09:00",
+  "seasonal_naive_min_samples": 2,
+  "holidays_kst": [
+    "2026-09-24",
+    "2026-09-25",
+    "2026-09-26",
+    "2026-10-03",
+    "2026-10-05",
+    "2026-10-09"
+  ],
+  "holiday_grid_rows_affected": {
+    "2026-09-24": 0,
+    "2026-09-25": 0,
+    "2026-09-26": 0,
+    "2026-10-03": 0,
+    "2026-10-05": 0,
+    "2026-10-09": 0
+  },
+  "anomaly_candidates_n": 183,
+  "notes": [
+    "이 실행은 모델을 학습하지 않는다. 평가행과 기준선 제공률만 진단한다.",
+    "label_valid 게이트와 history/future 연속성 공식은 A22/A20과 동일하다.",
+    "lag_24h/lag_7d는 target_time에서 정확히 24시간/7일 전의 격자값만 쓴다.",
+    "seasonal naive는 홀드아웃 이전 관측만으로 집계하며 표본 2개 미만은 제공하지 않는다.",
+    "core 행 집합은 lag_7d를 뺀 것이다. 보유 18일로는 lag_7d 제공률이 낮아 행 수를 절반 가까이 잃는다. 어느 집합의 수치인지 항상 함께 보고한다.",
+    "공통 행이 0인 지평선은 현재 데이터로 인증할 수 없다는 뜻이며 통과로 처리하지 않는다."
+  ]
+}

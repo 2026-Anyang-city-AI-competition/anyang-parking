@@ -31,7 +31,7 @@
 | P0 | `GET /api/v1/health` | 구현됨 | 모델·DB·예측 준비 상태 |
 | P0 | `POST /api/v1/recommend` | 1차 구현 | 추천. 출입 필터·복수 할인·상세 요금 보강 필요 |
 | P0 | `GET /api/v1/places/search` | 미구현 | 목적지 이름·주소 검색 |
-| P0 | `POST /api/v1/fare/quote` | 미구현 | 시간·일일권·할인별 독립 요금 견적 |
+| P0 | `POST /api/v1/fare/quote` | 구현됨 | 시간·일일권·할인별 독립 요금 견적 |
 | P1 | `GET /api/v1/benefits` | 미구현 | 지원 감면 항목과 설명 제공 |
 | P1 | `GET /api/v1/auth/kakao/login` | 미구현 | 카카오 로그인 시작 |
 | P1 | `GET /api/v1/auth/kakao/callback` | 미구현 | OAuth 콜백 |
@@ -305,6 +305,14 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 }
 ```
 
+7단계 구현 완료: `src/serve/fare_quote.py`의 `quote_fare()`가 추천을 다시 돌리지 않고
+`parking_id`·도착시각·주차시간·감면 코드만으로 견적을 만든다. 추천과 같은 `calc_fare`와
+`check_access`를 쓰므로 두 경로의 금액이 어긋나지 않는다. 출입 판정은 요금 계산을 막지 않는다 —
+이용 불가여도 참고 요금을 돌려주고 `access.available=false`로 알린다.
+`benefit_codes`는 지금 0~1개만 받는다. 중복 감면은 조례 확인 전까지 곱하지 않고
+`multiple_benefits_unsupported`(422)로 거절한다 — 10단계에서 항목별 계산으로 바꾼다.
+일일권은 `recommended_option`·`saving`으로 병기만 하고 `daily_pass_purchasable`은 null이다.
+
 ### 4.2 계산 보강
 
 6단계 연결 완료: 추천 카드의 `fare`에 계산 내역·유료분·무료분·날짜별
@@ -394,6 +402,33 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 
 ## 8. 예측 검증을 꾸준히 돌리는 작업 — P0/P1
 
+### 세부 단계
+
+| 단계 | 범위 | 상태 |
+|---|---|---|
+| 8-1 | 공통 평가 기반: 지평선 15~1440분 확장, 기준선 4종, 평가행·제공률 진단 | 완료 |
+| 8-2 | A23 본실험: 지평선별 M0 vs 최강 기준선, 인증/실패 지평선 판정 | 대기 |
+| 8-3 | A23 모델 보강: M1(`lag_24h`/`lag_7d`/time-of-week/공휴일), 360분 이상 M2 Prophet 비교군 | 대기 |
+| 8-4 | A24: 글로벌 G0 vs 개별 L0 vs 글로벌+잔차 보정 H0 | 대기 |
+| 8-5 | 만차 강등 가치 검증 A/B/C와 `full_prob` 보정·cutoff 비교 | 대기 |
+| 8-6 | 매일 감시 자동화: 최신성·결측·고정값·정원 초과·급변 | 대기 |
+| 8-7 | 데이터 추가 시 재평가 루틴과 U11 구간 커버리지 재평가 | 대기 |
+
+8-1 완료: `src/analysis/a23_common.py`. A22의 `label_valid` 게이트와 A20의
+history/future 연속성 공식을 그대로 재사용하고, 기준선 persistence·`lag_24h`·`lag_7d`·
+요일×시각 seasonal naive를 같은 평가행에 붙인다. seasonal naive는 홀드아웃 이전
+관측만으로 집계하고 표본 2개 미만은 제공하지 않는다. 결측 기준선을 근처 값으로
+채우지 않으므로 인증 비교는 기준선이 모두 정의된 행에서만 한다.
+진단 결과는 [`../../reports/tables/a23_coverage.csv`](../../reports/tables/a23_coverage.csv).
+
+현재 데이터(18일·66곳)의 제약 두 가지를 8-2 전에 확정해야 한다.
+
+- `lag_7d` 제공률이 36~58%뿐이라 네 기준선 공통 행은 평가행의 절반 아래다. 그래서
+  행 집합을 `core`(persistence·`lag_24h`·seasonal naive)와 `all`(+`lag_7d`) 두 벌로 만들고
+  어느 쪽 수치인지 항상 함께 보고한다. `performance_plan.md`도 `lag_7d`를 "가능한 경우"로 둔다.
+- 720·1440분은 평가 가능 주차장이 66곳에서 43곳으로 줄고, `all` 집합의 1440분 주말 공통 행은
+  0이다. 이 지평선은 현재 데이터로 인증할 수 없으며 통과로 처리하지 않는다.
+
 ### 재정립한 P0 목표
 
 - [ ] A23: 15/30/60/120/180/240/360/720/1440분 직접 예측
@@ -455,7 +490,7 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 4. ✅ 추천 API에서 이용 불가 후보 제외 및 후보 반경 재확장
 5. ✅ `prediction_availability.csv` 스키마·로더와 시간대별 예측 차단 엔진
 6. ✅ 요금 계산기를 조사된 `fee_windows`에 연결
-7. `POST /api/v1/fare/quote`
+7. ✅ `POST /api/v1/fare/quote`
 8. `GET /api/v1/places/search`
 9. 웹 UI 실제 추천·검색·요금 응답 연결
 10. 복수 할인 자격과 로그인 없는 마이페이지

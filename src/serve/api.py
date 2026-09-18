@@ -10,6 +10,7 @@
 import os
 import logging
 import uuid
+from datetime import datetime
 from contextlib import asynccontextmanager
 from functools import partial
 
@@ -25,6 +26,8 @@ from src.serve.recommend import recommend
 from src.serve.request_polling import RequestPoller
 from src.serve.access_rules import AccessRulesRepository
 from src.serve.prediction_gate import PredictionGate
+from src.serve.fare_quote import (MultipleBenefitsUnsupported, UnknownBenefit,
+                                  UnknownParking, quote_fare)
 from src.serve import fare_tables
 
 LOG = logging.getLogger(__name__)
@@ -46,6 +49,15 @@ class RecommendRequest(BaseModel):
     full_probability_cutoff: float = Field(default=.5, ge=0, le=1)
     discount: str | None = None
     include_alternatives: bool = True
+    access_safety_margin_minutes: int = Field(default=0, ge=0, le=60)
+
+
+class FareQuoteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    parking_id: int = Field(ge=1)
+    arrival_at: datetime
+    parking_minutes: int = Field(ge=1, le=10080)
+    benefit_codes: list[str] = Field(default_factory=list, max_length=5)
     access_safety_margin_minutes: int = Field(default=0, ge=0, le=60)
 
 
@@ -182,6 +194,37 @@ def create_app(predictor=None, poller=None, access_rules=None):
             "prediction_gate": gate_status,
             "request": body.model_dump(),
         })
+        return result
+
+    @application.post("/api/v1/fare/quote")
+    async def fare_quote_endpoint(body: FareQuoteRequest, request: Request):
+        """추천을 다시 돌리지 않고 시간·할인만 바꿔 요금을 다시 계산한다."""
+        access_rules = request.app.state.access_rules
+        access_status = await run_in_threadpool(access_rules.refresh)
+        work = partial(
+            quote_fare,
+            body.parking_id,
+            body.arrival_at,
+            body.parking_minutes,
+            body.benefit_codes,
+            access_rules=access_rules,
+            safety_margin_minutes=body.access_safety_margin_minutes,
+        )
+        try:
+            result = await run_in_threadpool(work)
+        except UnknownParking:
+            raise ApiProblem(404, "unknown_parking", "존재하지 않는 주차장입니다",
+                             {"parking_id": body.parking_id})
+        except UnknownBenefit as exc:
+            raise ApiProblem(422, "unknown_benefit", "지원하지 않는 감면 유형입니다",
+                             {"unknown": exc.codes, "allowed": sorted(fare_tables.DISCOUNTS)})
+        except MultipleBenefitsUnsupported:
+            raise ApiProblem(422, "multiple_benefits_unsupported",
+                             "중복 감면 가능 여부가 확인되지 않아 한 번에 한 가지만 계산합니다",
+                             {"benefit_codes": body.benefit_codes})
+        result.update({"request_id": _request_id(request),
+                       "access_rules": access_status,
+                       "request": body.model_dump(mode="json")})
         return result
 
     return application
