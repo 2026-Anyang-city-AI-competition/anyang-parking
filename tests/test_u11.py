@@ -9,6 +9,25 @@ from src.serve.predictor import Predictor
 from src.serve.ranking import rank_cards
 
 
+
+class AllowAll:
+    """게이트 규칙이 전부 열려 있는 상태."""
+    def refresh(self, force=False): return {"rules_loaded": 1}
+    def validity_mask(self, pids, obs, targets): return [True]*len(pids)
+
+
+class BlockAfternoon:
+    """12시 이후를 막는 게이트."""
+    def refresh(self, force=False): return {"rules_loaded": 1}
+    def validity_mask(self, pids, obs, targets):
+        return [o.hour < 12 and t.hour < 12 for o, t in zip(obs, targets)]
+
+
+class EmptyGate:
+    """행이 없는 게이트. fail-closed 라 전부 막히므로 마스크를 적용하면 안 된다."""
+    def refresh(self, force=False): return {"rules_loaded": 0}
+    def validity_mask(self, pids, obs, targets): return [False]*len(pids)
+
 class EvaluationTests(unittest.TestCase):
     def test_query_denominator_not_candidate_count(self):
         q=pd.DataFrame(dict(axis=['walk','walk'],n_candidates=[20,30],changed=[1,0],
@@ -29,13 +48,31 @@ class EvaluationTests(unittest.TestCase):
         c.loc[c.segment.eq('운영중'),'inside']=2
         with self.assertRaises(AssertionError): validate_coverage(c)
 
-    def test_split_purges_target_boundary(self):
+    def _frame(self):
         ts=pd.date_range('2026-09-01',periods=24*12*4,freq='5min')
         t=pd.DataFrame({c:np.ones(len(ts)) for c in FEATURES})
         t['ts_kst']=ts;t['target_time']=ts+pd.Timedelta(minutes=120);t['nx']=0
-        a,b,c=split_frame(t,pd.Timestamp('2026-09-04'))
+        t['parking_id']=39
+        return t
+
+    def test_split_purges_target_boundary(self):
+        a,b,c=split_frame(self._frame(),pd.Timestamp('2026-09-04'),gate=AllowAll())
         self.assertLess(a.target_time.max(),b.ts_kst.min())
         self.assertLess(b.target_time.max(),c.ts_kst.min())
+
+    def test_split_drops_rows_the_service_gate_blocks(self):
+        # 서비스가 예측을 막는 시간대는 학습·보정·평가에서도 빠져야 한다.
+        t=self._frame()
+        full=sum(len(x) for x in split_frame(t,pd.Timestamp('2026-09-04'),gate=AllowAll()))
+        gated=sum(len(x) for x in split_frame(t,pd.Timestamp('2026-09-04'),gate=BlockAfternoon()))
+        self.assertGreater(full,gated)
+        self.assertGreater(gated,0)
+
+    def test_empty_gate_does_not_silently_drop_everything(self):
+        t=self._frame()
+        kept=sum(len(x) for x in split_frame(t,pd.Timestamp('2026-09-04'),gate=EmptyGate()))
+        self.assertEqual(kept,sum(len(x) for x in split_frame(
+            t,pd.Timestamp('2026-09-04'),gate=AllowAll())))
 
     def test_rank_modes_and_fallback(self):
         cards=[dict(parking_id=1,walk_min=1,fare_payg=0,occ_now=20,full_prob=.9),

@@ -17,6 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from src.analysis.a16_stratified_weekend import feats, INTX
 from src.features.temporal import oprtime_features, OPR_COLS
 from src.serve.candidates import find_candidates
+from src.serve.prediction_gate import PredictionGate
 from src.serve.fare import calc_fare, resolve_type
 from src.serve.ranking import rank_cards
 from src.serve.walking import CACHE, _grid
@@ -83,9 +84,32 @@ def horizon_frame(d, h, meta):
     return t
 
 
-def split_frame(t, start):
+GATE = PredictionGate()
+
+
+def gate_mask(frame, gate=None):
+    """서비스 예측 게이트와 같은 판정을 학습·평가 프레임에 적용한다.
+
+    게이트가 막는 시간대(경직·이상·고정 피드·미검증)를 학습·보정·평가에서 뺀다.
+    리포트 수치가 사용자에게 실제로 나가는 예측의 성능이 되도록 맞추는 것이다.
+    게이트 파일이 비어 있으면 fail-closed 라 전부 False 가 되므로,
+    그 경우에는 마스크를 적용하지 않고 경고만 남긴다."""
+    gate = gate or GATE
+    if gate.refresh().get("rules_loaded", 0) == 0:
+        print("경고: 예측 게이트가 비어 있다 — 마스크를 적용하지 않는다", flush=True)
+        return np.ones(len(frame), dtype=bool)
+    mask = np.asarray(gate.validity_mask(
+        frame.parking_id.tolist(),
+        frame.ts_kst.dt.to_pydatetime().tolist(),
+        frame.target_time.dt.to_pydatetime().tolist()), dtype=bool)
+    assert mask.dtype == bool and len(mask) == len(frame)
+    return mask
+
+
+def split_frame(t, start, gate=None):
     cal_start = start - pd.Timedelta(days=1)
     valid = t.dropna(subset=FEATURES + ["nx"])
+    valid = valid[gate_mask(valid, gate)]
     train = valid[valid.target_time < cal_start].copy()
     cal = valid[(valid.ts_kst >= cal_start) & (valid.target_time < start)].copy()
     test = valid[(valid.ts_kst >= start) & (valid.target_time < start+pd.Timedelta(days=1))].copy()
@@ -252,6 +276,7 @@ def run():
             q,s = rank_queries(pred,lots,dead,routes,fold,h,start)
             queries.extend(q);skips.extend(s)
             audits.append(dict(fold=fold,horizon=h,train_n=len(train),cal_n=len(cal),test_n=len(test),
+                gate_rules=GATE.status().get("rules_loaded"),
                 train_target_max=str(train.target_time.max()),cal_start=str(cal.ts_kst.min()),
                 cal_target_max=str(cal.target_time.max()),test_start=str(test.ts_kst.min()),
                 test_end=str(test.target_time.max()),live_lots=test.parking_id.nunique(),dead_lots=len(dead),

@@ -129,10 +129,12 @@ class CommonRowTests(unittest.TestCase):
         frame.loc[0, a23.pred_column("lag_7d")] = np.nan
         self.assertFalse(a23.common_mask(frame).iloc[0])
 
-    def test_core_row_set_survives_missing_lag_7d(self):
-        """보유 기간이 짧아 lag_7d가 없는 행도 core 집합에서는 평가할 수 있다."""
+    def test_core_row_set_survives_scarce_baselines(self):
+        """보유 기간이 짧아 lag_7d·seasonal naive가 없는 행도 core에서는 평가할 수 있다."""
         frame = self.prepared()
-        frame.loc[0, a23.pred_column("lag_7d")] = np.nan
+        for scarce in ("lag_7d", "seasonal_naive"):
+            frame.loc[0, a23.pred_column(scarce)] = np.nan
+        self.assertFalse(a23.common_mask(frame).iloc[0])
         self.assertTrue(a23.common_mask(frame, a23.BASELINES_CORE).iloc[0])
         scores = a23.baseline_scores(frame, a23.BASELINES_CORE)
         self.assertEqual(set(scores["baseline"]), set(a23.BASELINES_CORE))

@@ -14,10 +14,11 @@
 - [x] 후불요금과 선불 일일권 병기
 - [x] 단일 감면 코드 계산
 - [x] 도착 시점 `full_prob` 기반 추천 강등
-- [ ] 조사 결과를 읽는 구조화된 출입·과금 데이터셋
+- [x] `POST /api/v1/fare/quote` 독립 요금 견적
+- [x] 조사 결과를 읽는 구조화된 출입·과금 데이터셋 — 89곳 267행, 검증 통과
 - [x] 실제 입출차 가능시간을 반영한 추천 제외
 - [x] 데이터 경직·이상 시간대의 예측 차단 엔진 — 실제 진단 행 적재는 별도
-- [ ] 장소명·주소 검색 API
+- [x] 장소명·주소 검색 API
 - [ ] 복수 할인 자격과 마이페이지
 - [ ] 카카오 OAuth
 - [ ] 웹 UI의 실제 API 연결
@@ -30,7 +31,7 @@
 |---|---|---|---|
 | P0 | `GET /api/v1/health` | 구현됨 | 모델·DB·예측 준비 상태 |
 | P0 | `POST /api/v1/recommend` | 1차 구현 | 추천. 출입 필터·복수 할인·상세 요금 보강 필요 |
-| P0 | `GET /api/v1/places/search` | 미구현 | 목적지 이름·주소 검색 |
+| P0 | `GET /api/v1/places/search` | 구현됨 | 목적지 이름·주소 검색 |
 | P0 | `POST /api/v1/fare/quote` | 구현됨 | 시간·일일권·할인별 독립 요금 견적 |
 | P1 | `GET /api/v1/benefits` | 미구현 | 지원 감면 항목과 설명 제공 |
 | P1 | `GET /api/v1/auth/kakao/login` | 미구현 | 카카오 로그인 시작 |
@@ -59,8 +60,13 @@
 
 신규 생성 예정:
 
-- `data/raw/parking_access_rules.csv`: 조사로 확인한 출입·과금 규칙
+- `data/raw/parking_access_rules.csv`: 조사로 확인한 출입·과금 규칙. **주차장 × 요일그룹 267행. 서비스 정본.**
 - `data/processed/prediction_availability.csv`: DB 진단으로 산출한 예측 가능시간
+- `data/processed/parking_access_rules.csv`: **분석용 별도 파일.** 주차장 1행 89행이며
+  `feed_status`·`enterable_status`를 담는다. A20/A22가 읽는다. 서비스 경로는 이 파일을 읽지 않는다.
+
+서비스본과 분석본은 **합치지 않는다.** `scripts/crosscheck_access_rules.py`가 대조만 하고
+충돌·보강 후보·양쪽 미확인을 보고한다. 현재 충돌 0건, 일치 189행, 양쪽 미확인 26곳이다.
 
 `parking_access_rules.csv`는 **주차장 × 요일그룹 한 행**으로 저장한다.
 
@@ -140,7 +146,7 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 ### 1.5 데이터 적재·검증 TODO
 
 - [x] 위 스키마로 `parking_access_rules.csv` 생성
-- [ ] 조사 완료된 항목만 `reports/태영.txt`에서 수동 전환
+- [x] 조사 완료된 항목만 `reports/태영.txt`에서 수동 전환 — 89곳 전부 적재, 26곳은 `unknown`으로 남김
 - [x] ID가 `parking.db.lots` 89곳에 존재하는지 검사
 - [x] 주차장별 `weekday/saturday/sunday_holiday` 중복·누락 검사
 - [x] 시간 형식, 겹치는 구간, 역전 구간, 자정 통과 검사
@@ -255,11 +261,24 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 - [x] 예측 불가 카드는 `full_prob` 강등에 사용하지 않음
 - [x] 경직·이상 시간대의 현재값을 null 처리하고 관측 상태 표시
 - [x] 학습·평가가 재사용할 `validity_mask()` 구현
-- [ ] 25곳·3곳 및 이상 시간대의 실제 진단 행 적재 — ID·요일·시간·근거 필수
-- [ ] 정상 시간대 데이터만 모델 학습·평가에 사용하도록 마스크 연결
-- [ ] 15·30·60·120분 horizon별 최근 이력 충족 검사
-- [ ] 상시 5분 폴러 유지. 요청 시 폴링은 누락 방지용으로만 사용
-- [ ] 일일 데이터 연속성·고정값·정원 초과·급변 감시
+- [x] 25곳·3곳 및 이상 시간대의 실제 진단 행 적재 — `scripts/build_prediction_availability.py`로 267행 산출
+- [x] 정상 시간대 데이터만 모델 학습·평가에 사용하도록 마스크 연결 — `u11_evaluate.split_frame`이 `validity_mask` 적용
+- [x] 15·30·60·120분 horizon별 최근 이력 충족 검사 — 5분 초과 결측은 `no_fresh_history`, 학습 범위 밖은 `unsupported_horizon`
+- [x] 상시 5분 폴러 유지. 요청 시 폴링은 누락 방지용으로만 사용
+- [ ] 일일 데이터 연속성·고정값·정원 초과·급변 감시 — 결측(`check_gaps`)·최신성(`watch_freshness`)·고정값(`dead_feed`)만 있고 정원 초과·급변 감시 없음
+
+게이트는 **fail-closed**다. `prediction_availability.csv`가 비어 있으면 아무것도 막지 않는 게
+아니라 **모든 예측이 차단**된다. 그래서 진단 적재는 선택이 아니라 서비스 동작 조건이다.
+진단은 `scripts/build_prediction_availability.py`가 `parking.db`에서 만든다 — 조사 결과가 아니다.
+주차장 × 요일그룹 × 시(hour) 버킷을 표본 부족 → 정원초과·급변 → 경직 순으로 판정하고,
+열린 시만 이어 붙여 `prediction_windows`로 쓴다. 근거는
+`reports/tables/prediction_availability_diagnosis.csv`에 버킷 단위로 남는다.
+현재 결과: 고정 피드 21곳 전면 차단, 68곳 개방, 그중 49곳은 일부 시간대만 차단.
+이 21곳은 분석본 `data/processed/parking_access_rules.csv`의 `feed_status=FIXED` 21곳과 정확히 일치한다.
+
+학습·평가는 `split_frame`에서 같은 게이트를 통과한 행만 쓴다. 서비스가 막는 시간대의 성능을
+리포트에 합산하지 않기 위해서다. 게이트가 비어 있으면 마스크를 적용하지 않고 경고만 남긴다 —
+fail-closed 게이트로 학습 표본을 0으로 만들지 않기 위한 예외다.
 
 사용자 표시 문구:
 
@@ -327,10 +346,10 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 - [x] 주차장별 토요일·공휴일 규칙 우선 적용
 - [ ] 24시간을 넘는 주차의 날짜별 누진·일 상한 재계산
 - [ ] 입차 당일 기준 일일권의 이용 범위와 구매 가능 조건 확정
-- [ ] 일일권 판매 여부·매진 정보가 없으면 가격만 안내하고 구매 가능으로 단정하지 않음
-- [ ] 후불과 일일권을 자동 합치지 않고 두 상품을 병기
-- [ ] 누진구간·무료구간·감면·100원 절사 순서가 보이는 `breakdown` 반환
-- [ ] 계산 불가 사유를 `null + reason`으로 반환하고 임의 추정 금지
+- [x] 일일권 판매 여부·매진 정보가 없으면 가격만 안내하고 구매 가능으로 단정하지 않음 — `daily_pass_purchasable`은 항상 null
+- [x] 후불과 일일권을 자동 합치지 않고 두 상품을 병기 — `apply_daily_pass_cap` 기본 False
+- [ ] 누진구간·무료구간·감면·100원 절사 순서가 보이는 `breakdown` 반환 — 누진 구간만 행으로 있고 무료·감면·절사는 별도 필드
+- [x] 계산 불가 사유를 `null + reason`으로 반환하고 임의 추정 금지
 
 ---
 
@@ -341,10 +360,10 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 기존 `discount: string | null`은 하위 호환으로 유지한 뒤 `benefit_codes: string[]`로 전환한다.
 
 - [ ] 복수 자격별 요금을 각각 계산
-- [ ] 조례상 중복 가능 여부를 확인하기 전에는 감면율을 임의로 곱하지 않음
+- [x] 조례상 중복 가능 여부를 확인하기 전에는 감면율을 임의로 곱하지 않음 — 복수 코드는 `multiple_benefits_unsupported`로 거절
 - [ ] 중복 불가라면 적용 가능한 단일 혜택 중 최저요금 선택
 - [ ] 선택된 혜택과 탈락한 혜택의 사유 반환
-- [ ] 현장 증빙 필요 문구 표시
+- [ ] 현장 증빙 필요 문구 표시 — `fare/quote`의 `applied_benefit.evidence_note`까지만, UI 미연결
 - [ ] `GET /api/v1/benefits`로 지원 코드·감면 내용·증빙 안내 제공
 
 ### 5.2 로그인 없는 1차 마이페이지
@@ -377,25 +396,30 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 
 ### `GET /api/v1/places/search?q=안양시청`
 
-- [ ] 카카오 로컬 키워드/주소 검색 연결
-- [ ] 안양시 중심 또는 경계로 결과 우선순위 제한
-- [ ] 이름·도로명주소·위도·경도 반환
-- [ ] 좌표 순서 `lng,lat` 혼동 방지 테스트
-- [ ] 짧은 TTL 캐시와 요청 제한
-- [ ] API 키를 브라우저에 노출하지 않음
-- [ ] 카카오 실패 시 최근 캐시 또는 명확한 검색 불가 응답
+8단계 구현 완료: `src/serve/places.py`. 카카오 좌표는 `x=경도, y=위도`라 `_place()` 한 곳에서만
+뒤집고 바깥으로는 `lat`/`lng` 이름으로만 내보낸다. **결과 없음과 검색 불가를 섞지 않는다** —
+빈 배열은 "검색은 됐고 결과가 없다", 503 `search_unavailable`은 "검색 자체를 못 했다"이다.
+카카오가 죽으면 24시간 이내 캐시를 `stale=true`로 내보내고, 그마저 없으면 503을 준다.
+
+- [x] 카카오 로컬 키워드/주소 검색 연결 — 키워드 우선, 주소 검색으로 보완
+- [x] 안양시 중심 또는 경계로 결과 우선순위 제한 — 경계 밖은 버리지 않고 뒤로 민다
+- [x] 이름·도로명주소·위도·경도 반환
+- [x] 좌표 순서 `lng,lat` 혼동 방지 테스트 — x/y 뒤집기는 `_place()` 한 곳에서만
+- [x] 짧은 TTL 캐시와 요청 제한 — 300초 TTL, 프로세스당 초당 5회
+- [x] API 키를 브라우저에 노출하지 않음 — 서버에서만 호출, 응답에 원천 본문 미포함
+- [x] 카카오 실패 시 최근 캐시 또는 명확한 검색 불가 응답 — `stale=true` 또는 503 `search_unavailable`
 
 ---
 
 ## 7. 추천 API 응답 완성 — P0
 
 - [ ] 카드의 `lat/lng`를 웹 지도 핀과 연결
-- [ ] `access_status`, `expected_departure_at`, `prediction_status` 추가
-- [ ] `fare` 객체에 후불·일일권·할인·계산 내역 포함
-- [ ] `by_walk`, `by_fare`, `excluded`, `live_unavailable` 의미 분리
+- [x] `access_status`, `expected_departure_at`, `prediction_status` 추가
+- [x] `fare` 객체에 후불·일일권·할인·계산 내역 포함
+- [ ] `by_walk`, `by_fare`, `excluded`, `live_unavailable` 의미 분리 — 역할은 나뉘었고 `live_unavailable` 이름만 아직 `unavailable`
 - [ ] 만차확률 강등 전/후 순위와 강등 이유 반환
-- [ ] 후보 부족·경로 실패·폴링 실패·예측 불가를 서로 다른 상태로 반환
-- [ ] 프런트엔드용 TypeScript 타입과 실제 응답 fixture 3개 생성
+- [x] 후보 부족·경로 실패·폴링 실패·예측 불가를 서로 다른 상태로 반환 — `exhausted`/`estimated`/`poll`/`prediction_reason`
+- [ ] 프런트엔드용 TypeScript 타입과 실제 응답 fixture 3개 생성 — fixture 3개는 `web/fixtures/`에 있고 TS 타입이 없음
 - [ ] 현재 `web/src/data.ts`의 가짜 데이터를 실제 API 호출로 교체
 
 ---
@@ -407,8 +431,8 @@ parking_id,name,day_group,entry_windows,exit_windows,fee_windows,fee_mode,overni
 | 단계 | 범위 | 상태 |
 |---|---|---|
 | 8-1 | 공통 평가 기반: 지평선 15~1440분 확장, 기준선 4종, 평가행·제공률 진단 | 완료 |
-| 8-2 | A23 본실험: 지평선별 M0 vs 최강 기준선, 인증/실패 지평선 판정 | 대기 |
-| 8-3 | A23 모델 보강: M1(`lag_24h`/`lag_7d`/time-of-week/공휴일), 360분 이상 M2 Prophet 비교군 | 대기 |
+| 8-2 | A23 본실험: 지평선별 M0 vs 최강 기준선, 인증/실패 지평선 판정 | 완료(partial) |
+| 8-3 | A23 모델 보강: M1(`lag_24h`/`lag_7d`/time-of-week/공휴일), 360분 이상 M2 Prophet 비교군 | 완료(partial) |
 | 8-4 | A24: 글로벌 G0 vs 개별 L0 vs 글로벌+잔차 보정 H0 | 대기 |
 | 8-5 | 만차 강등 가치 검증 A/B/C와 `full_prob` 보정·cutoff 비교 | 대기 |
 | 8-6 | 매일 감시 자동화: 최신성·결측·고정값·정원 초과·급변 | 대기 |
@@ -429,12 +453,36 @@ history/future 연속성 공식을 그대로 재사용하고, 기준선 persiste
 - 720·1440분은 평가 가능 주차장이 66곳에서 43곳으로 줄고, `all` 집합의 1440분 주말 공통 행은
   0이다. 이 지평선은 현재 데이터로 인증할 수 없으며 통과로 처리하지 않는다.
 
+8-2 완료: `src/analysis/a23_horizon_curve.py`. 지평선마다 M0을 직접 학습하고
+같은 평가행에서 기준선과 비교한다. 결과는 [`../../reports/tables/a23_certification.csv`](../../reports/tables/a23_certification.csv),
+근거 수치는 [`../../reports/performance_status.md`](../../reports/performance_status.md).
+test 구간에 주말이 1회뿐이라 "주말 2회 재현" 조건을 채울 수 없어 **상태는 `partial`**이고
+인증 지평선은 없다. 그 조건만 뺀 탐색 결과는 **core 행집합 60분**이다.
+
+fold를 정답 시각 기준으로 나눴다. A20의 관측시각 기준 test 창은 지평선이 하루에
+가까워지면 행이 사라져 1440분에서 정의상 0이 된다. 이 변경은 A23에만 적용했고
+A20/A22 산출물은 건드리지 않았다.
+
+8-3 완료: `src/analysis/a23_model_upgrade.py`(M1), `src/analysis/a23_prophet_compare.py`(M2).
+M0과 M1은 같은 fold·같은 평가행·같은 기준선을 쓴다. M1 추가 피처의 결측으로 행을 빼지 않고
+LightGBM이 그대로 학습하게 해 두 모델의 분모를 맞췄다.
+
+- M1이 8-2에서 120분을 막았던 **주차장 합격률을 0.788 → 0.803**으로 올려 탐색 상한이
+  **60분 → 120분**으로 늘었다. 인증은 여전히 주말 2회 확보 후다.
+- 180·240분은 M1이 오히려 나빠진다(-3.1%, -2.4%). 전 구간 채택할 근거는 없다.
+- 720분은 M1이 MAE 8.538 → 7.144(-16.3%), 합격률 0.744 → 0.860으로 가장 크게 좋아지지만
+  날짜별 방향이 재현되지 않아 인증 대상이 아니다.
+- `tgt_is_holiday`는 데이터 기간(08-31~09-18)에 공휴일이 없어 모든 지평선에서 상수다.
+  추석(9/24~26) 데이터가 쌓이기 전에는 기여할 수 없다.
+- M2(Prophet)는 360·720·1440분 모두 M1보다 나쁘다(9.255/7.986/12.203). 720분에서만 M0을
+  이긴다. 비교군으로만 기록하고 앙상블·서비스에 넣지 않는다. `prophet`은 실험 전용 의존성이다.
+
 ### 재정립한 P0 목표
 
-- [ ] A23: 15/30/60/120/180/240/360/720/1440분 직접 예측
-- [ ] MAE 10%p 이하이면서 최강 기준선보다 우수한 최대 지평선 산출
-- [ ] `lag_24h`, `lag_7d`, time-of-week를 현재 글로벌 모델과 비교
-- [ ] 360분 이상에서 Prophet을 비교군으로만 평가
+- [x] A23: 15/30/60/120/180/240/360/720/1440분 직접 예측
+- [ ] MAE 10%p 이하이면서 최강 기준선보다 우수한 최대 지평선 산출 — 탐색값 60분, 인증은 주말 2회 확보 후
+- [x] `lag_24h`, `lag_7d`, time-of-week를 현재 글로벌 모델과 비교 — 지평선별로 효과가 갈린다
+- [x] 360분 이상에서 Prophet을 비교군으로만 평가 — 세 지평선 모두 M1에 미달
 - [ ] A24: 글로벌 vs 개별 vs 글로벌+주차장별 잔차 보정 비교
 - [ ] GITS는 QA → 지역별 의미 검증 → 다지역 사전학습 순으로 실험
 
@@ -460,14 +508,14 @@ history/future 연속성 공식을 그대로 재사용하고, 기준선 persiste
 
 ## 9. 운영·배포 — P1
 
-- [ ] GCP에서 `scripts/run_poll.sh` 5분 상시 실행 및 단일 인스턴스 보장
-- [ ] API 프로세스 재시작 정책과 1 worker 원칙 적용
-- [ ] `parking.db` 백업·복구와 읽기/쓰기 잠금 점검
-- [ ] CORS 운영 도메인 제한
-- [ ] 카카오 키·OAuth secret을 환경변수/Secret Manager로 관리
+- [x] GCP에서 `scripts/run_poll.sh` 5분 상시 실행 및 단일 인스턴스 보장
+- [ ] API 프로세스 재시작 정책과 1 worker 원칙 적용 — 1 worker만 적용, 재시작 정책 없음
+- [ ] `parking.db` 백업·복구와 읽기/쓰기 잠금 점검 — `pull_vm.sh`가 `.backup`으로 회수, 복구 절차 미정
+- [ ] CORS 운영 도메인 제한 — `CORS_ORIGINS` 환경변수는 있으나 localhost 정규식이 항상 열려 있음
+- [ ] 카카오 키·OAuth secret을 환경변수/Secret Manager로 관리 — 환경변수·`.env`까지 적용, Secret Manager 미적용
 - [ ] `/health`를 모니터링에 연결
 - [ ] 폴링·경로·검색 API 실패율과 응답시간 기록
-- [ ] 사용자 응답에 내부 경로·키·원천 응답 본문 노출 금지
+- [x] 사용자 응답에 내부 경로·키·원천 응답 본문 노출 금지
 
 ---
 
@@ -491,7 +539,7 @@ history/future 연속성 공식을 그대로 재사용하고, 기준선 persiste
 5. ✅ `prediction_availability.csv` 스키마·로더와 시간대별 예측 차단 엔진
 6. ✅ 요금 계산기를 조사된 `fee_windows`에 연결
 7. ✅ `POST /api/v1/fare/quote`
-8. `GET /api/v1/places/search`
+8. ✅ `GET /api/v1/places/search`
 9. 웹 UI 실제 추천·검색·요금 응답 연결
 10. 복수 할인 자격과 로그인 없는 마이페이지
 11. 필요 시 카카오 OAuth와 설정 동기화

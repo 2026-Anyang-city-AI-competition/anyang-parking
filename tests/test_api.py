@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from src.serve.api import create_app
 from src.serve.fare_quote import (MultipleBenefitsUnsupported, UnknownBenefit,
                                   UnknownParking)
+from src.serve.places import SearchUnavailable
 
 
 STATUS = {
@@ -122,6 +123,37 @@ class ApiTests(unittest.TestCase):
                 response = self.client.post("/api/v1/fare/quote", json=payload)
             self.assertEqual(response.status_code, status)
             self.assertEqual(response.json()["error"]["code"], code)
+
+    def test_places_search_returns_results(self):
+        stub = {"places": [{"name": "안양시청", "lat": 37.394259, "lng": 126.956861,
+                            "road_address": "경기 안양시 동안구 시민대로 235", "in_anyang": True}],
+                "source": "kakao", "stale": False, "cache_age_sec": 0}
+        with patch("src.serve.api.search_places", return_value=stub) as called:
+            response = self.client.get("/api/v1/places/search", params={"q": "안양시청"})
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["count"], 1)
+        self.assertEqual(body["query"], "안양시청")
+        self.assertEqual(body["places"][0]["lat"], 37.394259)
+        self.assertEqual(called.call_args.args[0], "안양시청")
+
+    def test_places_search_reports_outage_instead_of_empty_list(self):
+        with patch("src.serve.api.search_places", side_effect=SearchUnavailable()):
+            response = self.client.get("/api/v1/places/search", params={"q": "안양시청"})
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["error"]["code"], "search_unavailable")
+
+    def test_places_search_requires_query(self):
+        response = self.client.get("/api/v1/places/search")
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
+
+    def test_places_search_does_not_leak_the_kakao_key(self):
+        stub = {"places": [], "source": "kakao", "stale": False, "cache_age_sec": 0}
+        with patch("src.serve.api.search_places", return_value=stub):
+            response = self.client.get("/api/v1/places/search", params={"q": "안양시청"})
+        self.assertNotIn("KakaoAK", response.text)
+        self.assertNotIn("dapi.kakao.com", response.text)
 
     def test_fare_quote_rejects_bad_payload(self):
         response = self.client.post("/api/v1/fare/quote", json={

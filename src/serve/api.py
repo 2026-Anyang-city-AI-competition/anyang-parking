@@ -14,7 +14,7 @@ from datetime import datetime
 from contextlib import asynccontextmanager
 from functools import partial
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -28,6 +28,7 @@ from src.serve.access_rules import AccessRulesRepository
 from src.serve.prediction_gate import PredictionGate
 from src.serve.fare_quote import (MultipleBenefitsUnsupported, UnknownBenefit,
                                   UnknownParking, quote_fare)
+from src.serve.places import MAX_QUERY_LEN, SearchUnavailable, search_places
 from src.serve import fare_tables
 
 LOG = logging.getLogger(__name__)
@@ -195,6 +196,21 @@ def create_app(predictor=None, poller=None, access_rules=None):
             "request": body.model_dump(),
         })
         return result
+
+    @application.get("/api/v1/places/search")
+    async def places_search_endpoint(
+            request: Request,
+            q: str = Query(min_length=1, max_length=MAX_QUERY_LEN, description="장소명 또는 주소")):
+        """목적지 검색. 키는 서버에만 있고 응답에 원천 본문을 싣지 않는다."""
+        try:
+            result = await run_in_threadpool(search_places, q)
+        except ValueError:
+            raise ApiProblem(422, "empty_query", "검색어를 입력해주세요")
+        except SearchUnavailable:
+            # 빈 목록으로 위장하지 않는다. 결과 없음과 검색 불가는 다른 상태다.
+            raise ApiProblem(503, "search_unavailable", "장소 검색을 지금 사용할 수 없습니다")
+        return {**result, "query": q, "count": len(result["places"]),
+                "request_id": _request_id(request)}
 
     @application.post("/api/v1/fare/quote")
     async def fare_quote_endpoint(body: FareQuoteRequest, request: Request):

@@ -1,0 +1,149 @@
+{
+  "raw_n": 472323,
+  "raw_hash": "48a2bc6df6aa4a306b8b28bddcb0d747f948a80dd29ac27eecebd46ecc8d8f64",
+  "lots_hash": "210bf8f85cfd1901409e880313769aaf86e7de38c6d98a16e5fe69738cd65252",
+  "rules_hash": "bdd46f2f2d1d2035260fdcfd79df6edcaf7b2480d8ee5c40b4d96d66333f7ef1",
+  "active_lots": 68,
+  "active_raw_n": 360876,
+  "start": "2026-08-31 04:56:37+09:00",
+  "end": "2026-09-18 23:40:22+09:00",
+  "absent_ids": [],
+  "protocol": "a23_horizon_curve_v1",
+  "status": "partial",
+  "horizons": [
+    15,
+    30,
+    60,
+    120,
+    180,
+    240,
+    360,
+    720,
+    1440
+  ],
+  "methods": [
+    "ml",
+    "persistence",
+    "lag_24h",
+    "lag_7d",
+    "seasonal_naive"
+  ],
+  "row_sets": {
+    "core": [
+      "persistence",
+      "lag_24h"
+    ],
+    "all": [
+      "persistence",
+      "lag_24h",
+      "lag_7d",
+      "seasonal_naive"
+    ]
+  },
+  "test_dates": [
+    "2026-09-11",
+    "2026-09-12",
+    "2026-09-13",
+    "2026-09-14",
+    "2026-09-15",
+    "2026-09-16",
+    "2026-09-17"
+  ],
+  "test_days": 7,
+  "min_train_days": 7,
+  "weekend_weeks_in_test": 1,
+  "certified_max_horizon": {
+    "core": null,
+    "all": null
+  },
+  "provisional_max_horizon": {
+    "core": 60,
+    "all": null
+  },
+  "criteria": {
+    "mae_target_pp": 10.0,
+    "lot_pass_rate": 0.8,
+    "min_lot_rows": 30,
+    "min_weekend_weeks": 2
+  },
+  "model": {
+    "objective": "quantile",
+    "alpha": 0.5,
+    "n_estimators": 120,
+    "learning_rate": 0.08,
+    "num_leaves": 31,
+    "min_child_samples": 40,
+    "random_state": 42,
+    "n_jobs": 4,
+    "verbosity": -1
+  },
+  "features": [
+    "occ_now",
+    "lag_5",
+    "lag_10",
+    "lag_15",
+    "lag_30",
+    "lag_60",
+    "delta_5",
+    "delta_15",
+    "delta_30",
+    "roll_mean_15",
+    "roll_mean_30",
+    "roll_mean_60",
+    "hour",
+    "minute",
+    "minute_of_day",
+    "hour_sin",
+    "hour_cos",
+    "day_of_week",
+    "is_weekend",
+    "parking_id_cat",
+    "is_sunday",
+    "we_hour_sin",
+    "we_hour_cos",
+    "pid_we",
+    "opr_is_operating",
+    "opr_min_to_open",
+    "opr_min_to_close",
+    "opr_is_free_now"
+  ],
+  "prediction_clip": [
+    0,
+    100
+  ],
+  "matched_n": 374127,
+  "holidays_kst": [
+    "2026-09-24",
+    "2026-09-25",
+    "2026-09-26",
+    "2026-10-03",
+    "2026-10-05",
+    "2026-10-09"
+  ],
+  "holiday_grid_rows_affected": {
+    "2026-09-24": 0,
+    "2026-09-25": 0,
+    "2026-09-26": 0,
+    "2026-10-03": 0,
+    "2026-10-05": 0,
+    "2026-10-09": 0
+  },
+  "anomaly_candidates_n": 183,
+  "source_hashes": {
+    "a23_horizon_curve.py": "bf5fe73a367cbd892d63de91b25082315d3d251f0e63c635fa0e7b717c458aaf",
+    "a23_common.py": "3336688b5770a246a4ed0c933983c361247ae3985ce0144eba822c54ec8ab3a6",
+    "a22_baseline_api_alive.py": "e40580221839fddd70fc62ce26161c3b52a2fe7afdaa23d2da856e32c2d173c8",
+    "a20_matched_model_comparison.py": "3b9df6e2bf56124822c4ccd80c95ce44946049de2d7d85e0ed329d107fa4dffd"
+  },
+  "notes": [
+    "지평선마다 직접 학습한 모델이며 재귀 예측으로 이어 붙이지 않았다.",
+    "fold는 정답 시각(target_time) 기준으로 나눈다. A20의 관측시각 기준 test 창은 지평선이 하루에 가까워지면 행이 0이 되어 720·1440분을 평가할 수 없다.",
+    "label_valid 게이트와 history/future 연속성 공식은 A22/A20과 동일하다.",
+    "학습은 eligible 행 전체에서 하고, 채점만 기준선이 모두 정의된 행으로 제한한다.",
+    "core 행 집합은 필수 기준선(persistence·lag_24h)만 요구한다. all 집합은 lag_7d와 seasonal naive까지 요구하며, 보유 기간이 짧아 주말 행이 거의 없다.",
+    "720·1440분은 평가 가능 주차장이 줄어드는 지평선이다. 통과해도 표본 구성을 함께 본다.",
+    "주말이 2회 미만인 test 구간에서는 방향 재현을 확인할 수 없어 status는 partial이다.",
+    "provisional_max_horizon은 주말 2회 조건만 뺀 탐색 결과다. 인증 수치로 쓰지 않는다.",
+    "기존 U11 학습 산출물과 서비스 predictor.pkl을 갱신하지 않는다."
+  ]
+}

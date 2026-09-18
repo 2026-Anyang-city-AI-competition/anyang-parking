@@ -38,9 +38,11 @@ HORIZONS = (15, 30, 60, 120, 180, 240, 360, 720, 1440)
 
 # 기준선 이름 → 예측 컬럼. persistence는 A20과 같은 정의(occ_now)를 쓴다.
 BASELINES = ("persistence", "lag_24h", "lag_7d", "seasonal_naive")
-# 보유 기간이 18일이라 lag_7d는 제공률이 낮다. performance_plan.md도 lag_7d를
-# "가능한 경우"로 둔다. 그래서 인증 행 집합을 두 벌로 만들고 어느 쪽인지 항상 밝힌다.
-BASELINES_CORE = ("persistence", "lag_24h", "seasonal_naive")
+# 보유 기간이 18일이라 lag_7d와 seasonal naive는 제공률이 낮다. 특히 주말은 같은 요일이
+# 2~3회뿐이라 두 기준선이 거의 비어 인증 행에서 주말이 통째로 사라진다. performance_plan.md는
+# persistence와 lag_24h만 필수로, lag_7d는 "가능한 경우"로 둔다. 그래서 행 집합을 두 벌로
+# 만들고(core=필수 기준선, all=+lag_7d+seasonal naive) 어느 쪽 수치인지 항상 함께 보고한다.
+BASELINES_CORE = ("persistence", "lag_24h")
 ROW_SETS = {"core": BASELINES_CORE, "all": BASELINES}
 LAG_OFFSETS = {"lag_24h": pd.Timedelta(days=1), "lag_7d": pd.Timedelta(days=7)}
 SEASONAL_KEYS = ["parking_id", "target_weekday", "target_minute_of_day"]
@@ -212,8 +214,9 @@ def run_coverage(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV,
             "label_valid 게이트와 history/future 연속성 공식은 A22/A20과 동일하다.",
             "lag_24h/lag_7d는 target_time에서 정확히 24시간/7일 전의 격자값만 쓴다.",
             "seasonal naive는 홀드아웃 이전 관측만으로 집계하며 표본 2개 미만은 제공하지 않는다.",
-            "core 행 집합은 lag_7d를 뺀 것이다. 보유 18일로는 lag_7d 제공률이 낮아 "
-            "행 수를 절반 가까이 잃는다. 어느 집합의 수치인지 항상 함께 보고한다.",
+            "core 행 집합은 performance_plan이 필수로 둔 persistence와 lag_24h만 요구한다. "
+            "보유 18일로는 lag_7d와 seasonal naive 제공률이 낮고, 특히 주말은 같은 요일 표본이 "
+            "1회뿐이라 all 집합에서 주말 행이 거의 사라진다. 두 집합을 항상 함께 보고한다.",
             "공통 행이 0인 지평선은 현재 데이터로 인증할 수 없다는 뜻이며 통과로 처리하지 않는다.",
         ],
     }

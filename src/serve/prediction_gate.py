@@ -19,6 +19,7 @@ class PredictionGate:
         self.path, self.parking_db = Path(path), Path(parking_db)
         self._lock = threading.RLock()
         self._rules = {}
+        self._cache = {}
         self._status = {"status": "not_loaded", "rules_loaded": 0, "errors": []}
         self._signature = object()
 
@@ -71,6 +72,7 @@ class PredictionGate:
                 _issue(result, 0, "file", "unreadable", "게이트 파일을 읽을 수 없습니다")
             # 불량 갱신 때는 이전 허용 규칙도 끈다. 확률 노출은 fail-closed이다.
             self._rules = indexed if result.valid else {}
+            self._cache = {}
             self._status = {"status": "invalid" if not result.valid else "ready" if indexed else "empty",
                             "rules_loaded": len(self._rules),
                             "errors": sorted({e.code for e in result.errors})}
@@ -80,24 +82,43 @@ class PredictionGate:
         with self._lock:
             return {**self._status, "errors": list(self._status["errors"])}
 
+    def _at(self, pid, value):
+        """한 시점의 판정. 학습 프레임은 수십만 행이라 (ID, 요일그룹, 분) 으로 메모이즈한다."""
+        value = value.replace(tzinfo=KST) if value.tzinfo is None else value.astimezone(KST)
+        group = day_group_for(value, is_holiday=is_korean_holiday(value.date()))
+        minute = value.hour * 60 + value.minute + value.second / 60
+        key = (int(pid), group, minute)
+        cached = self._cache.get(key)
+        if cached is not None:
+            return cached
+        rule = self._rules.get((int(pid), group))
+        if rule is None:
+            verdict = (False, "evaluation_pending", "no_verified_window")
+        else:
+            windows, status, reason = rule
+            if any(start <= minute < end for start, end in windows):
+                verdict = (True, "available", "verified_window")
+            else:
+                verdict = (False, status if status != "available" else "unavailable", reason)
+        self._cache[key] = verdict
+        return verdict
+
     def check(self, pid, observed_at, arrival_at):
         with self._lock:
+            # 관측 시각과 도착 시각이 둘 다 검증된 창 안이어야 한다.
             for value in (observed_at, arrival_at):
-                value = value.replace(tzinfo=KST) if value.tzinfo is None else value.astimezone(KST)
-                group = day_group_for(value, is_holiday=is_korean_holiday(value.date()))
-                rule = self._rules.get((int(pid), group))
-                if rule is None:
-                    return {"allowed": False, "status": "evaluation_pending", "reason": "no_verified_window"}
-                windows, status, reason = rule
-                minute = value.hour * 60 + value.minute + value.second / 60
-                if not any(start <= minute < end for start, end in windows):
-                    return {"allowed": False, "status": status if status != "available" else "unavailable",
-                            "reason": reason}
+                allowed, status, reason = self._at(pid, value)
+                if not allowed:
+                    return {"allowed": False, "status": status, "reason": reason}
             return {"allowed": True, "status": "available", "reason": "verified_window"}
 
     def validity_mask(self, parking_ids, observation_times, target_times):
-        """학습·평가에서 재사용할 동일 게이트 마스크. 세 입력의 길이는 같아야 한다."""
+        """학습·평가가 서비스와 같은 게이트를 쓰게 한다. 세 입력의 길이는 같아야 한다.
+
+        서비스 예측을 막는 시간대는 학습·평가에서도 뺀다. 그래야 리포트 수치가
+        사용자가 실제로 보는 예측의 성능이 된다."""
         if not (len(parking_ids) == len(observation_times) == len(target_times)):
             raise ValueError("마스크 입력 길이가 다릅니다")
-        return [self.check(pid, observed, target)["allowed"]
-                for pid, observed, target in zip(parking_ids, observation_times, target_times)]
+        with self._lock:
+            return [self._at(pid, observed)[0] and self._at(pid, target)[0]
+                    for pid, observed, target in zip(parking_ids, observation_times, target_times)]
