@@ -1,0 +1,9 @@
+{
+  "rows": 439386,
+  "gate_rules": 267,
+  "allowed_share": 0.7325,
+  "min_rows_per_cell": 200,
+  "cells_insufficient": 0,
+  "cells_below_persistence": 3,
+  "note": "대표 수치는 게이트 허용 구간이다. 차단 구간은 사용자에게 예측이 나가지 않는다."
+}

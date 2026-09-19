@@ -1,0 +1,10 @@
+[Unit]
+Description=Check the Anyang parking API health
+After=anyang-api.service
+
+[Service]
+Type=oneshot
+User=chabee2027
+WorkingDirectory=/home/chabee2027/anyang-parking
+ExecStart=/home/chabee2027/anyang-parking/scripts/health_check.sh
+

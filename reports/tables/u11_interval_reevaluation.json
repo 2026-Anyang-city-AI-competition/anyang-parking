@@ -1,0 +1,20 @@
+{
+  "band": [
+    0.77,
+    0.83
+  ],
+  "min_rows": 500,
+  "cells": 16,
+  "passing": 6,
+  "deployed_open": 0,
+  "wrongly_open": [],
+  "can_open": [
+    "15|outside|wd",
+    "30|outside|wd",
+    "30|outside|we",
+    "60|outside|wd",
+    "120|outside|wd",
+    "120|outside|we"
+  ],
+  "note": "게이트는 u11_evaluate 가 학습·보정과 함께 정한다. 이 표는 근거다."
+}

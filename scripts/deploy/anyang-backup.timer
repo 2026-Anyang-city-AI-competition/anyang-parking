@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the Anyang parking database backup every day
+
+[Timer]
+OnCalendar=*-*-* 03:20:00 Asia/Seoul
+Persistent=true
+RandomizedDelaySec=300
+Unit=anyang-backup.service
+
+[Install]
+WantedBy=timers.target
+

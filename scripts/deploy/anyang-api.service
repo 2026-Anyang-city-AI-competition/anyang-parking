@@ -12,6 +12,9 @@
 Description=Anyang parking recommendation API
 After=network-online.target
 Wants=network-online.target
+# 10분 안에 5번 넘게 죽으면 멈추고 원인을 본다.
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -25,9 +28,6 @@ ExecStart=/home/chabee2027/anyang-parking/.venv/bin/python -m uvicorn src.serve.
 # 재시작 정책 — 죽으면 되살리되, 부팅 루프는 막는다.
 Restart=always
 RestartSec=5
-# 10분 안에 5번 넘게 죽으면 멈추고 사람을 부른다. 무한 재시작으로 원인을 덮지 않는다.
-StartLimitIntervalSec=600
-StartLimitBurst=5
 
 # 느린 종료로 배포가 막히지 않게 한다.
 TimeoutStopSec=30

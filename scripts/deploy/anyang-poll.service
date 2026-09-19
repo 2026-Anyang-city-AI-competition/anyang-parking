@@ -1,0 +1,27 @@
+[Unit]
+Description=Anyang parking five-minute collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=chabee2027
+WorkingDirectory=/home/chabee2027/anyang-parking
+ExecStart=/usr/bin/python3 -u src/collect/poll_parking.py
+Restart=always
+RestartSec=30
+TimeoutStopSec=30
+KillSignal=SIGTERM
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/chabee2027/anyang-parking/data /home/chabee2027/anyang-parking/logs
+
+StandardOutput=append:/home/chabee2027/anyang-parking/logs/poll.log
+StandardError=append:/home/chabee2027/anyang-parking/logs/poll.err
+
+[Install]
+WantedBy=multi-user.target
+

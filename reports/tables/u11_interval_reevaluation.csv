@@ -1,0 +1,17 @@
+key,horizon,state,rows_total,rows_with_interval,interval_share,coverage,avg_width,status,pass,deployed_open
+15|operating|wd,15,operating|wd,33714,25270,0.7495,0.7647,10.16,ok,False,False
+15|operating|we,15,operating|we,6292,3216,0.5111,0.7581,8.46,ok,False,False
+15|outside|wd,15,outside|wd,41728,30869,0.7398,0.795,3.53,ok,True,False
+15|outside|we,15,outside|we,31429,15876,0.5051,0.8485,4.03,ok,False,False
+30|operating|wd,30,operating|wd,33678,25248,0.7497,0.7488,13.91,ok,False,False
+30|operating|we,30,operating|we,6268,3204,0.5112,0.7041,11.94,ok,False,False
+30|outside|wd,30,outside|wd,40960,30233,0.7381,0.7828,5.6,ok,True,False
+30|outside|we,30,outside|we,31051,15517,0.4997,0.825,5.61,ok,True,False
+60|operating|wd,60,operating|wd,33606,25194,0.7497,0.7492,18.51,ok,False,False
+60|operating|we,60,operating|we,6220,3180,0.5113,0.6352,16.56,ok,False,False
+60|outside|wd,60,outside|wd,39424,29343,0.7443,0.7787,9.08,ok,True,False
+60|outside|we,60,outside|we,30295,15312,0.5054,0.8698,7.32,ok,False,False
+120|operating|wd,120,operating|wd,33462,25086,0.7497,0.7434,24.81,ok,False,False
+120|operating|we,120,operating|we,6124,3132,0.5114,0.6434,22.42,ok,False,False
+120|outside|wd,120,outside|wd,36352,27012,0.7431,0.7748,15.22,ok,True,False
+120|outside|we,120,outside|we,28783,14556,0.5057,0.8156,12.3,ok,True,False

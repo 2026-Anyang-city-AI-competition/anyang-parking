@@ -144,11 +144,12 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     if use_cache:
         route_con.commit()
         route_con.close()
-    # 폴백으로 채운 항목은 실패로 센다. 서비스는 살아 있어도 경로 API 는 실패한 것이다.
+    # 폴백으로 채운 항목만 실패로 센다. 캐시는 외부 호출을
+    # 성공해 보관한 결과이므로 실패가 아니다.
     for value in out.values():
         if isinstance(value, dict):
             metrics.record_external("kakao_route_multi",
-                                    value.get("source") == "kakao", 0.0)
+                                    value.get("source") in {"kakao", "cache"}, 0.0)
     return out
 
 def future_eta(origin, dest, minutes_ahead=30, key=None):

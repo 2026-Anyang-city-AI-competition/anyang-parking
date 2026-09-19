@@ -1,0 +1,12 @@
+# Production API runtime only. Analysis and model-training packages stay in
+# requirements.txt and are intentionally not installed on the 1 GB VM.
+numpy==2.5.2
+pandas==3.0.5
+scikit-learn==1.9.0
+lightgbm==4.7.0
+scipy==1.18.1
+pyarrow==25.0.1
+holidays==0.103
+requests==2.34.2
+fastapi==0.141.1
+uvicorn==0.53.0
