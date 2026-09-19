@@ -741,19 +741,23 @@ A27 실험(`src/analysis/a27_continuous_horizon.py`): 지평선을 피처로 넣
 - [x] 폴링·경로·검색 API 실패율과 응답시간 기록 — `src/serve/metrics.py`, `/health`의 `metrics`
 - [x] 사용자 응답에 내부 경로·키·원천 응답 본문 노출 금지
 
-### 9.1 다음 단계: `main` 푸시 자동 배포(CI/CD) — P0
+### 9.1 `main` 푸시 자동 배포(CI/CD) — 완료
 
-현재는 **자동 배포가 아니다.** `.github/workflows/parking-regressions.yml`은 테스트 전용이고,
-푸시 트리거도 `codex/parking-review-fixes` 브랜치뿐이다. GCP VM의 systemd 자동 재시작은
-프로세스 장애 복구일 뿐 새 코드를 받는 배포 기능이 아니다. Cloud Build API도 아직 켜지지 않았다.
+`.github/workflows/deploy-gcp.yml`이 `main` 푸시마다 회귀 테스트 73개와 프런트 빌드를 먼저
+검증하고, 성공한 동일 산출물만 GCP 운영 VM에 배포한다. GitHub OIDC와 Workload Identity
+Federation을 사용하므로 장기 서비스 계정 JSON이나 고정 SSH 개인키를 저장하지 않는다.
 
-- [ ] `main` 푸시 → Python 테스트·프런트 빌드 통과 → GCP 운영 VM 배포 순서로 워크플로 추가
-- [ ] 장기 SSH 키/서비스 계정 JSON 대신 GitHub Actions용 Workload Identity Federation 구성
-- [ ] `data/`, DB, 로그, `.env`, `/etc/anyang-parking`은 절대 덮어쓰지 않고 코드·빌드 산출물만 배포
-- [ ] 잠금 파일 기반 의존성 설치, 프런트 `npm ci && npm run build`, 새 릴리스 디렉터리 생성
-- [ ] systemd 재시작 후 `/health` 확인; 실패하면 직전 릴리스로 자동 롤백
-- [ ] 동시 배포 1개 제한, production 환경 승인·배포 이력·실패 로그 남기기
-- [ ] 실제 `main` 푸시 한 번으로 테스트 → 배포 → 헬스체크까지 검증
+- [x] `main` 푸시 → Python 테스트·프런트 빌드 통과 → GCP 운영 VM 배포 순서로 워크플로 추가
+- [x] 장기 SSH 키/서비스 계정 JSON 대신 GitHub Actions용 Workload Identity Federation 구성
+- [x] `data/`, DB, 로그, `.env`, `/etc/anyang-parking`은 덮어쓰지 않고 코드·빌드 산출물만 배포
+- [x] 고정 버전 Python 요구사항 설치, 프런트 `npm ci && npm run build`, 검증된 릴리스 번들 생성
+- [x] systemd 재시작 후 모델·백그라운드 갱신·프런트 스모크 체크; 실패하면 직전 릴리스로 자동 롤백
+- [x] 동시 배포 1개 제한, GitHub `production` 환경과 배포 이력·실패 진단 로그 구성
+- [x] 실제 `main` 푸시 검증 완료 — Actions run `35453697432`, 운영 revision `72e7cd2`
+
+배포 대상은 `src/`, `scripts/`, `web/dist/`, `requirements-api.txt`뿐이다. 실패 릴리스에서
+롤백이 실제로 작동하는 것도 확인했으며, 운영의 `parking.db`·`gits.db`와 폴러는 배포 중에도
+별도 경로에 보존된다.
 
 ---
 
@@ -809,8 +813,8 @@ P2 구현 메모:
 14. ✅ 목적지 입력 옆 지도 버튼 + 지도에서 목적지 선택
 15. ✅ 추천 결과의 실제 지도 + 순위 핀↔카드 동기화
 16. ✅ 모델 백그라운드 갱신·경로 캐시 + 390×844 모바일 엔드투엔드 테스트
-17. `main` 푸시 CI/CD — 테스트·빌드 → GCP VM 배포 → 헬스체크 → 실패 시 롤백
+17. ✅ `main` 푸시 CI/CD — 테스트·빌드 → GCP VM 배포 → 헬스체크 → 실패 시 롤백
 
 조사 결과 수동 적재는 개발 단계와 병렬로 계속하며, 실제 서비스 검증 전까지 완료한다.
-현재 새 P0 범위는 13~17이다. OAuth·정기권·사용자 제보보다 시간·경로·지도·응답속도·자동 배포를
-먼저 완성한다.
+새 P0 범위 13~17은 완료됐다. 조사 데이터 수동 적재와 반복 예측 검증은 별도 운영 작업으로
+계속한다.
