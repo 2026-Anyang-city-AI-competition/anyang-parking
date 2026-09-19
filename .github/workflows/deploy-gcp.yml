@@ -31,6 +31,16 @@ jobs:
       - name: Compile service code
         run: python -m compileall -q src scripts tests
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build web
+        working-directory: web
+        run: npm ci && npm run build
+
       - name: Run service regression tests
         run: >-
           python -m unittest
@@ -45,16 +55,6 @@ jobs:
           tests.test_accuracy_gate
           tests.test_places
           tests.test_deploy_release
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
-      - name: Build web
-        working-directory: web
-        run: npm ci && npm run build
 
       - name: Validate deployment scripts
         run: bash -n scripts/deploy/deploy_release.sh scripts/deploy/deploy_smoke_check.sh
