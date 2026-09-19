@@ -1,0 +1,42 @@
+{
+  "raw_n": 487364,
+  "raw_hash": "7449e34b9a7a3be8e7f0057fe0e4bdddd6e523c0c6e2f7364b12b40da614af0b",
+  "lots_hash": "ecbfb96d71beb10305bed0fac1731a67cfaf31c02d917cc647a4caa0fe0a0d20",
+  "rules_hash": "92f7426a37b13d916c822401e0a3525d6f39a94a3539b43bb885235d2e492ef4",
+  "active_lots": 68,
+  "active_raw_n": 372368,
+  "start": "2026-08-31 04:56:37+09:00",
+  "end": "2026-09-19 18:50:35+09:00",
+  "absent_ids": [],
+  "protocol": "a22c_baseline_comparison_v1",
+  "test_dates": [
+    "2026-09-12",
+    "2026-09-13",
+    "2026-09-14",
+    "2026-09-15",
+    "2026-09-16",
+    "2026-09-17",
+    "2026-09-18"
+  ],
+  "data_end_kst": "2026-09-19 00:00:00+09:00",
+  "eligible_n_before_lag_intersection": 245836,
+  "common_n_after_lag_intersection": 229617,
+  "dropped_for_missing_lag_24h_or_7d": 16219,
+  "lag_anchor": "ts_kst(관측 시각) 기준, target_time 기준 아님 — persistence의 occ_now와 동일 앵커",
+  "baselines": {
+    "persistence": "occ_now",
+    "lag_24h": "occ(ts_kst-24h)",
+    "lag_7d": "occ(ts_kst-7d)"
+  },
+  "note": "세 기준선을 공통 행(교집합)에서만 비교함 — CLAUDE.local.md 'A20/A22 확정 규칙' 준수. AI 모델은 이 스크립트의 비교 대상이 아니다(A23에서 다룸).",
+  "source_hashes": {
+    "a22c_baseline_comparison.py": "df87fbf303b2e11bdf7d79dfc5e3520aaec2321d93ac81c77182a244d762144b",
+    "a22_baseline_api_alive.py": "cecaabbfe7f786232ae8929e1bb40e6e735eed613111b2d03cd18897f2f4e168",
+    "a20_matched_model_comparison.py": "7a45367edf15b3e0bd7e49843e019af44a51a5c36df9e857334c66c0e80fe937",
+    "a19_persistence_baseline.py": "0bcf6adb84214ed0285d94439d8943d8fbb587b2dcbae6b21dd52afab899a98e"
+  },
+  "versions": {
+    "pandas": "3.0.5",
+    "numpy": "2.5.3"
+  }
+}
