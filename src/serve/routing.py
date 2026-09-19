@@ -33,6 +33,9 @@ KST  = timezone(timedelta(hours=9))
 NAVI = "https://apis-navi.kakaomobility.com"
 LOCAL = "https://dapi.kakao.com/v2/local/search/category.json"
 TIMEOUT, MAX_DEST, RETRY = 15, 30, 2  # Added RETRY
+ROUTE_CACHE_TTL_SEC = 300       # 현재 교통 경로는 5분만 신선하다고 본다.
+ROUTE_CACHE_STALE_SEC = 86400   # 카카오 장애 때만 최대 24시간 캐시를 추정치로 쓴다.
+COORD_DECIMALS = 5              # 약 1m. 부동소수점 잡음만 합치고 다른 출발지는 섞지 않는다.
 
 # 폴백 상수 — 직선거리 × 우회계수 ÷ 도심 평균속도
 #   ★ 출발지 1곳·경로 25개로 맞춘 값이라 근거가 얇다. **더 맞추지 않는다(재보정 금지).**
@@ -65,11 +68,13 @@ def fallback_eta(lat1, lon1, lat2, lon2):
             "source": "fallback", "estimated": True}
 
 def _route_db():
-    """Initialize route cache database."""
+    """동시 추천 요청도 안전하게 쓰는 로컬 경로 캐시."""
     cache_dir = ROOT / "data/interim"
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / "route_cache.sqlite"
-    con = sqlite3.connect(cache_file)
+    con = sqlite3.connect(cache_file, timeout=5)
+    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA busy_timeout=5000")
     con.execute("""CREATE TABLE IF NOT EXISTS route(
         origin_lat REAL, origin_lon REAL,
         dest_lat REAL, dest_lon REAL,
@@ -78,16 +83,58 @@ def _route_db():
     con.commit()
     return con
 
+
+def _cache_key(origin, dest):
+    return tuple(round(float(value), COORD_DECIMALS) for value in (*origin, *dest))
+
+
+def _cache_age(ts, now=None):
+    try:
+        value = datetime.fromisoformat(ts)
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=KST)
+        return max(0.0, ((now or datetime.now(KST))-value.astimezone(KST)).total_seconds())
+    except (TypeError, ValueError):
+        return None
+
+
+def _read_cached(con, origin, dest):
+    key = _cache_key(origin, dest)
+    row = con.execute(
+        "SELECT distance,duration,ts FROM route "
+        "WHERE origin_lat=? AND origin_lon=? AND dest_lat=? AND dest_lon=?", key
+    ).fetchone()
+    if not row:
+        return None
+    return {"distance": row[0], "duration": row[1], "ts": row[2],
+            "age": _cache_age(row[2]), "key": key}
+
+
+def _write_cached(con, origin, dest, value):
+    key = _cache_key(origin, dest)
+    con.execute(
+        "INSERT OR REPLACE INTO route VALUES (?,?,?,?,?,?,?)",
+        (*key, value["distance"], value["duration"], datetime.now(KST).isoformat()),
+    )
+
 def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     """origin=(lat,lon) · dests={id:(lat,lon)} → {id:{distance,duration,source}}
-    실패하면 그 항목만 폴백으로 채운다. 예외를 밖으로 던지지 않는다."""
+    신선 캐시 → 카카오 → 24시간 이내 stale 캐시 → 직선 폴백 순이다.
+    실패하면 그 항목만 폴백으로 채우며 예외를 밖으로 던지지 않는다."""
     if key is None: key = _key()      # key="" 는 '키 없음' 강제(폴백 시험용)
-    out, items = {}, list(dests.items())
-    # Use cache if enabled
-    if use_cache:
-        route_con = _route_db()
-    for i in range(0, len(items), MAX_DEST):          # 30개씩 끊는다
-        chunk = items[i:i+MAX_DEST]
+    out, cached = {}, {}
+    route_con = _route_db() if use_cache else None
+    for pid, dest in dests.items():
+        row = _read_cached(route_con, origin, dest) if route_con is not None else None
+        cached[pid] = row
+        if row is not None and row["age"] is not None and row["age"] <= ROUTE_CACHE_TTL_SEC:
+            out[pid] = {"distance": row["distance"], "duration": row["duration"],
+                        "source": "cache", "estimated": False,
+                        "cache_age_sec": round(row["age"])}
+
+    misses = [(pid, dest) for pid, dest in dests.items() if pid not in out]
+    for i in range(0, len(misses), MAX_DEST):          # 캐시 미스만 30개씩 끊는다.
+        chunk = misses[i:i+MAX_DEST]
         got = {}
         if key:
             body = {"origin": {"x": origin[1], "y": origin[0]},        # ★ x=경도
@@ -123,25 +170,22 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
                         wait_time = 2 ** a
                         print(f"[routing] Attempt {a+1} failed: {type(e).__name__}: {str(e)[:100]}. Retrying in {wait_time}s...", flush=True)
                         time.sleep(wait_time)
-        for k, (lat, lon) in chunk:
-            # Check cache first if enabled
-            if use_cache:
-                cur = route_con.execute(
-                    "SELECT distance, duration FROM route WHERE origin_lat=? AND origin_lon=? AND dest_lat=? AND dest_lon=?",
-                    (origin[0], origin[1], lat, lon))
-                row = cur.fetchone()
-                if row:
-                    out[k] = {"distance": row[0], "duration": row[1], "source": "cache", "estimated": False}
-                    continue
-            # Not in cache or cache disabled, use the API result or fallback
-            out[k] = got.get(str(k)) or fallback_eta(origin[0], origin[1], lat, lon)
-            # Store in cache if enabled
-            if use_cache and out[k]["source"] == "kakao":
-                route_con.execute(
-                    "INSERT OR REPLACE INTO route VALUES (?,?,?,?,?,?,?)",
-                    (origin[0], origin[1], lat, lon, out[k]["distance"], out[k]["duration"],
-                     datetime.now(KST).isoformat()))
-    if use_cache:
+        for pid, (lat, lon) in chunk:
+            api_value = got.get(str(pid))
+            if api_value is not None:
+                out[pid] = api_value
+                if route_con is not None:
+                    _write_cached(route_con, origin, (lat, lon), api_value)
+                continue
+            stale = cached.get(pid)
+            if (stale is not None and stale["age"] is not None
+                    and stale["age"] <= ROUTE_CACHE_STALE_SEC):
+                out[pid] = {"distance": stale["distance"], "duration": stale["duration"],
+                            "source": "stale_cache", "estimated": True,
+                            "cache_age_sec": round(stale["age"])}
+            else:
+                out[pid] = fallback_eta(origin[0], origin[1], lat, lon)
+    if route_con is not None:
         route_con.commit()
         route_con.close()
     # 폴백으로 채운 항목만 실패로 센다. 캐시는 외부 호출을

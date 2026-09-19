@@ -23,6 +23,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.serve.predictor import Predictor
+from src.serve.background_refresh import BackgroundRefresher
 from src.serve.recommend import recommend
 from src.serve.request_polling import RequestPoller
 from src.serve.access_rules import AccessRulesRepository
@@ -146,10 +147,13 @@ def create_app(predictor=None, poller=None, access_rules=None):
         application.state.poller = supplied_poller or RequestPoller()
         application.state.access_rules = supplied_access_rules or AccessRulesRepository()
         application.state.prediction_gate = PredictionGate()
-        await run_in_threadpool(service.refresh_from_db, force=True)
-        await run_in_threadpool(application.state.access_rules.refresh, force=True)
-        await run_in_threadpool(application.state.prediction_gate.refresh, force=True)
-        yield
+        application.state.refresher = BackgroundRefresher(
+            service, application.state.access_rules, application.state.prediction_gate)
+        await application.state.refresher.start()
+        try:
+            yield
+        finally:
+            await application.state.refresher.stop()
 
     application = FastAPI(
         title="안양 공영주차장 추천 API",
@@ -215,11 +219,11 @@ def create_app(predictor=None, poller=None, access_rules=None):
 
     @application.get("/api/v1/health")
     async def health(request: Request):
-        service = request.app.state.predictor
-        status = await run_in_threadpool(service.refresh_from_db)
+        status = request.app.state.refresher.service_status()
         access_status = request.app.state.access_rules.status()
         ready = status.get("prediction_ready_lots")
         overall = ("ok" if status["model_status"] == "ready"
+                   and status.get("model_reload_error") is None
                    and status["data_status"] == "fresh"
                    and status.get("refresh_error") is None
                    and ready is not None and ready >= (status.get("live_lots") or 1)
@@ -228,11 +232,13 @@ def create_app(predictor=None, poller=None, access_rules=None):
         gate_status = request.app.state.prediction_gate.status()
         return {"status": overall, "service": status, "access_rules": access_status,
                 "prediction_gate": gate_status,
+                "background_refresh": request.app.state.refresher.status(),
                 # 모니터링이 읽는 자리. 외부 API 실패율과 응답시간이 여기 모인다.
                 "metrics": metrics.snapshot(),
                 "auth": auth.status(),
                 "checks": {
                     "model": status["model_status"] == "ready",
+                    "model_bundle_current": status.get("model_reload_error") is None,
                     "observations_fresh": status["data_status"] == "fresh",
                     "access_rules": access_status["status"] not in {"invalid", "unavailable"},
                     "prediction_gate": gate_status["status"] == "ready",
@@ -249,10 +255,15 @@ def create_app(predictor=None, poller=None, access_rules=None):
                              {"unknown": unknown, "allowed": sorted(fare_tables.DISCOUNTS)})
         service = request.app.state.predictor
         poll_status = await run_in_threadpool(request.app.state.poller.poll_if_due)
-        service_status = await run_in_threadpool(
-            service.refresh_from_db, force=poll_status["status"] == "polled")
-        access_status = await run_in_threadpool(request.app.state.access_rules.refresh)
-        gate_status = await run_in_threadpool(request.app.state.prediction_gate.refresh)
+        if poll_status["status"] == "polled":
+            # 새로 저장한 관측은 이번 추천부터 써야 한다. 갱신 실행 주체는 백그라운드
+            # 관리자로 유지하고, 실제 폴링이 있었던 드문 요청만 완료를 기다린다.
+            service_status = await request.app.state.refresher.refresh(force=True)
+        else:
+            service_status = request.app.state.refresher.service_status()
+            request.app.state.refresher.trigger()
+        access_status = request.app.state.access_rules.status()
+        gate_status = request.app.state.prediction_gate.status()
         origin = ((body.origin.lat, body.origin.lng) if body.origin else None)
         work = partial(
             recommend,
@@ -277,6 +288,7 @@ def create_app(predictor=None, poller=None, access_rules=None):
             "poll": poll_status,
             "access_rules": access_status,
             "prediction_gate": gate_status,
+            "background_refresh": request.app.state.refresher.status(),
             "request": body.model_dump(),
         })
         return result

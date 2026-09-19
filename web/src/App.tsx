@@ -395,11 +395,12 @@ function ResultMap({
         icon,
         keyboard: true,
         title: `${index + 1}위 ${card.name}`,
-      }).addTo(layer);
+      });
       marker.on('add', () => {
         marker.getElement()?.setAttribute('aria-label', `${index + 1}위 ${card.name}`);
       });
       marker.on('click', () => onSelect(card.parking_id));
+      marker.addTo(layer);
       parkingMarkers.current[card.parking_id] = marker;
       bounds.push([card.lat, card.lng]);
     });

@@ -2,6 +2,7 @@ import sqlite3
 import tempfile
 import threading
 import unittest
+import pickle
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -9,6 +10,28 @@ from src.serve.predictor import Predictor
 
 
 class LiveRefreshTests(unittest.TestCase):
+    def test_bad_hot_reload_keeps_previous_model_bundle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "predictor.pkl"
+            bundle = {
+                "models": {(15, .1): "model"},
+                "full_models": {15: "classifier"},
+                "feat_cols": ["occ_now"],
+                "dead": [], "hist": {}, "meta": {},
+                "model_version": "good-v1",
+            }
+            with path.open("wb") as handle:
+                pickle.dump(bundle, handle)
+            predictor = Predictor(path=path)
+            self.assertTrue(predictor.ok)
+            self.assertEqual(predictor.model_version, "good-v1")
+
+            path.write_bytes(b"not-a-pickle-bundle")
+            self.assertFalse(predictor.reload_model_if_changed())
+            self.assertTrue(predictor.ok)
+            self.assertEqual(predictor.model_version, "good-v1")
+            self.assertEqual(predictor.model_reload_error, "UnpicklingError")
+
     def test_recent_observations_replace_bundled_history_without_retraining(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "parking.db"

@@ -27,8 +27,7 @@ TAB = ROOT / "reports/tables"
 OUT = ROOT / "data/processed/u11"
 # 240·360 추가. 주차장별 정확도 게이트(prediction_accuracy.csv)가 못 맞히는 곳을
 # 막아 주므로, 지평선 전체를 켜고 끄는 대신 맞히는 주차장에서만 나간다.
-# ⚠️ 180분은 아직 없다. 180분 요청은 120이나 240으로 60분이나 밀린다 — 다음 확장 대상.
-HORIZONS = (15, 30, 60, 120, 240, 360)
+HORIZONS = (15, 30, 60, 120, 180, 240, 360)
 FEATURES = INTX + ["opr_" + c for c in OPR_COLS]
 PARAMS = dict(n_estimators=120, learning_rate=.08, num_leaves=31,
               min_child_samples=40, random_state=42, n_jobs=4, verbosity=-1)
@@ -116,8 +115,12 @@ def split_frame(t, start, gate=None):
     train = valid[valid.target_time < cal_start].copy()
     cal = valid[(valid.ts_kst >= cal_start) & (valid.target_time < start)].copy()
     test = valid[(valid.ts_kst >= start) & (valid.target_time < start+pd.Timedelta(days=1))].copy()
-    assert train.target_time.max() < cal.ts_kst.min()
-    assert cal.target_time.max() < test.ts_kst.min()
+    # ★ 수집 중인 날은 test 가 비어 있다. 빈 조각으로 비교하면 NaT 가 섞여 단언이
+    #   "누수" 처럼 실패한다 — 실제로는 평가할 수 없는 fold 일 뿐이다. 호출자가 건너뛴다.
+    if not train.empty and not cal.empty:
+        assert train.target_time.max() < cal.ts_kst.min()
+    if not cal.empty and not test.empty:
+        assert cal.target_time.max() < test.ts_kst.min()
     return train, cal, test
 
 
@@ -263,6 +266,7 @@ def run():
     (OUT/"routes.json").write_text(json.dumps([{ "key":list(k),"duration":v[0],"cached_at":v[1]} for k,v in routes.items()], ensure_ascii=False))
     cov, queries, skips, audits, allpred = [],[],[],[],[]
     final_models,final_full,final_platt,final_cqr = {},{},{},{}
+    deployed_fold = {}
     for fold, day in enumerate(dates, 1):
         start = pd.Timestamp(day)
         prior = d[d.ts_kst < start-pd.Timedelta(days=1)]
@@ -270,6 +274,11 @@ def run():
         dead = set(ranges.index[(ranges["max"]-ranges["min"]) < 1])
         for h,t in frames.items():
             train,cal,test = split_frame(t,start)
+            if cal.empty or test.empty:
+                # 아직 하루가 끝나지 않은 날. 평가하지 않고 넘어간다.
+                print(f"fold={fold} {start.date()} h={h}: 수집 중인 날이라 건너뜀 "
+                      f"(cal={len(cal)} test={len(test)})", flush=True)
+                continue
             bundle = fit_models(train,cal)
             test = test[~test.parking_id.isin(dead)]
             pred = predict_frame(bundle,test)
@@ -285,17 +294,29 @@ def run():
                 test_end=str(test.target_time.max()),live_lots=test.parking_id.nunique(),dead_lots=len(dead),
                 partial_day=info["end"][:10] == str(start.date()),model_id=f"fold{fold}_h{h}"))
             print(f"fold={fold} {start.date()} h={h}: train={len(train)} cal={len(cal)} test={len(test)} queries={len(q)}",flush=True)
-            if fold == len(dates):
-                models,clf,platt,adj = bundle
-                final_models.update({(h,a):m for a,m in models.items()})
-                final_full[h],final_platt[h] = clf,platt
-                final_cqr.update({f"{h}|{s}":v for s,v in adj.items()})
+            # ★ 마지막 **평가된** fold 의 모델을 배포한다. `fold == len(dates)` 로 고르면
+            #   그날이 수집 중이라 건너뛰었을 때 번들이 통째로 비어 옛 모델이 남는다.
+            #   날짜 순으로 돌므로 매번 덮어쓰면 마지막 성공 fold 가 남는다.
+            models,clf,platt,adj = bundle
+            final_models.update({(h,a):m for a,m in models.items()})
+            final_full[h],final_platt[h] = clf,platt
+            final_cqr.update({f"{h}|{s}":v for s,v in adj.items()})
+            deployed_fold[h] = fold
     pd.DataFrame(cov).to_csv(TAB/"u11_coverage.csv",index=False)
     pd.DataFrame(queries).to_csv(TAB/"u11_rank_queries.csv",index=False)
     pd.DataFrame(skips).to_csv(TAB/"u11_rank_exclusions.csv",index=False)
     pd.DataFrame(audits).to_csv(TAB/"u11_splits.csv",index=False)
     pd.concat(allpred,ignore_index=True).to_parquet(OUT/"predictions.parquet",index=False)
     (TAB/"u11_manifest.json").write_text(json.dumps(info,ensure_ascii=False,indent=2)+"\n")
+    # 모델이 하나도 안 만들어졌으면 덮어쓰지 않는다. 옛 번들을 그대로 두는 편이
+    # 빈 번들을 배포하는 것보다 안전하다.
+    if not final_models:
+        raise SystemExit("평가된 fold 가 없어 배포할 모델이 없다 — 데이터 수집 상태를 확인한다")
+    missing = [h for h in HORIZONS if h not in deployed_fold]
+    if missing:
+        raise SystemExit(f"지평선 {missing} 의 모델이 만들어지지 않았다 — 번들을 덮어쓰지 않는다")
+    print(f"배포 fold: {deployed_fold}", flush=True)
+
     # 최신 fold의 검증된 동일 모델을 배포한다. 보정 뒤 재학습하지 않는다.
     from src.report.u11_report import generate
     gate = generate()

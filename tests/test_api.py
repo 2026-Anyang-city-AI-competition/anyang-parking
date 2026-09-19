@@ -60,6 +60,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["status"], "ok")
         self.assertEqual(response.json()["service"]["live_lots"], 68)
         self.assertEqual(response.json()["access_rules"]["status"], "empty")
+        self.assertTrue(response.json()["background_refresh"]["running"])
         self.assertTrue(response.headers["X-Request-ID"])
 
     def test_recommend_validates_and_returns_service_metadata(self):
