@@ -461,6 +461,7 @@ fail-closed 게이트로 학습 표본을 0으로 만들지 않기 위한 예외
 - [x] 후보 부족·경로 실패·폴링 실패·예측 불가를 서로 다른 상태로 반환 — `exhausted`/`estimated`/`poll`/`prediction_reason`
 - [x] 프런트엔드용 TypeScript 타입과 실제 응답 fixture 3개 생성 — `web/src/api/types.ts`, fixture는 서비스 경로로 재생성
 - [x] 현재 `web/src/data.ts`의 가짜 데이터를 실제 API 호출로 교체 — `data.ts` 삭제
+- [ ] predictor.pkl·KAKAO_REST_KEY 확보 후 generate_fixtures.py 재실행 → ui_*.png 3장 다시 촬영(도착 시점 예측 줄이 나와야 제출용으로 완성)
 
 9단계 구현 완료: `web/src/api/`에 타입·클라이언트·표시 규칙을 두고 `App.tsx`가 실제 응답만 읽는다.
 `web/src/data.ts`(가짜 데이터)는 삭제했다. 표시 규칙은 세 가지를 지킨다.
