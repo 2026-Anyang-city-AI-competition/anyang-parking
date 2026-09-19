@@ -21,6 +21,11 @@ CASES = [
 ]
 
 predictor = Predictor()
+# API 경로(src/serve/api.py)는 요청마다 이걸 호출해서 최근 lag/rolling을 최신 DB로 갱신한다.
+# 이 스크립트는 recommend()를 직접 부르므로 그 경로를 안 타 — 안 하면 pickle에 박힌
+# 옛 이력으로만 예측해서 매번 no_fresh_history가 난다.
+status = predictor.refresh_from_db(force=True)
+print(f"predictor refresh: {status}")
 # 서비스와 같은 경로로 만든다. 출입 규칙·예측 게이트를 빼면 fixture 가 실제 응답과 달라진다.
 access_rules = AccessRulesRepository()
 access_rules.refresh(force=True)

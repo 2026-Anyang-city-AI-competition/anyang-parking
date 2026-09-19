@@ -12,8 +12,13 @@ A20의 history_complete/future_complete/eligible 게이트가 수정 없이 그�
 enterable(실제 입출차 가능 여부)은 이 스크립트에서 쓰지 않는다 — 그건 추천 필터링
 개념이고 모델 성능 채점 기준이 아니다(계획 확정 사항).
 
-test 날짜와 데이터 절단 시각은 A20과 정확히 같은 시간 범위에서 비교하기 위해
-A20 manifest(reports/tables/a20_manifest.json)의 값으로 고정한다.
+test 날짜와 데이터 절단 시각은 기본으로 A20과 정확히 같은 시간 범위(A20
+manifest(reports/tables/a20_manifest.json)의 값)를 재현한다. --test-dates/--data-end로
+바꿀 수 있고, --output-prefix로 산출물 이름을 바꿔 기존 a22_* 결과 위에 안 덮어쓸 수 있다.
+
+python src/analysis/a22_baseline_api_alive.py \
+    --test-dates 2026-09-12,2026-09-13,2026-09-14,2026-09-15,2026-09-16,2026-09-17,2026-09-18 \
+    --data-end "2026-09-19 00:00:00+09:00" --output-prefix a22b
 """
 import argparse
 import hashlib
@@ -243,22 +248,31 @@ def pick_scalar(df, col):
 
 
 def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, table_dir=TABLES,
-        prediction_dir=PROCESSED / "a22", a20_table_dir=TABLES,
-        a20_prediction_path=PROCESSED / "a20" / "predictions.csv.gz", model_params=None):
-    print("=== A22 label_valid 게이트 재평가 (A20 대비) ===", flush=True)
+        a20_table_dir=TABLES, a20_prediction_path=PROCESSED / "a20" / "predictions.csv.gz",
+        model_params=None, test_dates=None, data_end=None, output_prefix="a22",
+        prediction_dir=None):
+    """test_dates/data_end를 안 주면 A20과 정확히 같은 조건(고정값)을 재현한다.
+    output_prefix로 산출물 파일명을 바꿔서 기존 a22_* 결과를 덮어쓰지 않고 나란히 남길 수 있다."""
+    test_dates = FIXED_TEST_DATES if test_dates is None else test_dates
+    data_end = FIXED_DATA_END if data_end is None else data_end
+    is_default_window = test_dates is FIXED_TEST_DATES and data_end is FIXED_DATA_END
+    prediction_dir = Path(prediction_dir) if prediction_dir else PROCESSED / output_prefix
+
+    print(f"=== {output_prefix.upper()} label_valid 게이트 재평가 (A20 대비) ===", flush=True)
     obs, lots, rules, info = load_inputs(db_path, rules_path)
     before_n = len(obs)
-    obs = obs.loc[obs["ts_kst"] <= FIXED_DATA_END].copy()
+    obs = obs.loc[obs["ts_kst"] <= data_end].copy()
     truncated_n = before_n - len(obs)
+    window_note = "A20과 동일(고정)" if is_default_window else "CLI 지정값"
     print(f"대상 {len(rules)}곳 · {len(obs):,}행(데이터 절단으로 {truncated_n:,}행 제외, "
-          f"절단 시각(A20과 동일)={FIXED_DATA_END})", flush=True)
-    print(f"test 날짜(A20과 동일, 고정): "
-          f"{', '.join(str(d.date()) for d in FIXED_TEST_DATES)}", flush=True)
+          f"절단 시각={data_end} [{window_note}])", flush=True)
+    print(f"test 날짜 [{window_note}]: "
+          f"{', '.join(str(d.date()) for d in test_dates)}", flush=True)
 
     base, anomalies, holiday_counts = build_features_label_valid(obs, lots, rules, progress=True)
     opr_const, open_ratio = diagnostics_per_horizon(base, rules, lots)
     paired, summary, daily, audits, per_lot = evaluate(
-        base, rules, lots, FIXED_TEST_DATES, model_params)
+        base, rules, lots, test_dates, model_params)
 
     a20_pred = load_a20_predictions(a20_prediction_path)
     b_table = rescore_with_a20(paired, a20_pred)
@@ -266,14 +280,14 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, table_dir=TABLE
     dropped_diag = dropped_row_diagnostic(a20_pred, paired)
     passed, pass_checks = pass_fail(summary)
 
-    table_dir, prediction_dir = Path(table_dir), Path(prediction_dir)
+    table_dir = Path(table_dir)
     table_dir.mkdir(parents=True, exist_ok=True)
     prediction_dir.mkdir(parents=True, exist_ok=True)
     for name, frame in (("comparison", summary), ("by_day", daily), ("splits", audits),
                         ("per_lot", per_lot), ("three_line", three_line),
                         ("opr_constant_lots", opr_const), ("open_transition", open_ratio),
                         ("anomalies", anomalies), ("a20_dropped_diagnostic", dropped_diag)):
-        frame.to_csv(table_dir / f"a22_{name}.csv", index=False, encoding="utf-8-sig")
+        frame.to_csv(table_dir / f"{output_prefix}_{name}.csv", index=False, encoding="utf-8-sig")
     paired.to_csv(prediction_dir / "predictions.csv.gz", index=False, compression="gzip")
 
     unmatched_total = int(b_table["unmatched_n"].sum())
@@ -285,16 +299,17 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, table_dir=TABLE
                     Path(__file__).parents[1] / "features/temporal.py"]
     manifest = {
         **info, "protocol": "a22_label_valid_v1", "status": "complete" if passed else "partial",
-        "fixed_test_dates": [str(d.date()) for d in FIXED_TEST_DATES],
-        "fixed_data_end_kst": str(FIXED_DATA_END),
-        "data_rows_truncated_after_fixed_end": int(truncated_n),
+        "output_prefix": output_prefix, "used_a20_default_window": is_default_window,
+        "test_dates": [str(d.date()) for d in test_dates],
+        "data_end_kst": str(data_end),
+        "data_rows_truncated_after_end": int(truncated_n),
         "holidays_kst": sorted(str(d) for d in HOLIDAYS_KST),
         "holiday_grid_rows_affected": holiday_counts,
         "anomaly_jump_threshold_pp": ANOMALY_JUMP_THRESHOLD,
         "anomaly_candidates_n": int(len(anomalies)),
         "anomaly_note": "제거하지 않고 기록만 함(a22_anomalies.csv)",
         "opr_is_operating_constant_lots_n": int(len(opr_const)),
-        "opr_is_operating_note": "이번 실행에서 FEATURES에서 제거하지 않음(a22_opr_constant_lots.csv에 목록)",
+        "opr_is_operating_note": f"이번 실행에서 FEATURES에서 제거하지 않음({output_prefix}_opr_constant_lots.csv에 목록)",
         "open_transition_exclusion": open_ratio.to_dict("records"),
         "a20_predictions_path": str(a20_prediction_path),
         "a20_predictions_found": a20_pred is not None,
@@ -311,12 +326,13 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, table_dir=TABLE
             "enterable_status는 이 스크립트에서 쓰지 않는다(추천 필터링 개념).",
             "occ는 observation_grid 직후, feats() 호출 전에 label_valid가 아닌 시각만 NaN 처리. "
             "history_complete/future_complete/eligible 공식은 A20과 동일(수정 없음).",
-            "test 날짜·데이터 절단 시각은 A20 manifest 값으로 고정(재계산하지 않음).",
-            "이상값은 제거하지 않고 a22_anomalies.csv에 후보만 기록.",
+            "test 날짜·데이터 절단 시각은 CLI로 지정 가능(기본값은 A20과 동일한 고정값)."
+            + ("" if is_default_window else " 이번 실행은 기본값이 아닌 CLI 지정값을 썼다."),
+            f"이상값은 제거하지 않고 {output_prefix}_anomalies.csv에 후보만 기록.",
             "합격 기준은 label_valid 행 기준이며 enterable(출입 가능) 조건은 포함하지 않는다.",
             "open_transition_exclusion의 excluded_rate는 정의상 항상 1.0이다(opened_recently 자체가 "
             "history_complete를 반드시 깨는 조건이라 동어반복) — opened_recently_n(오픈 직후 손실 행 수)만 의미 있다.",
-            "(a)->(b) persistence MAE 변화 방향은 horizon/요일에 따라 다르다(a22_a20_dropped_diagnostic.csv 참고). "
+            f"(a)->(b) persistence MAE 변화 방향은 horizon/요일에 따라 다르다({output_prefix}_a20_dropped_diagnostic.csv 참고). "
             "평일 30/60/120분은 감소하는데, label_valid로 빠지는 행이 운영시간 밖 관측을 입력으로 쓴 행(주로 개장 "
             "전 이른 아침 시간대)이라 persistence 오차가 원래 훨씬 컸기 때문이다(재개장 전 정지값으로 재개장 후 "
             "실제값을 맞히려다 크게 틀림). 주말은 반대로 모든 horizon에서 증가하는데, 빠지는 행이 주말 내내 닫혀 "
@@ -324,16 +340,16 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, table_dir=TABLE
             "기존 U11 학습 산출물과 서비스 predictor.pkl을 갱신하지 않는다.",
         ],
     }
-    (table_dir / "a22_manifest.json").write_text(
+    (table_dir / f"{output_prefix}_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
 
-    print("\n=== (a)A20 / (b)A20 재채점 / (c)A22 — horizon x 평일/주말 ===", flush=True)
+    print(f"\n=== (a)A20 / (b)A20 재채점 / (c){output_prefix.upper()} — horizon x 평일/주말 ===", flush=True)
     print(three_line.to_string(index=False, float_format=lambda x: f"{x:.3f}"), flush=True)
-    print(f"\nA22 test 행 중 A20 예측 미매칭: {unmatched_total:,}행", flush=True)
-    print(f"이상값 후보(기록만, 미제거): {len(anomalies):,}건 → {table_dir / 'a22_anomalies.csv'}",
+    print(f"\n{output_prefix.upper()} test 행 중 A20 예측 미매칭: {unmatched_total:,}행", flush=True)
+    print(f"이상값 후보(기록만, 미제거): {len(anomalies):,}건 → {table_dir / (output_prefix + '_anomalies.csv')}",
           flush=True)
     print(f"opr_is_operating이 상수인 (horizon,lot): {len(opr_const)}건 → "
-          f"{table_dir / 'a22_opr_constant_lots.csv'}", flush=True)
+          f"{table_dir / (output_prefix + '_opr_constant_lots.csv')}", flush=True)
     print(f"\n합격 기준: {manifest['pass_criteria']}")
     print(f"결과: {'PASS' if passed else 'FAIL/PARTIAL'}", flush=True)
     for c in pass_checks:
@@ -343,12 +359,29 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, table_dir=TABLE
     return summary
 
 
+def _parse_test_dates(value):
+    dates = [d.strip() for d in value.split(",") if d.strip()]
+    return pd.to_datetime(dates).tz_localize("Asia/Seoul")
+
+
+def _parse_data_end(value):
+    ts = pd.Timestamp(value)
+    return ts.tz_localize("Asia/Seoul") if ts.tz is None else ts.tz_convert("Asia/Seoul")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", type=Path, default=PARKING_DB)
     parser.add_argument("--rules", type=Path, default=PARKING_ACCESS_RULES_CSV)
+    parser.add_argument("--test-dates", type=_parse_test_dates, default=None,
+                         help="쉼표로 구분한 YYYY-MM-DD 목록. 기본값은 A20과 동일한 09-12~09-14 고정값.")
+    parser.add_argument("--data-end", type=_parse_data_end, default=None,
+                         help="이 시각 이후 관측은 절단. 기본값은 A20 manifest의 종료 시각(2026-09-15 01:22:18+09:00).")
+    parser.add_argument("--output-prefix", default="a22",
+                         help="산출물 파일명 접두사(기본 a22). 기존 결과를 안 덮어쓰려면 예: a22b")
     args = parser.parse_args()
-    run(args.db, args.rules)
+    run(args.db, args.rules, test_dates=args.test_dates, data_end=args.data_end,
+        output_prefix=args.output_prefix)
 
 
 if __name__ == "__main__":
