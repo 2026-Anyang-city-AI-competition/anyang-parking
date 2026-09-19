@@ -18,6 +18,10 @@ UA = "Mozilla/5.0 (research; anyang-parking-study)"
 
 def db_init():
     c = sqlite3.connect(DB)
+    # ★ WAL 이어야 폴링이 쓰는 동안에도 API 가 읽을 수 있다. 기본 delete 모드에서는
+    #   쓰기가 읽기를 막아 추천 요청이 대기한다. 한 번 켜면 파일에 남는다.
+    c.execute("PRAGMA journal_mode=WAL")
+    c.execute("PRAGMA busy_timeout=5000")
     c.executescript("""
     CREATE TABLE IF NOT EXISTS lots(
         parking_id INTEGER PRIMARY KEY, name TEXT, div TEXT, gu TEXT,

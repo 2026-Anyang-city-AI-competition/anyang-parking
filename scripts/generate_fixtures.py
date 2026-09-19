@@ -8,6 +8,8 @@ sys.path.insert(0, str(ROOT))
 
 from src.serve.recommend import recommend
 from src.serve.predictor import Predictor
+from src.serve.access_rules import AccessRulesRepository
+from src.serve.prediction_gate import PredictionGate
 from datetime import datetime, timedelta, timezone
 
 KST = timezone(timedelta(hours=9))
@@ -19,9 +21,15 @@ CASES = [
 ]
 
 predictor = Predictor()
+# 서비스와 같은 경로로 만든다. 출입 규칙·예측 게이트를 빼면 fixture 가 실제 응답과 달라진다.
+access_rules = AccessRulesRepository()
+access_rules.refresh(force=True)
+prediction_gate = PredictionGate()
+prediction_gate.refresh(force=True)
 
 for name, dest, when, mins, fname in CASES:
-    result = recommend(dest, mins, start=(37.4018, 126.9226), predictor=predictor)
+    result = recommend(dest, mins, start=(37.4018, 126.9226), predictor=predictor,
+                       access_rules=access_rules, prediction_gate=prediction_gate)
     # Predictor가 검증한 구간만 같은 스키마로 export한다. 모든 배열을 검사한다.
     for key in ("cards", "by_walk", "by_fare", "unavailable"):
         for card in result.get(key, []):

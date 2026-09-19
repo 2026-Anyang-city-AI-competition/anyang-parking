@@ -228,6 +228,23 @@ class CollectTests(unittest.TestCase):
         paired, _ = self.collected(horizons=(60, 120))
         self.assertFalse(paired.duplicated(curve.KEYS).any())
 
+    def test_missing_model_predictions_do_not_erase_the_mae(self):
+        """예측이 없는 행이 섞여도 제공한 행의 MAE는 계산된다(NaN 전파 금지)."""
+        paired, _ = self.collected()
+        holed = paired.copy()
+        holed.loc[holed.index[:5], a23.pred_column(curve.ML)] = np.nan
+        score = a23.score_predictions(holed, curve.ML)
+        self.assertEqual(score["n_missing"], 5)
+        self.assertEqual(score["n"], len(holed) - 5)
+        self.assertFalse(np.isnan(score["mae"]))
+
+    def test_all_predictions_missing_reports_null(self):
+        paired, _ = self.collected()
+        holed = paired.assign(**{a23.pred_column(curve.ML): np.nan})
+        score = a23.score_predictions(holed, curve.ML)
+        self.assertEqual(score["n"], 0)
+        self.assertTrue(np.isnan(score["mae"]))
+
     def test_summary_shares_one_row_count_per_group(self):
         paired, _ = self.collected()
         summary = curve.summarize(paired, (60,))

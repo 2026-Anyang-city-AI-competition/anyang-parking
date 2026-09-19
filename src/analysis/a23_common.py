@@ -52,6 +52,24 @@ def pred_column(name):
     return f"pred_{name}"
 
 
+def truncate_obs(obs, data_end=None):
+    """관측을 지정 시각까지만 남긴다.
+
+    폴링이 5분마다 계속 쌓이므로 같은 스크립트를 다음 날 돌리면 rolling-origin 창이
+    통째로 밀린다. 실험끼리 같은 test 날짜를 쓰려면 데이터 끝을 고정해야 한다.
+    (A22가 a20 manifest 시각으로 고정한 것과 같은 이유다.)
+    """
+    if data_end is None:
+        return obs, 0
+    end = pd.Timestamp(data_end)
+    if end.tz is None:
+        end = end.tz_localize("Asia/Seoul")
+    kept = obs.loc[obs["ts_kst"] <= end].copy()
+    if kept.empty:
+        raise ValueError(f"data_end={end} 이전 관측이 없습니다.")
+    return kept, len(obs) - len(kept)
+
+
 def occ_lookup(base):
     """label_valid 게이트를 통과한 occ만 (주차장, 시각)으로 조회한다.
 
@@ -120,16 +138,25 @@ def common_mask(frame, baselines=BASELINES):
     return pd.Series(mask, index=frame.index)
 
 
+def score_predictions(frame, name):
+    """한 방법의 MAE. 예측이 없는 행은 평균에서 빼고 그 수를 함께 돌려준다.
+
+    결측을 그대로 평균에 넣으면 전체가 NaN이 되어, 실제로는 이긴 모델이 '평가 불가'로
+    보인다. 대신 제공한 행에서만 채점하고 제공하지 못한 행 수를 보고한다.
+    """
+    predicted = frame[pred_column(name)].to_numpy(dtype=float)
+    actual = frame["actual_occ"].to_numpy(dtype=float)
+    available = np.isfinite(predicted) & np.isfinite(actual)
+    error = np.abs(actual[available] - predicted[available])
+    scored = int(available.sum())
+    return dict(baseline=name, n=scored, n_missing=int(len(frame) - scored),
+                mae=float(error.mean()) if scored else np.nan,
+                rmse=float(np.sqrt((error ** 2).mean())) if scored else np.nan)
+
+
 def baseline_scores(frame, baselines=BASELINES):
     """같은 행에서 기준선별 MAE. 비어 있으면 NaN을 남기고 0으로 만들지 않는다."""
-    rows = []
-    actual = frame["actual_occ"].to_numpy(dtype=float)
-    for name in baselines:
-        error = np.abs(actual - frame[pred_column(name)].to_numpy(dtype=float))
-        rows.append(dict(baseline=name, n=len(frame),
-                         mae=float(error.mean()) if len(frame) else np.nan,
-                         rmse=float(np.sqrt((error ** 2).mean())) if len(frame) else np.nan))
-    return pd.DataFrame(rows)
+    return pd.DataFrame([score_predictions(frame, name) for name in baselines])
 
 
 def strongest_baseline(scores):

@@ -10,8 +10,8 @@ sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 
 from src.serve.api import create_app
-from src.serve.fare_quote import (MultipleBenefitsUnsupported, UnknownBenefit,
-                                  UnknownParking)
+from src.serve.fare_quote import UnknownBenefit, UnknownParking
+from src.serve import auth
 from src.serve.places import SearchUnavailable
 
 
@@ -116,8 +116,7 @@ class ApiTests(unittest.TestCase):
         payload = {"parking_id": 999999, "arrival_at": "2026-09-16T16:00:00+09:00",
                    "parking_minutes": 60}
         cases = [(UnknownParking(999999), 404, "unknown_parking"),
-                 (UnknownBenefit({"없는코드"}), 422, "unknown_benefit"),
-                 (MultipleBenefitsUnsupported(), 422, "multiple_benefits_unsupported")]
+                 (UnknownBenefit({"없는코드"}), 422, "unknown_benefit")]
         for error, status, code in cases:
             with self.subTest(code=code), patch("src.serve.api.quote_fare", side_effect=error):
                 response = self.client.post("/api/v1/fare/quote", json=payload)
@@ -154,6 +153,99 @@ class ApiTests(unittest.TestCase):
             response = self.client.get("/api/v1/places/search", params={"q": "안양시청"})
         self.assertNotIn("KakaoAK", response.text)
         self.assertNotIn("dapi.kakao.com", response.text)
+
+    def test_auth_endpoints_report_503_when_not_configured(self):
+        with patch.object(auth, "config", return_value={**auth.config(), "enabled": False}):
+            for method, path in (("get", "/api/v1/auth/kakao/login"), ("get", "/api/v1/me")):
+                response = getattr(self.client, method)(path)
+                self.assertIn(response.status_code, (401, 503), path)
+                self.assertIn(response.json()["error"]["code"],
+                              {"auth_not_configured", "not_authenticated"})
+
+    def test_me_requires_a_session(self):
+        cfg = {"client_id": "k", "client_secret": "", "redirect_uri": "http://localhost:5173/cb",
+               "pepper": "p", "secure_cookie": False, "enabled": True}
+        with patch.object(auth, "config", return_value=cfg):
+            response = self.client.get("/api/v1/me")
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()["error"]["code"], "not_authenticated")
+
+    def test_login_callback_sets_an_httponly_session_cookie(self):
+        cfg = {"client_id": "k", "client_secret": "", "redirect_uri": "http://localhost:5173/cb",
+               "pepper": "p", "secure_cookie": False, "enabled": True}
+        with patch.object(auth, "config", return_value=cfg), \
+             patch.object(auth, "complete_login", return_value="session-token"):
+            response = self.client.get("/api/v1/auth/kakao/callback",
+                                       params={"code": "c", "state": "s"})
+        self.assertEqual(response.status_code, 200)
+        cookie = response.headers.get("set-cookie", "")
+        self.assertIn("anyang_session=", cookie)
+        self.assertIn("HttpOnly", cookie)
+        self.assertIn("SameSite=lax", cookie)
+
+    def test_callback_failure_does_not_explain_why(self):
+        cfg = {"client_id": "k", "client_secret": "", "redirect_uri": "http://localhost:5173/cb",
+               "pepper": "p", "secure_cookie": False, "enabled": True}
+        with patch.object(auth, "config", return_value=cfg), \
+             patch.object(auth, "complete_login", side_effect=auth.AuthFailed("state 불일치")):
+            response = self.client.get("/api/v1/auth/kakao/callback",
+                                       params={"code": "c", "state": "s"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "auth_failed")
+        self.assertNotIn("state", response.json()["error"]["message"])
+
+    def test_preferences_rejects_unknown_codes_and_extra_fields(self):
+        cfg = {"client_id": "k", "client_secret": "", "redirect_uri": "http://localhost:5173/cb",
+               "pepper": "p", "secure_cookie": False, "enabled": True}
+        with patch.object(auth, "config", return_value=cfg), \
+             patch.object(auth, "resolve", return_value="account"):
+            unknown = self.client.put("/api/v1/me/preferences",
+                                      json={"benefit_codes": ["없는코드"]})
+            extra = self.client.put("/api/v1/me/preferences",
+                                    json={"benefit_codes": [], "rrn": "900101-1234567"})
+        self.assertEqual(unknown.status_code, 422)
+        self.assertEqual(unknown.json()["error"]["code"], "unknown_discount")
+        # 증빙·식별정보 필드는 모델이 아예 거부한다.
+        self.assertEqual(extra.status_code, 422)
+        self.assertEqual(extra.json()["error"]["code"], "validation_error")
+
+    def test_logout_clears_the_cookie(self):
+        cfg = {"client_id": "k", "client_secret": "", "redirect_uri": "http://localhost:5173/cb",
+               "pepper": "p", "secure_cookie": False, "enabled": True}
+        with patch.object(auth, "config", return_value=cfg), \
+             patch.object(auth, "logout", return_value=True):
+            response = self.client.post("/api/v1/auth/logout")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("anyang_session=", response.headers.get("set-cookie", ""))
+
+    def test_benefits_endpoint_lists_codes_and_evidence(self):
+        response = self.client.get("/api/v1/benefits")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        codes = {item["code"] for item in body["benefits"]}
+        self.assertIn("경형자동차", codes)
+        first = body["benefits"][0]
+        self.assertTrue(first["evidence"])
+        self.assertTrue(first["evidence_required"])
+        self.assertIn("조례", body["stacking"])
+        # 증빙 서류 자체를 요구하는 필드가 있으면 안 된다.
+        self.assertNotIn("document", str(body))
+
+    def test_recommend_accepts_multiple_benefit_codes(self):
+        stub = {"cards": [], "by_walk": [], "by_fare": [], "unavailable": []}
+        payload = {"destination": {"lat": 37.4, "lng": 126.9}, "parking_minutes": 60,
+                   "benefit_codes": ["경형자동차", "다자녀"]}
+        with patch("src.serve.api.recommend", return_value=stub) as called:
+            response = self.client.post("/api/v1/recommend", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(called.call_args.kwargs["benefit_codes"], ["경형자동차", "다자녀"])
+
+    def test_recommend_rejects_unknown_benefit_code(self):
+        response = self.client.post("/api/v1/recommend", json={
+            "destination": {"lat": 37.4, "lng": 126.9}, "parking_minutes": 60,
+            "benefit_codes": ["없는코드"]})
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["details"]["unknown"], ["없는코드"])
 
     def test_fare_quote_rejects_bad_payload(self):
         response = self.client.post("/api/v1/fare/quote", json={

@@ -32,7 +32,7 @@ from src.analysis.a20_matched_model_comparison import (
 from src.analysis.a22_baseline_api_alive import HOLIDAYS_KST, build_features_label_valid
 from src.analysis.a23_common import (
     BASELINES, HORIZONS, ROW_SETS, add_lag_baselines, apply_seasonal_naive, common_mask,
-    fit_seasonal_naive, occ_lookup, parse_horizons, pred_column,
+    fit_seasonal_naive, occ_lookup, parse_horizons, pred_column, truncate_obs,
 )
 from src.analysis.a23_horizon_curve import (
     CARRY, KEYS, MAE_TARGET_PP, ML, by_day_scores, certified_max_horizon, certify,
@@ -147,9 +147,13 @@ def head_to_head(paired, horizons):
 
 def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, horizons=HORIZONS,
         table_dir=TABLES, prediction_dir=PROCESSED / "a23m", test_days=7, min_train_days=7,
-        model_params=None):
+        model_params=None, data_end=None):
     print("=== A23 모델 보강: M0 vs M1 (같은 fold·같은 평가행) ===", flush=True)
     obs, lots, rules, info = load_inputs(db_path, rules_path)
+    # 폴링이 계속 쌓이므로 데이터 끝을 고정하지 않으면 다음 날 실행에서 test 창이 통째로 밀린다.
+    obs, truncated_n = truncate_obs(obs, data_end)
+    if truncated_n:
+        print(f"데이터 절단: {truncated_n:,}행 제외 (끝={data_end})", flush=True)
     dates = test_dates(obs["ts_kst"].min(), obs["ts_kst"].max(), test_days, min_train_days)
     weekend_week_count = weekend_weeks(dates)
     print(f"대상 {len(rules)}곳 · {len(obs):,}행 · {info['start']} ~ {info['end']}", flush=True)
@@ -198,6 +202,8 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, horizons=HORIZO
         "horizons": list(horizons), "models": [M0, M1], "baselines": list(BASELINES),
         "row_sets": {k: list(v) for k, v in ROW_SETS.items()},
         "test_dates": [str(d.date()) for d in dates],
+        "data_end_kst": str(data_end) if data_end else None,
+        "rows_truncated_after_data_end": int(truncated_n),
         "weekend_weeks_in_test": weekend_week_count,
         "m0_features": FEATURES, "m1_extra_features": M1_EXTRA,
         "m1_extra_constant_in_train": constants,
@@ -248,9 +254,13 @@ def main():
     parser.add_argument("--horizons", type=str, default="")
     parser.add_argument("--test-days", type=int, default=7)
     parser.add_argument("--min-train-days", type=int, default=7)
+    parser.add_argument("--data-end", type=str, default="",
+                        help="이 시각까지의 관측만 사용한다(예: '2026-09-18 23:40:22+09:00'). "
+                             "다른 실험과 같은 test 창을 쓰려면 지정한다.")
     args = parser.parse_args()
     run(args.db, args.rules, parse_horizons(args.horizons),
-        test_days=args.test_days, min_train_days=args.min_train_days)
+        test_days=args.test_days, min_train_days=args.min_train_days,
+        data_end=args.data_end or None)
 
 
 if __name__ == "__main__":

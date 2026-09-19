@@ -195,3 +195,52 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(34, 86, 179,
   .hero { padding-left: 16px; padding-right: 16px; }
   .parking-card { padding: 14px 11px; }
 }
+
+/* 상태 표시 — 로딩·경고·미확인. 값이 없을 때 조용히 0으로 보이지 않게 한다. */
+.state-notice { display: flex; gap: 6px; align-items: flex-start; margin: 8px 0 0;
+  font-size: 12px; line-height: 1.5; color: var(--muted); }
+.state-notice.warn { color: var(--orange); }
+.state-notice svg { flex: none; margin-top: 2px; }
+.suggestion-state { padding: 12px 14px; margin: 0; font-size: 13px; color: var(--muted); }
+.suggestion-state.warn { color: var(--orange); }
+.parking-pin.unknown, .rank.unknown { background: var(--muted); }
+.parking-pin.red, .rank.red { background: var(--red); }
+.mock-map .parking-pin, .mock-map .destination-pin { position: absolute; transform: translate(-50%, -50%); }
+.excluded-list { margin-top: 18px; padding: 14px; border-radius: 14px; background: #f5f6f8; }
+.excluded-list h4 { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.excluded-list p { margin: 4px 0; font-size: 12px; color: var(--muted); }
+.excluded-list strong { color: inherit; }
+.primary-cta:disabled { opacity: .5; cursor: not-allowed; }
+a.primary-cta { text-decoration: none; }
+.fare-list .deduction dd { color: var(--green); }
+.fare-list .fare-total { border-top: 1px solid #e7e9ee; margin-top: 4px; padding-top: 6px; font-weight: 700; }
+
+/* 할인 설정 — 코드만 고르는 화면. 증빙 정보는 입력받지 않는다. */
+.settings-lead { margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.benefit-list { display: grid; gap: 8px; }
+.benefit-item { display: flex; gap: 10px; align-items: flex-start; padding: 12px;
+  border: 1px solid #e7e9ee; border-radius: 12px; background: #fff; text-align: left; }
+.benefit-item.on { border-color: var(--green); background: #f2fbf7; }
+.benefit-item strong { display: block; font-size: 14px; }
+.benefit-item small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.benefit-item small.evidence { color: var(--orange); }
+.benefit-check { flex: none; width: 20px; height: 20px; margin-top: 2px; border-radius: 6px;
+  border: 1px solid #d6d9e0; display: grid; place-items: center; color: #fff; }
+.benefit-item.on .benefit-check { background: var(--green); border-color: var(--green); }
+.privacy-list { margin: 0 0 14px; padding-left: 18px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.danger-button { display: flex; gap: 6px; align-items: center; justify-content: center;
+  width: 100%; padding: 12px; border: 1px solid var(--red); border-radius: 12px;
+  background: #fff; color: var(--red); font-size: 14px; }
+.benefit-result { padding: 10px 12px; border: 1px solid #e7e9ee; border-radius: 12px; }
+.benefit-result.on { border-color: var(--green); background: #f2fbf7; }
+.benefit-result > div { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.benefit-result small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.benefit-result small.applied-tag { color: var(--green); }
+
+/* 즐겨찾기·최근 목적지 — 브라우저에만 저장한다. */
+.saved-places { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.saved-places button { display: inline-flex; gap: 4px; align-items: center; padding: 6px 10px;
+  border: 1px solid #e7e9ee; border-radius: 999px; background: #fff; font-size: 12px; color: var(--muted); }
+.favorite-toggle { display: inline-flex; gap: 5px; align-items: center; margin-top: 10px;
+  padding: 6px 10px; border: 1px solid #e7e9ee; border-radius: 999px; background: #fff;
+  font-size: 12px; color: var(--orange); }

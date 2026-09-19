@@ -2,8 +2,7 @@ import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
-from src.serve.fare_quote import (MultipleBenefitsUnsupported, UnknownBenefit,
-                                  UnknownParking, quote_fare)
+from src.serve.fare_quote import UnknownBenefit, UnknownParking, quote_fare
 from tests.test_access_check import rule
 
 KST = timezone(timedelta(hours=9))
@@ -77,11 +76,15 @@ class FareQuoteTests(unittest.TestCase):
         self.assertEqual(fare["payg"], 0)
         self.assertEqual(fare["billable_minutes"], 0)
 
-    def test_multiple_paid_dates_return_null_with_reason(self):
+    def test_multiple_paid_dates_are_priced_per_day(self):
         fare = self.quote(datetime(2026, 9, 16, 16, tzinfo=KST), 1500)["fare"]
-        self.assertIsNone(fare["payg"])
-        self.assertIsNone(fare["recommended_option"])
-        self.assertIn("복수 날짜", fare["reason"])
+        self.assertEqual(fare["payg"], 26000)
+        self.assertEqual(fare["recommended_option"], "payg")
+        # 며칠치 일일권을 살 수 있는지는 확인되지 않아 선불 총액을 주지 않는다.
+        self.assertIsNone(fare["daily_pass"])
+        self.assertEqual(fare["daily_pass_list_price"], 7000)
+        self.assertIsNone(fare["saving"])
+        self.assertIn("연장·재구매", fare["daily_pass_note"])
 
     def test_access_unavailable_still_returns_reference_fare(self):
         body = self.quote(datetime(2026, 9, 16, 16, tzinfo=KST), 240, rules=ClosedRules())
@@ -89,12 +92,41 @@ class FareQuoteTests(unittest.TestCase):
         self.assertEqual(body["access"]["reason"], "closes_before_departure")
         self.assertEqual(body["fare"]["payg"], 1000)
 
-    def test_unknown_benefit_and_multiple_benefits_are_rejected(self):
+    def test_unknown_benefit_is_rejected(self):
         with self.assertRaises(UnknownBenefit) as ctx:
             self.quote(datetime(2026, 9, 16, 16, tzinfo=KST), 60, ["없는코드"])
         self.assertEqual(ctx.exception.codes, ["없는코드"])
-        with self.assertRaises(MultipleBenefitsUnsupported):
-            self.quote(datetime(2026, 9, 16, 16, tzinfo=KST), 60, ["경형자동차", "다자녀"])
+
+    def test_multiple_benefits_are_priced_separately_and_cheapest_wins(self):
+        body = self.quote(datetime(2026, 9, 16, 16, tzinfo=KST), 240,
+                          ["경형자동차", "전통시장"])
+        fare = body["fare"]
+        codes = {o["code"]: o for o in fare["benefit_options"]}
+        self.assertEqual(set(codes), {"경형자동차", "전통시장"})
+        # 60분 유료 → 전통시장은 90분 면제라 0원, 경차는 50%라 500원.
+        self.assertEqual(codes["전통시장"]["total"], 0)
+        self.assertEqual(codes["경형자동차"]["total"], 500)
+        self.assertEqual(fare["payg"], 0)
+        self.assertEqual(fare["applied_benefit"]["code"], "전통시장")
+        # 탈락한 자격도 사유와 함께 남는다.
+        self.assertFalse(codes["경형자동차"]["applied"])
+        self.assertIn("더 저렴", codes["경형자동차"]["rejected_reason"])
+
+    def test_rates_are_never_multiplied_together(self):
+        body = self.quote(datetime(2026, 9, 16, 16, tzinfo=KST), 240,
+                          ["경형자동차", "다자녀"])
+        # 둘 다 50%. 곱하면 250원이 되지만 겹쳐 적용하지 않는다.
+        self.assertEqual(body["fare"]["payg"], 500)
+        self.assertIn("조례", body["fare"]["benefit_stacking_note"])
+
+    def test_ordinance_defined_combination_is_offered(self):
+        body = self.quote(datetime(2026, 9, 16, 10, tzinfo=KST), 300,
+                          ["환승주차", "경형자동차"])
+        fare = body["fare"]
+        self.assertEqual(fare["applied_benefit"]["code"], "환승주차_경차")
+        # 우리가 곱해 만든 값이 아니라 표에 있는 항목임을 밝힌다.
+        self.assertEqual(sorted(fare["applied_benefit"]["combined_from"]),
+                         ["경형자동차", "환승주차"])
 
     def test_missing_parking_raises(self):
         with self.assertRaises(UnknownParking):

@@ -6,6 +6,8 @@
 import sqlite3
 import threading
 import time
+
+from src.serve import metrics
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -66,11 +68,15 @@ class RequestPoller:
                 with sqlite3.connect(self.path, timeout=30) as db:
                     ts, count = poll_once(db)
                 self._last_error = None
+                metrics.record_external("label_poll", True,
+                                        (time.monotonic()-started)*1000)
                 return {"status": "polled", "attempted": True, "reason": None,
                         "observation_at": ts, "lots": count,
                         "duration_ms": round((time.monotonic()-started)*1000), "error": None}
             except Exception as exc:
                 self._last_error = type(exc).__name__
+                metrics.record_external("label_poll", False,
+                                        (time.monotonic()-started)*1000)
                 # 추천 자체는 기존 DB로 계속한다. 원천 응답 본문이나 경로는 노출하지 않는다.
                 return {"status": "failed", "attempted": True, "reason": "poll_failed",
                         "observation_at": latest, "lots": None,

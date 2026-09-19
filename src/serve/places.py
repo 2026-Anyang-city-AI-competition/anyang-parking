@@ -19,6 +19,7 @@ from pathlib import Path
 import requests
 
 from src.config import INTERIM
+from src.serve import metrics
 from src.serve.candidates import haversine_m
 from src.serve.routing import _key
 
@@ -90,11 +91,14 @@ def _throttle():
 
 def _call(url, params, key):
     _throttle()
+    started = time.monotonic()
+    name = "kakao_local_keyword" if url == KEYWORD else "kakao_local_address"
     for attempt in range(RETRY):
         try:
             response = requests.get(url, headers={"Authorization": f"KakaoAK {key}"},
                                     params=params, timeout=TIMEOUT)
             if response.status_code == 200:
+                metrics.record_external(name, True, (time.monotonic() - started) * 1000)
                 return response.json().get("documents") or []
             if response.status_code in (401, 403):
                 break                         # 키 문제는 재시도해도 같다
@@ -102,6 +106,7 @@ def _call(url, params, key):
             pass
         if attempt < RETRY - 1:
             time.sleep(0.3)
+    metrics.record_external(name, False, (time.monotonic() - started) * 1000)
     return None
 
 
