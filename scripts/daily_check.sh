@@ -10,3 +10,11 @@ if [ -f "$DB" ]; then
 else
   echo "경고: $DB 가 아직 없다."
 fi
+
+# 값 품질까지 본다 — 연속성·고정값·정원 초과·급변. 문제가 있으면 0이 아닌 코드로 끝난다.
+PYTHON="${PYTHON:-}"
+if [ -z "$PYTHON" ]; then
+  if [ -x "$ROOT/.venv/bin/python" ]; then PYTHON="$ROOT/.venv/bin/python"; else PYTHON="python3"; fi
+fi
+echo
+"$PYTHON" "$ROOT/scripts/daily_data_audit.py" --write

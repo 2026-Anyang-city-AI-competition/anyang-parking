@@ -134,6 +134,37 @@ def surveyed_fee_schedule(lot, start_dt, minutes, access_rules, parking_id,
     return schedule
 
 
+def legacy_fee_schedule(lot, start_dt, minutes, sunday_free=None):
+    """조사 규칙이 없을 때의 날짜별 과금표. `surveyed_fee_schedule` 과 같은 모양이다.
+
+    하루를 넘는 주차를 날짜별로 계산하려면 두 경로가 같은 구조를 줘야 한다."""
+    if sunday_free is None:
+        sunday_free = T.SUNDAY_HOLIDAY_FREE
+    end = start_dt + timedelta(minutes=int(minutes))
+    day = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    schedule = []
+    while day < end:
+        tomorrow = day + timedelta(days=1)
+        if sunday_free and day.weekday() == 6:
+            windows = []
+        else:
+            a, b = _open_window(lot, day.weekday())
+            windows = [(a, b)] if b > a else []
+        segments = []
+        for a, b in windows:
+            lo = max(start_dt, day + timedelta(minutes=a))
+            hi = min(end, tomorrow, day + timedelta(minutes=b))
+            if hi > lo:
+                segments.append({"start": lo.isoformat(), "end": hi.isoformat(),
+                                 "minutes": (hi - lo).total_seconds() / 60})
+        schedule.append({"date": day.date().isoformat(), "source": "legacy_db_unverified",
+                         "window_minutes": sum(b - a for a, b in windows),
+                         "billable_minutes": sum(x["minutes"] for x in segments),
+                         "segments": segments})
+        day = tomorrow
+    return schedule
+
+
 def _progressive(rate, billable):
     """누진 계산. 첫 구간은 정액, 이후는 10분 단위 올림."""
     first30, *tiers = rate
@@ -159,13 +190,23 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
               apply_daily_pass_cap=False, access_rules=None, parking_id=None,
               holiday_checker=None):
     """반환 dict. 계산 불가면 None 이 아니라 reason 을 담은 dict 를 준다
-    (서비스가 죽으면 안 된다)."""
+    (서비스가 죽으면 안 된다).
+
+    ★ 하루를 넘는 주차는 **날짜별로** 누진과 일 상한을 적용하고 합산한다.
+      비고 10 의 상한은 「일 최대요금」이므로 하루 단위로 건다. 여러 날의 유료분을
+      한 줄로 이어 누진하면 마지막 구간 단가가 계속 붙어 과다청구가 된다.
+    ★ 일일권은 **입차 당일의 유료시간**을 사는 상품으로 본다(별표 5 가 운영시간별로
+      값을 정한다). 하루를 넘으면 몇 장이 필요한지는 세지만, 연장·재구매가 가능한지는
+      확인된 바 없으므로 선불 총액을 확정하지 않는다.
+    """
     out = {"total": None, "reason": None, "breakdown": [], "capped": False,
            "billable_min": 0, "free_minutes": 0, "daily_pass": None,
            "daily_pass_better_after_min": None, "raw_progressive": None,
            # ★ 일일권은 자동 상한이 아니라 '선불 상품'이다(별표1 비고 8).
            #   두 금액을 병기하고 "입차 시 구매" 를 안내한다.
-           "total_prepaid": None, "recommend_prepaid": False, "prepaid_saving": None}
+           "total_prepaid": None, "recommend_prepaid": False, "prepaid_saving": None,
+           "prepaid_reason": None, "daily_pass_days_required": 0,
+           "daily_pass_scope": "입차 당일의 유료시간", "paid_days": 0}
 
     typ = lot.get("type")
     if typ not in ("노상", "노외", "부설"):
@@ -184,87 +225,141 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
         out["reason"] = f"요금표에 없는 조합 (유형={typ!r}, 급지={grade})"
         return out
 
+    surveyed = access_rules is not None and parking_id is not None
     schedule = (surveyed_fee_schedule(lot, start_dt, minutes, access_rules, parking_id,
-                                     sunday_free, holiday_checker)
-                if access_rules is not None and parking_id is not None else None)
-    billable = (sum(day["billable_minutes"] for day in schedule) if schedule is not None
-                else operating_minutes(lot, start_dt, minutes, sunday_free))
-    out["fee_schedule"] = schedule or []
-    sources = {day["source"] for day in schedule} if schedule is not None else {"legacy_db_unverified"}
+                                      sunday_free, holiday_checker) if surveyed
+                else legacy_fee_schedule(lot, start_dt, minutes, sunday_free))
+    billable = sum(day["billable_minutes"] for day in schedule)
+    out["fee_schedule"] = schedule
+    sources = {day["source"] for day in schedule}
     out["fee_source"] = next(iter(sources)) if len(sources) == 1 else "mixed"
     out["free_minutes_outside_fee_window"] = max(0, minutes - billable)
     out["billable_min"] = billable
-    paid_days = [day for day in schedule or [] if day["billable_minutes"] > 0]
-    if len(paid_days) > 1:
-        out["reason"] = "복수 날짜 유료주차의 누진·감면·일일권 적용 규칙 미검증"
-        return out
+
+    breakdown = []
+    if out["free_minutes_outside_fee_window"] > 0:
+        breakdown.append({"kind": "free_window", "seg": "요금 징수시간 외",
+                          "min": out["free_minutes_outside_fee_window"], "amt": 0})
 
     # 별표 2-1 · 15분 미만 전액 면제
     if billable < T.FREE_UNDER_MIN:
-        out["total"] = 0
+        out["total"], out["breakdown"] = 0, breakdown
         out["reason"] = f"운영시간 내 {billable}분 — 15분 미만 면제"
         return out
 
-    # 감면 중 '먼저 면제되는 분'을 뺀다
+    # 감면 중 '먼저 면제되는 분'을 뺀다. 1회 주차 기준이라 첫 유료일부터 소진한다.
+    paid = [day for day in schedule if day["billable_minutes"] > 0]
+    minutes_by_day = [day["billable_minutes"] for day in paid]
     d = T.DISCOUNTS.get(discount) if discount else None
     if d and d["free_min"]:
-        out["free_minutes"] = min(billable, d["free_min"])
-        billable = max(0, billable - d["free_min"])
-        if billable == 0:
-            out["total"] = 0
+        remaining = min(billable, d["free_min"])
+        out["free_minutes"] = remaining
+        breakdown.append({"kind": "benefit_free", "seg": f"{discount} 면제",
+                          "min": remaining, "amt": 0})
+        for i, day_minutes in enumerate(minutes_by_day):
+            used = min(day_minutes, remaining)
+            minutes_by_day[i] = day_minutes - used
+            remaining -= used
+            if remaining <= 0:
+                break
+        if sum(minutes_by_day) == 0:
+            out["total"], out["breakdown"] = 0, breakdown
             out["reason"] = f"{discount}: {d['note']} — 면제 구간 내"
             return out
 
-    total, bd = _progressive(rate, billable)
-    out["raw_progressive"] = total
-    out["breakdown"] = bd
+    out["paid_days"] = sum(1 for m in minutes_by_day if m > 0)
+    multi_day = out["paid_days"] > 1
 
-    # 일일주차권 (별표 5) — 운영시간 길이 기준
-    a, b = _open_window(lot, start_dt.weekday())
-    open_hours = paid_days[0]["window_minutes"] / 60 if paid_days else (b-a) / 60
-    dp = T.daily_pass(open_hours, grade) if float(open_hours).is_integer() else None
-    out["daily_pass"] = dp
-    if dp is None:
-        out["reason"] = (f"일일주차권 표 밖 (유료시간 {open_hours:g}h, 급지 {grade}) "
-                         f"— 상한 없음으로 처리")
-
-    # 비고 10 · 누진 일 최대 상한 25,000. 일일권은 여기 포함하지 않는다(비고 8).
-    caps = [T.DAILY_CAP]
-    if apply_daily_pass_cap and dp is not None:
-        caps.append(dp)                       # 후불에도 일일권 상한을 적용하고 싶을 때만
-    cap = min(caps)
-    if total > cap:
-        total, out["capped"] = cap, True
+    # 날짜별 누진 + 날짜별 일 상한
+    total = raw = 0
+    for day, day_minutes in zip(paid, minutes_by_day):
+        if day_minutes <= 0:
+            continue
+        day_total, rows = _progressive(rate, day_minutes)
+        raw += day_total
+        for row in rows:
+            entry = {"kind": "progressive", **row}
+            if multi_day:
+                entry["date"] = day["date"]
+                entry["seg"] = f"{day['date'][5:]} {row['seg']}"
+            breakdown.append(entry)
+        caps = [T.DAILY_CAP]
+        if apply_daily_pass_cap:
+            day_pass = _day_pass(day, grade)
+            if day_pass is not None:
+                caps.append(day_pass)          # 후불에도 일일권 상한을 적용하고 싶을 때만
+        cap = min(caps)
+        if day_total > cap:
+            breakdown.append({"kind": "daily_cap",
+                              "seg": (f"{day['date'][5:]} 일 최대 상한" if multi_day
+                                      else "일 최대 상한"),
+                              "min": 0, "amt": cap - day_total})
+            day_total, out["capped"] = cap, True
+        total += day_total
+    out["raw_progressive"] = raw
 
     # 감면율
     if d and d["rate"] != 1.0:
-        total = total * d["rate"]
+        discounted = total * d["rate"]
+        breakdown.append({"kind": "benefit_rate",
+                          "seg": f"{discount} {round((1 - d['rate']) * 100)}% 감면",
+                          "min": 0, "amt": int(discounted - total)})
+        total = discounted
 
     # 비고 11 · 100원 미만 절사 (감면 '후')
-    total = int(total // T.ROUND_DOWN_TO * T.ROUND_DOWN_TO)
-    out["total"] = total
+    rounded = int(total // T.ROUND_DOWN_TO * T.ROUND_DOWN_TO)
+    if rounded != total:
+        breakdown.append({"kind": "round_down", "seg": "100원 미만 절사",
+                          "min": 0, "amt": int(rounded - total)})
+    out["total"] = rounded
+    out["breakdown"] = breakdown
+
+    # ── 일일주차권 (별표 5) — 입차 당일의 유료시간 기준 ──────────────
+    entry_day = paid[0] if paid else None
+    dp = _day_pass(entry_day, grade) if entry_day else None
+    if dp is None and entry_day is None:
+        a, b = _open_window(lot, start_dt.weekday())
+        hours = (b - a) / 60
+        dp = T.daily_pass(hours, grade) if float(hours).is_integer() else None
+    out["daily_pass"] = dp
+    out["daily_pass_days_required"] = out["paid_days"]
+    if dp is None:
+        hours = (entry_day["window_minutes"] / 60) if entry_day else 0
+        out["reason"] = (f"일일주차권 표 밖 (유료시간 {hours:g}h, 급지 {grade}) "
+                         f"— 상한 없음으로 처리")
 
     # ★ 선불 일일권과 병기 — 어느 쪽이 싼지 사용자가 고르게 한다
-    if dp is not None:
+    if dp is not None and not multi_day:
         prepaid = dp
         if d and d["rate"] != 1.0:            # 별표2-2: 1일주차 요금은 70% 감면
             prepaid = int(dp * 0.3 // T.ROUND_DOWN_TO * T.ROUND_DOWN_TO)
         out["total_prepaid"] = prepaid
-        out["recommend_prepaid"] = prepaid < total
-        out["prepaid_saving"] = max(0, total - prepaid)
+        out["recommend_prepaid"] = prepaid < out["total"]
+        out["prepaid_saving"] = max(0, out["total"] - prepaid)
+    elif dp is not None and multi_day:
+        # 하루치 정가는 알지만 며칠치를 살 수 있는지는 규정이 확인되지 않았다.
+        out["prepaid_reason"] = (
+            f"유료 주차가 {out['paid_days']}일에 걸쳐 일일권 {out['paid_days']}장이 필요합니다. "
+            f"연장·재구매 가능 여부가 확인되지 않아 선불 총액은 제시하지 않습니다.")
 
     # ★ 일일권이 더 싸지는 시점
     if dp is not None:
-        prev_cap = out.get("_")
-        lo, hi = 1, 24 * 60
         found = None
-        for m in range(10, hi + 1, 10):
+        for m in range(10, 24 * 60 + 1, 10):
             v, _ = _progressive(rate, m)
             if v > dp:
                 found = m - 9                # 그 10분 단위가 시작되는 분
                 break
         out["daily_pass_better_after_min"] = found
     return out
+
+
+def _day_pass(day, grade):
+    """그 날의 유료시간 길이로 별표 5 를 조회한다. 표 밖이면 None — 보간하지 않는다."""
+    if day is None:
+        return None
+    hours = day["window_minutes"] / 60
+    return T.daily_pass(hours, grade) if float(hours).is_integer() else None
 
 
 if __name__ == "__main__":

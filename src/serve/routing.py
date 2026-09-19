@@ -26,6 +26,8 @@ from pathlib import Path
 
 import requests
 
+from src.serve import metrics
+
 ROOT = Path(__file__).resolve().parents[2]
 KST  = timezone(timedelta(hours=9))
 NAVI = "https://apis-navi.kakaomobility.com"
@@ -142,6 +144,11 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     if use_cache:
         route_con.commit()
         route_con.close()
+    # 폴백으로 채운 항목은 실패로 센다. 서비스는 살아 있어도 경로 API 는 실패한 것이다.
+    for value in out.values():
+        if isinstance(value, dict):
+            metrics.record_external("kakao_route_multi",
+                                    value.get("source") == "kakao", 0.0)
     return out
 
 def future_eta(origin, dest, minutes_ahead=30, key=None):
@@ -179,6 +186,7 @@ def future_eta(origin, dest, minutes_ahead=30, key=None):
                     wait_time = 2 ** a
                     print(f"[future] Attempt {a+1} failed: {type(e).__name__}: {str(e)[:100]}. Retrying in {wait_time}s...", flush=True)
                     time.sleep(wait_time)
+    metrics.record_external("kakao_route_future", False, 0.0)
     return {**fallback_eta(origin[0], origin[1], dest[0], dest[1]), "fare": None}
 
 def alt_parkings(lat, lon, radius=1000, key=None, pages=3):

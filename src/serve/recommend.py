@@ -24,7 +24,8 @@ from src.serve.candidates import find_candidates, haversine_m, RADII
 from src.serve.access_check import check_access
 from src.serve import walking, routing
 from src.serve.fare import calc_fare, resolve_type
-from src.serve.ranking import rank_cards
+from src.serve import benefits as B
+from src.serve.ranking import rank_with_demotion
 from src.features.temporal import oprtime_features
 
 KST = timezone(timedelta(hours=9))
@@ -34,7 +35,7 @@ WALK_FAR_MIN = 15          # 도보 15분(≈1km) 초과면 경고. 1km 를 걷�
 def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
               full_prob_cutoff=0.5, predictor=None, discount=None,
               with_alternatives=True, now=None, access_rules=None, access_safety_margin_minutes=0,
-              prediction_gate=None):
+              prediction_gate=None, benefit_codes=None):
     """dest=(lat,lon) · minutes=주차할 분 · start=(lat,lon) 출발지(없으면 목적지에서 출발)
     depart_in_min>0 이면 카카오 미래운행(단건)으로 목적지 ETA 하나를 공통 적용한다.
     predictor(lot, arrive_dt) -> (예측 점유율, 만차확률) — 모델이 준비되면 주입."""
@@ -95,7 +96,8 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                f"{cand['radius_used']/1000:g}km 안에서 이용 가능한 추천 후보가 {live_count}곳뿐입니다"
                if exhausted else None)
     if not service_lots:
-        return {"cards": [], "by_fare": [], "by_walk": [], "unavailable": [],
+        return {"cards": [], "by_fare": [], "by_walk": [],
+                "live_unavailable": [], "unavailable": [],
                 "excluded": list(excluded.values()), "candidate_count": 0,
                 "radius_used": cand["radius_used"], "exhausted": exhausted,
                 "message": message, "unlabeled": cand.get("unlabeled") or [],
@@ -153,8 +155,16 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                "grade": d.get("grade"), "wdays_start": d.get("wdays_start"),
                "wdays_end": d.get("wdays_end"), "wend_start": d.get("wend_start"),
                "wend_end": d.get("wend_end")}
-        f = calc_fare(lot, arrive, minutes, discount=discount,
-                      access_rules=access_rules, parking_id=pid)
+        # 복수 자격은 각각 계산해 가장 싼 하나만 적용한다. 감면율을 곱하지 않는다(§5.1).
+        codes = list(benefit_codes or ([discount] if discount else []))
+
+        def price(code, _lot=lot, _arrive=arrive, _pid=pid):
+            return calc_fare(_lot, _arrive, minutes, discount=code,
+                             access_rules=access_rules, parking_id=_pid)
+
+        benefit_result = B.evaluate(codes, price) if codes else None
+        applied_code = benefit_result["selected"] if benefit_result else None
+        f = price(applied_code)
         op = oprtime_features(d, arrive)
 
         est = bool((dv and dv.get("estimated")) or (wk and wk.get("estimated")))
@@ -173,6 +183,10 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "fare_payg": f["total"], "fare_daily_pass": f["total_prepaid"],
             "daily_pass_better": bool(f["recommend_prepaid"]),
             "fare": f,
+            "benefit": ({"applied": applied_code, "options": benefit_result["options"],
+                         "stacking": benefit_result["stacking"],
+                         "evidence_note": benefit_result["evidence_note"]}
+                        if benefit_result else None),
             "fee_source": f.get("fee_source", "legacy_db_unverified"),
             "prediction_status": prediction_status,
             "prediction_reason": gate["reason"] if not gate["allowed"] else prediction_source,
@@ -201,8 +215,8 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
     # 7. 정렬 — 두 축을 따로 낸다. 가중합으로 섞지 않는다.
     live_cards = [c for c in cards if c["is_live"]]
     unavailable = [c for c in cards if not c["is_live"]]
-    by_fare = rank_cards(live_cards, "fare", full_prob_cutoff)
-    by_walk = rank_cards(live_cards, "walk", full_prob_cutoff)
+    by_fare = rank_with_demotion(live_cards, "fare", full_prob_cutoff)
+    by_walk = rank_with_demotion(live_cards, "walk", full_prob_cutoff)
 
     # 8. 대체 주차장 — 순위 밖, 위치만
     alts = []
@@ -215,7 +229,9 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         except Exception:
             alts = []
 
-    return {"cards": live_cards, "by_fare": by_fare, "by_walk": by_walk, "unavailable": unavailable,
+    return {"cards": live_cards, "by_fare": by_fare, "by_walk": by_walk,
+            # `live_unavailable` 이 정식 이름이다. `unavailable` 은 하위 호환 별칭.
+            "live_unavailable": unavailable, "unavailable": unavailable,
             "excluded": list(excluded.values()), "candidate_count": len(live_cards),
             "radius_used": cand["radius_used"], "exhausted": exhausted,
             "message": message, "unlabeled": cand["unlabeled"],

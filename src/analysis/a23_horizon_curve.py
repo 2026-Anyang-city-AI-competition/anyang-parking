@@ -38,7 +38,7 @@ from src.analysis.a22_baseline_api_alive import HOLIDAYS_KST, build_features_lab
 from src.analysis.a23_common import (
     BASELINES, HORIZONS, ROW_SETS, add_lag_baselines, apply_seasonal_naive,
     baseline_scores, common_mask, fit_seasonal_naive, occ_lookup, parse_horizons,
-    pred_column, strongest_baseline,
+    pred_column, score_predictions, strongest_baseline, truncate_obs,
 )
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
@@ -133,13 +133,7 @@ def method_scores(frame, models=(ML,)):
 
     models에 여러 모델을 주면 8-3의 M0/M1/M2를 같은 행에서 나란히 채점한다.
     """
-    rows = []
-    actual = frame["actual_occ"].to_numpy(dtype=float)
-    for name in models:
-        error = np.abs(actual - frame[pred_column(name)].to_numpy(dtype=float))
-        rows.append(dict(baseline=name, n=len(frame),
-                         mae=float(error.mean()) if len(frame) else np.nan,
-                         rmse=float(np.sqrt((error ** 2).mean())) if len(frame) else np.nan))
+    rows = [score_predictions(frame, name) for name in models]
     return pd.concat([pd.DataFrame(rows), baseline_scores(frame, BASELINES)], ignore_index=True)
 
 
@@ -157,7 +151,8 @@ def summarize(paired, horizons, models=(ML,)):
                 rows.append(scored.assign(horizon=horizon, row_set=label, weekday_group=day,
                                           n_lots=subset["parking_id"].nunique()))
     return pd.concat(rows, ignore_index=True).rename(columns={"baseline": "method"})[
-        ["horizon", "row_set", "weekday_group", "method", "n", "n_lots", "mae", "rmse"]]
+        ["horizon", "row_set", "weekday_group", "method", "n", "n_missing", "n_lots",
+         "mae", "rmse"]]
 
 
 def per_lot_scores(paired, horizons, model=ML):
@@ -263,9 +258,13 @@ def certified_max_horizon(certification, label, horizons, column="certified"):
 
 def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, horizons=HORIZONS,
         table_dir=TABLES, prediction_dir=PROCESSED / "a23", test_days=7, min_train_days=7,
-        model_params=None):
+        model_params=None, data_end=None):
     print("=== A23 지평선별 오차 곡선과 인증 판정 ===", flush=True)
     obs, lots, rules, info = load_inputs(db_path, rules_path)
+    # 폴링이 계속 쌓이므로 데이터 끝을 고정하지 않으면 다음 날 실행에서 test 창이 통째로 밀린다.
+    obs, truncated_n = truncate_obs(obs, data_end)
+    if truncated_n:
+        print(f"데이터 절단: {truncated_n:,}행 제외 (끝={data_end})", flush=True)
     dates = test_dates(obs["ts_kst"].min(), obs["ts_kst"].max(), test_days, min_train_days)
     weekend_week_count = weekend_weeks(dates)
     print(f"대상 {len(rules)}곳 · {len(obs):,}행 · {info['start']} ~ {info['end']}", flush=True)
@@ -305,6 +304,8 @@ def run(db_path=PARKING_DB, rules_path=PARKING_ACCESS_RULES_CSV, horizons=HORIZO
         "row_sets": {k: list(v) for k, v in ROW_SETS.items()},
         "test_dates": [str(d.date()) for d in dates],
         "test_days": test_days, "min_train_days": min_train_days,
+        "data_end_kst": str(data_end) if data_end else None,
+        "rows_truncated_after_data_end": int(truncated_n),
         "weekend_weeks_in_test": weekend_week_count,
         "certified_max_horizon": ceilings,
         "provisional_max_horizon": provisional_ceilings,
@@ -353,9 +354,13 @@ def main():
     parser.add_argument("--horizons", type=str, default="")
     parser.add_argument("--test-days", type=int, default=7)
     parser.add_argument("--min-train-days", type=int, default=7)
+    parser.add_argument("--data-end", type=str, default="",
+                        help="이 시각까지의 관측만 사용한다(예: '2026-09-18 23:40:22+09:00'). "
+                             "다른 실험과 같은 test 창을 쓰려면 지정한다.")
     args = parser.parse_args()
     run(args.db, args.rules, parse_horizons(args.horizons),
-        test_days=args.test_days, min_train_days=args.min_train_days)
+        test_days=args.test_days, min_train_days=args.min_train_days,
+        data_end=args.data_end or None)
 
 
 if __name__ == "__main__":

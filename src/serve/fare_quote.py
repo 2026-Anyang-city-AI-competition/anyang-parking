@@ -10,6 +10,7 @@
 """
 from datetime import datetime, timedelta, timezone
 
+from src.serve import benefits as B
 from src.serve import fare_tables as T
 from src.serve.access_check import check_access, is_korean_holiday
 from src.serve.candidates import load_lot
@@ -22,14 +23,7 @@ class UnknownParking(Exception):
     """`parking.db.lots`에 없는 주차장."""
 
 
-class UnknownBenefit(Exception):
-    def __init__(self, codes):
-        super().__init__(codes)
-        self.codes = sorted(codes)
-
-
-class MultipleBenefitsUnsupported(Exception):
-    """조례상 중복 가능 여부를 확인하기 전에는 감면을 겹쳐 적용하지 않는다(§5.1)."""
+UnknownBenefit = B.UnknownBenefit
 
 
 def _kst(value):
@@ -40,13 +34,7 @@ def quote_fare(parking_id, arrival_at, parking_minutes, benefit_codes=None,
                access_rules=None, safety_margin_minutes=0,
                holiday_checker=is_korean_holiday, lot=None):
     """§4.1 응답 규격의 견적 dict. 계산 불가는 `null + reason`으로 돌려준다."""
-    codes = list(benefit_codes or [])
-    unknown = {c for c in codes if c not in T.DISCOUNTS}
-    if unknown:
-        raise UnknownBenefit(unknown)
-    if len(set(codes)) > 1:
-        raise MultipleBenefitsUnsupported(sorted(set(codes)))
-    benefit = codes[0] if codes else None
+    codes = B.validate(list(benefit_codes or []))
 
     lot = lot if lot is not None else load_lot(parking_id)
     if lot is None:
@@ -70,9 +58,16 @@ def quote_fare(parking_id, arrival_at, parking_minutes, benefit_codes=None,
                   "safety_margin_minutes": decision["safety_margin_minutes"]}
 
     calc_lot = {**lot, "type": resolve_type(lot.get("name"), lot.get("div"), lot.get("std_type"))}
-    result = calc_fare(calc_lot, arrival, parking_minutes, discount=benefit,
-                       access_rules=access_rules, parking_id=parking_id,
-                       holiday_checker=holiday_checker)
+
+    def price(code):
+        return calc_fare(calc_lot, arrival, parking_minutes, discount=code,
+                         access_rules=access_rules, parking_id=parking_id,
+                         holiday_checker=holiday_checker)
+
+    # 자격마다 따로 계산하고 가장 싼 하나만 적용한다. 감면율을 곱하지 않는다(§5.1).
+    evaluation = B.evaluate(codes, price)
+    benefit = evaluation["selected"]
+    result = price(benefit)
 
     payg, prepaid = result["total"], result["total_prepaid"]
     # 일일권은 자동 상한이 아니라 선불 상품이다(별표1 비고 8). 둘을 병기하고
@@ -82,8 +77,12 @@ def quote_fare(parking_id, arrival_at, parking_minutes, benefit_codes=None,
         recommended = "daily_pass" if prepaid is not None and prepaid < payg else "payg"
         saving = abs(payg - prepaid) if prepaid is not None else None
 
-    applied = ({"code": benefit, **T.DISCOUNTS[benefit],
-                "evidence_note": "현장에서 증빙을 제시해야 적용돼요."} if benefit else None)
+    applied = None
+    if benefit:
+        label, _, evidence = B.BENEFIT_INFO.get(benefit, (benefit, "", ""))
+        applied = {"code": benefit, "label": label, **T.DISCOUNTS[benefit],
+                   "evidence": evidence, "evidence_note": B.EVIDENCE_NOTE,
+                   "combined_from": evaluation["combined_from"]}
     return {
         "parking_id": int(parking_id),
         "name": lot.get("name"),
@@ -99,12 +98,19 @@ def quote_fare(parking_id, arrival_at, parking_minutes, benefit_codes=None,
             "daily_pass": prepaid,
             "daily_pass_list_price": result["daily_pass"],
             "daily_pass_purchasable": None,   # 판매·매진 정보가 없으면 단정하지 않는다
+            "daily_pass_days_required": result["daily_pass_days_required"],
+            "daily_pass_scope": result["daily_pass_scope"],
+            "daily_pass_note": result["prepaid_reason"],
             "daily_pass_better_after_min": result["daily_pass_better_after_min"],
+            "paid_days": result["paid_days"],
             "recommended_option": recommended,
             "saving": saving,
             "capped": result["capped"],
             "raw_progressive": result["raw_progressive"],
             "applied_benefit": applied,
+            # 고른 자격 전부의 계산 결과. 탈락한 자격은 사유가 붙는다.
+            "benefit_options": evaluation["options"],
+            "benefit_stacking_note": evaluation["stacking"],
             "breakdown": result["breakdown"],
             "fee_schedule": result.get("fee_schedule", []),
             "fee_source": result.get("fee_source", "legacy_db_unverified"),
