@@ -462,6 +462,8 @@ fail-closed 게이트로 학습 표본을 0으로 만들지 않기 위한 예외
 - [x] 프런트엔드용 TypeScript 타입과 실제 응답 fixture 3개 생성 — `web/src/api/types.ts`, fixture는 서비스 경로로 재생성
 - [x] 현재 `web/src/data.ts`의 가짜 데이터를 실제 API 호출로 교체 — `data.ts` 삭제
 - [ ] predictor.pkl·KAKAO_REST_KEY 확보 후 generate_fixtures.py 재실행 → ui_*.png 3장 다시 촬영(도착 시점 예측 줄이 나와야 제출용으로 완성)
+- [ ] 지도 `확대`·`축소`·`내 위치` 버튼 — main의 fixture UI(`17b1a04`)에 있던 요소다. 실제 API 버전으로 바꾸며 빠졌고 CSS `.map-controls`만 남아 있다. 표시와 동작을 함께 구현한다.
+- [ ] `실시간 미제공 N곳` 접기/펼치기 토글 — 같은 커밋에 있던 요소다. 지금은 목록을 항상 펼쳐 보여 주므로 정보 손실은 없고 접는 동작만 없다.
 
 9단계 구현 완료: `web/src/api/`에 타입·클라이언트·표시 규칙을 두고 `App.tsx`가 실제 응답만 읽는다.
 `web/src/data.ts`(가짜 데이터)는 삭제했다. 표시 규칙은 세 가지를 지킨다.
