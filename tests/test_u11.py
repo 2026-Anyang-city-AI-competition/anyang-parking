@@ -5,22 +5,11 @@ import pandas as pd
 
 from src.models.u11_evaluate import coverage_rows, segment_masks, split_frame, FEATURES
 from src.report.u11_report import validate_coverage, rank_summary
-from src.serve.predictor import Predictor
+from tests.predictor_stub import bare_predictor
 from src.serve.ranking import rank_cards
 
 
 
-
-class AllowAllAccuracy:
-    """정확도 게이트를 통과시키는 스텁. 다른 검증에 끼어들지 않게 한다."""
-    def check(self, parking_id, horizon_min):
-        return {"allowed": True, "status": "certified", "reason": "test"}
-
-
-class StubCalibration:
-    """보정표 스텁. 확률 수치 표시 여부만 정하고 계산에는 끼어들지 않는다."""
-    def is_calibrated(self, horizon_min):
-        return True
 
 class AllowAll:
     """게이트 규칙이 전부 열려 있는 상태."""
@@ -96,12 +85,7 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(rank_cards(cards,'walk',mode='B')[0]['parking_id'],1)
 
     def test_probability_uses_positive_class_and_gate(self):
-        p=Predictor.__new__(Predictor);p.ok=True;p.dead=set();p.meta={};p.model_version='test'
-        p.feat_cols=['occ_now'];p.full_calibrators={};p.cqr={'15|operating|wd':2}
-        p.interval_gate={};p.models={}
-        # 이 테스트는 확률·구간 논리를 본다. 게이트는 통과시켜 둔다.
-        p.accuracy_gate=AllowAllAccuracy()
-        p.calibration=StubCalibration()
+        p=bare_predictor(feat_cols=['occ_now'], cqr={'15|operating|wd':2})
         for a,v in ((.1,-5),(.5,0),(.9,5)):
             m=Mock();m.predict.return_value=np.array([v]);p.models[(15,a)]=m
         clf=Mock();clf.predict_proba.return_value=np.array([[.1,.9]]);p.full_models={15:clf}

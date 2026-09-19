@@ -14,7 +14,8 @@ import pandas as pd
 from scripts.fill_access_schedule import apply_schedules, validate_rule_ids
 from src.analysis import a18_continuity_check as a18
 from src.analysis.a19_persistence_baseline import accessible_at, build_series, hhmm_to_min
-from src.serve.predictor import HORIZ_GRID, Predictor
+from src.serve.predictor import HORIZ_GRID
+from tests.predictor_stub import BlockAllAccuracy, bare_predictor
 from src.serve.request_polling import RequestPoller
 
 
@@ -130,10 +131,8 @@ class PredictionRangeTests(unittest.TestCase):
       이 테스트가 낡아 실제 버그를 가리지 않게 하기 위해서다
       (240·360 을 추가했을 때 실제로 121 을 범위 밖으로 알고 있었다)."""
 
-    def _predictor(self):
-        predictor = Predictor.__new__(Predictor)
-        predictor.ok, predictor.dead, predictor.model_version = True, set(), "test"
-        return predictor
+    def _predictor(self, **kwargs):
+        return bare_predictor(**kwargs)
 
     def test_out_of_range_requests_never_call_a_short_horizon_model(self):
         predictor = self._predictor()
@@ -148,8 +147,7 @@ class PredictionRangeTests(unittest.TestCase):
                 self.assertIsNone(result["model_horizon_min"])
 
     def test_in_range_requests_snap_to_a_trained_horizon(self):
-        predictor = self._predictor()
-        predictor.accuracy_gate = _BlockAll()
+        predictor = self._predictor(accuracy_gate=BlockAllAccuracy())
         for horizon in (1, 45, max(HORIZ_GRID)):
             with self.subTest(horizon=horizon):
                 result = predictor.predict(53, datetime(2026, 9, 15, 12), horizon)
@@ -162,12 +160,6 @@ class PredictionRangeTests(unittest.TestCase):
         from src.models.u11_evaluate import HORIZONS
         self.assertEqual(tuple(HORIZ_GRID), tuple(HORIZONS))
 
-
-class _BlockAll:
-    """정확도 게이트를 모두 막는 스텁. 격자 선택 이후 경로만 보기 위함이다."""
-
-    def check(self, parking_id, horizon_min):
-        return {"allowed": False, "status": "not_evaluated", "reason": "stub"}
 
 
 class PollRetryTests(unittest.TestCase):
