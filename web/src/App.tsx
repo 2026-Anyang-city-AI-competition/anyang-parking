@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -15,6 +15,8 @@ import {
   LocateFixed,
   Map,
   MapPin,
+  Maximize2,
+  Minimize2,
   Minus,
   Navigation,
   Plus,
@@ -47,7 +49,6 @@ import {
   fullnessLabel,
   predictedFree,
   predictionNote,
-  project,
   resultNotice,
   sortedBy,
   toneOf,
@@ -307,46 +308,164 @@ function DestinationMap({
   );
 }
 
-/** 실제 좌표로 핀을 찍는 지도. 실제 지도 타일 대신 상대 위치만 보여준다. */
 function ResultMap({
   cards,
   destination,
   selected,
   onSelect,
+  expanded,
+  onExpandedChange,
 }: {
-  cards: ParkingCard[];
+  cards: RankedCard[];
   destination: Place | null;
-  selected?: number;
-  onSelect?: (id: number) => void;
+  selected: number | null;
+  onSelect: (id: number) => void;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
 }) {
-  const points = useMemo(
-    () => [...cards, ...(destination ? [{ lat: destination.lat, lng: destination.lng }] : [])],
-    [cards, destination],
-  );
+  const container = useRef<HTMLDivElement | null>(null);
+  const map = useRef<L.Map | null>(null);
+  const markerLayer = useRef<L.LayerGroup | null>(null);
+  const parkingMarkers = useRef<Record<number, L.Marker>>({});
+  const locationLayer = useRef<L.CircleMarker | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    if (!container.current || map.current) return;
+    try {
+      const instance = L.map(container.current, { zoomControl: false }).setView(ANYANG_CENTER, 14);
+      const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      });
+      tiles.on('tileerror', () => {
+        setMapError('지도 배경을 불러오지 못했어요. 추천 목록은 계속 이용할 수 있어요.');
+      });
+      tiles.addTo(instance);
+      L.control.zoom({ position: 'topright' }).addTo(instance);
+      markerLayer.current = L.layerGroup().addTo(instance);
+      map.current = instance;
+      window.setTimeout(() => instance.invalidateSize(), 0);
+    } catch {
+      setMapError('지도를 불러오지 못했어요. 추천 목록은 계속 이용할 수 있어요.');
+    }
+    return () => {
+      map.current?.remove();
+      map.current = null;
+      markerLayer.current = null;
+      parkingMarkers.current = {};
+      locationLayer.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const instance = map.current;
+    const layer = markerLayer.current;
+    if (!instance || !layer) return;
+
+    layer.clearLayers();
+    parkingMarkers.current = {};
+    const bounds: L.LatLngExpression[] = [];
+
+    if (destination) {
+      const destinationIcon = L.divIcon({
+        className: 'result-destination-marker-wrap',
+        html: '<span class="result-destination-marker"><span></span></span>',
+        iconSize: [34, 42],
+        iconAnchor: [17, 40],
+      });
+      L.marker([destination.lat, destination.lng], {
+        icon: destinationIcon,
+        keyboard: true,
+        title: `목적지 ${destination.name}`,
+      }).addTo(layer);
+      bounds.push([destination.lat, destination.lng]);
+    }
+
+    cards.forEach((card, index) => {
+      if (card.lat === null || card.lng === null) return;
+      const icon = L.divIcon({
+        className: 'result-parking-marker-wrap',
+        html: `<span class="result-parking-marker ${toneOf(card)}${selected === card.parking_id ? ' selected' : ''}">${index + 1}</span>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      });
+      const marker = L.marker([card.lat, card.lng], {
+        icon,
+        keyboard: true,
+        title: `${index + 1}위 ${card.name}`,
+      }).addTo(layer);
+      marker.on('add', () => {
+        marker.getElement()?.setAttribute('aria-label', `${index + 1}위 ${card.name}`);
+      });
+      marker.on('click', () => onSelect(card.parking_id));
+      parkingMarkers.current[card.parking_id] = marker;
+      bounds.push([card.lat, card.lng]);
+    });
+
+    if (bounds.length === 1) instance.setView(bounds[0], 16);
+    if (bounds.length > 1) instance.fitBounds(L.latLngBounds(bounds), { padding: [38, 38], maxZoom: 16 });
+  }, [cards, destination, onSelect, selected]);
+
+  useEffect(() => {
+    for (const [id, marker] of Object.entries(parkingMarkers.current)) {
+      const pin = marker.getElement()?.querySelector('.result-parking-marker');
+      pin?.classList.toggle('selected', Number(id) === selected);
+      marker.setZIndexOffset(Number(id) === selected ? 1000 : 0);
+    }
+    const marker = selected === null ? null : parkingMarkers.current[selected];
+    if (marker) map.current?.panInside(marker.getLatLng(), { padding: [45, 45], animate: true });
+  }, [selected]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => map.current?.invalidateSize(), 220);
+    return () => window.clearTimeout(timer);
+  }, [expanded]);
+
+  const moveToCurrent = () => {
+    if (!navigator.geolocation) {
+      setMapError('이 브라우저는 현재 위치를 지원하지 않아요.');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const point: L.LatLngExpression = [coords.latitude, coords.longitude];
+        if (map.current) {
+          locationLayer.current?.remove();
+          locationLayer.current = L.circleMarker(point, {
+            radius: 8,
+            weight: 3,
+            color: '#fff',
+            fillColor: '#2256b3',
+            fillOpacity: 1,
+          }).addTo(map.current);
+          map.current.setView(point, Math.max(map.current.getZoom(), 15));
+        }
+        setLocating(false);
+      },
+      () => {
+        setMapError('현재 위치를 확인하지 못했어요. 위치 권한을 확인해 주세요.');
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+    );
+  };
+
   return (
-    <div className="mock-map compact">
-      {destination && (
-        <span
-          className="destination-pin"
-          aria-label={`목적지 ${destination.name}`}
-          style={project(points, destination.lat, destination.lng)}
-        >
-          <MapPin size={20} fill="currentColor" />
-        </span>
-      )}
-      {cards.map((card, index) =>
-        card.lat === null || card.lng === null ? null : (
-          <button
-            key={card.parking_id}
-            aria-label={`${card.name} 도보 ${card.walk_min ?? '?'}분`}
-            className={`parking-pin ${toneOf(card)} ${selected === card.parking_id ? 'selected' : ''}`}
-            style={project(points, card.lat, card.lng)}
-            onClick={() => onSelect?.(card.parking_id)}
-          >
-            {index + 1}
-          </button>
-        ),
-      )}
+    <div className="result-map-shell">
+      <div ref={container} className="result-map-canvas" aria-label="추천 주차장 지도" />
+      {mapError && <p className="result-map-error">{mapError}</p>}
+      <div className="result-map-actions">
+        <button onClick={moveToCurrent} disabled={locating} aria-label="지도에서 내 위치 보기">
+          <LocateFixed size={15} /> {locating ? '확인 중' : '내 위치'}
+        </button>
+        <button onClick={() => onExpandedChange(!expanded)} aria-label={expanded ? '지도 줄이기' : '지도 크게 보기'}>
+          {expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+          {expanded ? '목록 보기' : '지도 크게'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -381,12 +500,35 @@ function Availability({ card }: { card: ParkingCard }) {
   );
 }
 
-function ParkingCardView({ card, onOpen }: { card: RankedCard; onOpen: () => void }) {
+function ParkingCardView({
+  card,
+  selected,
+  onMapSelect,
+  onOpen,
+}: {
+  card: RankedCard;
+  selected: boolean;
+  onMapSelect: () => void;
+  onOpen: () => void;
+}) {
   const fare = fareLabel(card);
   const warning = accessWarning(card);
   const demotion = demotionNote(card);
   return (
-    <article className="parking-card" onClick={onOpen}>
+    <article
+      id={`parking-card-${card.parking_id}`}
+      className={`parking-card ${selected ? 'selected' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${card.name} 지도 핀 강조`}
+      onClick={onMapSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onMapSelect();
+        }
+      }}
+    >
       <div className="card-title">
         <span className={`rank ${toneOf(card)}`}>{card.rank}</span>
         <div>
@@ -396,7 +538,16 @@ function ParkingCardView({ card, onOpen }: { card: RankedCard; onOpen: () => voi
             {card.cell_cnt ? <small>총 {card.cell_cnt}면</small> : null}
           </p>
         </div>
-        <ChevronRight size={20} />
+        <button
+          className="card-detail-button"
+          aria-label={`${card.name} 상세 보기`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen();
+          }}
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
       <Availability card={card} />
       {demotion && <Notice tone="warn">{demotion}</Notice>}
@@ -836,9 +987,27 @@ function Results({
   onSelect: (card: RankedCard) => void;
 }) {
   const [sort, setSort] = useState<SortMode>('recommend');
+  const [selectedParkingId, setSelectedParkingId] = useState<number | null>(null);
+  const [mapExpanded, setMapExpanded] = useState(false);
   const cards = sortedBy(result, sort);
   const notice = resultNotice(result);
   const gateBlocked = cards.length > 0 && cards.every((c) => c.prediction_status !== 'available');
+
+  useEffect(() => {
+    setSelectedParkingId((current) => (
+      current !== null && cards.some((card) => card.parking_id === current)
+        ? current
+        : (cards[0]?.parking_id ?? null)
+    ));
+  }, [cards]);
+
+  const selectFromMap = useCallback((parkingId: number) => {
+    setSelectedParkingId(parkingId);
+    document.getElementById(`parking-card-${parkingId}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, []);
 
   return (
     <main className="screen results-screen">
@@ -862,8 +1031,15 @@ function Results({
         <button className={sort === 'walk' ? 'active' : ''} onClick={() => setSort('walk')}>도보 짧은순</button>
       </div>
 
-      <div className="results-map">
-        <ResultMap cards={cards} destination={destination} />
+      <div className={`results-map ${mapExpanded ? 'expanded' : ''}`}>
+        <ResultMap
+          cards={cards}
+          destination={destination}
+          selected={selectedParkingId}
+          onSelect={selectFromMap}
+          expanded={mapExpanded}
+          onExpandedChange={setMapExpanded}
+        />
       </div>
 
       <section className="result-list">
@@ -878,7 +1054,13 @@ function Results({
         )}
 
         {cards.map((card) => (
-          <ParkingCardView key={card.parking_id} card={card} onOpen={() => onSelect(card)} />
+          <ParkingCardView
+            key={card.parking_id}
+            card={card}
+            selected={selectedParkingId === card.parking_id}
+            onMapSelect={() => setSelectedParkingId(card.parking_id)}
+            onOpen={() => onSelect(card)}
+          />
         ))}
 
         {result.excluded.length > 0 && (
