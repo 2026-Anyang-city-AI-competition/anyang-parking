@@ -25,7 +25,10 @@ from src.serve.walking import CACHE, _grid
 ROOT = Path(__file__).resolve().parents[2]
 TAB = ROOT / "reports/tables"
 OUT = ROOT / "data/processed/u11"
-HORIZONS = (15, 30, 60, 120)
+# 240·360 추가. 주차장별 정확도 게이트(prediction_accuracy.csv)가 못 맞히는 곳을
+# 막아 주므로, 지평선 전체를 켜고 끄는 대신 맞히는 주차장에서만 나간다.
+# ⚠️ 180분은 아직 없다. 180분 요청은 120이나 240으로 60분이나 밀린다 — 다음 확장 대상.
+HORIZONS = (15, 30, 60, 120, 240, 360)
 FEATURES = INTX + ["opr_" + c for c in OPR_COLS]
 PARAMS = dict(n_estimators=120, learning_rate=.08, num_leaves=31,
               min_child_samples=40, random_state=42, n_jobs=4, verbosity=-1)

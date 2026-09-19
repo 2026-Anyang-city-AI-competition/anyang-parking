@@ -68,6 +68,7 @@ class ApiTests(unittest.TestCase):
             "destination": {"lat": 37.394259, "lng": 126.956861},
             "origin": {"lat": 37.4018, "lng": 126.9226},
             "parking_minutes": 120,
+            "depart_in_minutes": 35,
             "include_alternatives": False,
         }
         with patch("src.serve.api.recommend", return_value=stub) as called:
@@ -80,6 +81,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(body["poll"]["status"], "polled")
         self.assertEqual(body["request"]["parking_minutes"], 120)
         self.assertEqual(called.call_args.args[0], (37.394259, 126.956861))
+        self.assertEqual(called.call_args.kwargs["start"], (37.4018, 126.9226))
+        self.assertEqual(called.call_args.kwargs["depart_in_min"], 35)
 
     def test_invalid_coordinate_has_stable_error_shape(self):
         response = self.client.post("/api/v1/recommend", json={
@@ -153,6 +156,24 @@ class ApiTests(unittest.TestCase):
             response = self.client.get("/api/v1/places/search", params={"q": "안양시청"})
         self.assertNotIn("KakaoAK", response.text)
         self.assertNotIn("dapi.kakao.com", response.text)
+
+    def test_places_reverse_returns_selected_coordinate_and_address(self):
+        place = {"name": "경기 안양시 동안구 시민대로 235",
+                 "road_address": "경기 안양시 동안구 시민대로 235",
+                 "address": "경기 안양시 동안구 관양동 1590",
+                 "lat": 37.394259, "lng": 126.956861, "in_anyang": True,
+                 "distance_from_anyang_m": 0, "category": "지도 선택"}
+        with patch("src.serve.api.reverse_geocode", return_value=place) as called:
+            response = self.client.get("/api/v1/places/reverse",
+                                       params={"lat": 37.394259, "lng": 126.956861})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["place"]["road_address"], place["road_address"])
+        self.assertEqual(called.call_args.args, (37.394259, 126.956861))
+
+    def test_places_reverse_rejects_bad_coordinate(self):
+        response = self.client.get("/api/v1/places/reverse", params={"lat": 91, "lng": 126.9})
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
 
     def test_auth_endpoints_report_503_when_not_configured(self):
         with patch.object(auth, "config", return_value={**auth.config(), "enabled": False}):

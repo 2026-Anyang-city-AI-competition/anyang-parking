@@ -14,7 +14,9 @@ export type PredictionStatus =
   | 'evaluation_pending'
   | 'frozen'
   | 'anomaly'
-  | 'dead_feed';
+  | 'dead_feed'
+  /** 이 주차장은 이 예측시간에서 정확도가 기준에 못 미쳐 예측을 내보내지 않는다. */
+  | 'accuracy_not_certified';
 
 /** 출입 가능 여부. `unknown` 을 24시간 개방으로 간주하지 않는다. */
 export type AccessStatus = 'available' | 'unknown';
@@ -117,6 +119,9 @@ export type ParkingCard = {
   arrive_at_iso: string;
   /** 경로 조회 실패로 추정치를 쓴 경우. UI 에 "추정치"를 반드시 표시한다. */
   estimated: boolean;
+  route_source?: string | null;
+  /** 미래 출발에서 `current`면 현재 교통 기준 ETA다. */
+  route_traffic_basis?: 'live' | 'current' | null;
   walk_far_warning: boolean;
 
   fare: Fare;
@@ -136,6 +141,8 @@ export type ParkingCard = {
   avail_pred: number | null;
   occ_now: number | null;
   full_prob: number | null;
+  /** 확률을 **숫자로** 보여줘도 되는지. false 면 순위에는 썼지만 수치는 감춘다. */
+  full_prob_calibrated: boolean | null;
   pred_p10: number | null;
   pred_p90: number | null;
   interval_status: 'pass' | 'withheld' | 'unverified' | 'unavailable';
@@ -247,6 +254,11 @@ export type PlacesResponse = {
   cache_age_sec: number;
   query: string;
   count: number;
+  request_id?: string;
+};
+
+export type ReverseGeocodeResponse = {
+  place: Place;
   request_id?: string;
 };
 

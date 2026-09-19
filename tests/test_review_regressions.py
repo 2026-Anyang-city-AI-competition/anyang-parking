@@ -14,7 +14,7 @@ import pandas as pd
 from scripts.fill_access_schedule import apply_schedules, validate_rule_ids
 from src.analysis import a18_continuity_check as a18
 from src.analysis.a19_persistence_baseline import accessible_at, build_series, hhmm_to_min
-from src.serve.predictor import Predictor
+from src.serve.predictor import HORIZ_GRID, Predictor
 from src.serve.request_polling import RequestPoller
 
 
@@ -124,17 +124,50 @@ class ObservationGridTests(unittest.TestCase):
 
 
 class PredictionRangeTests(unittest.TestCase):
-    def test_out_of_range_requests_never_call_a_short_horizon_model(self):
+    """학습 범위 밖 요청을 가까운 모델로 위장하지 않는지.
+
+    ★ 경계를 숫자로 박지 않고 `HORIZ_GRID` 에서 끌어온다. 격자를 넓힐 때마다
+      이 테스트가 낡아 실제 버그를 가리지 않게 하기 위해서다
+      (240·360 을 추가했을 때 실제로 121 을 범위 밖으로 알고 있었다)."""
+
+    def _predictor(self):
         predictor = Predictor.__new__(Predictor)
         predictor.ok, predictor.dead, predictor.model_version = True, set(), "test"
+        return predictor
+
+    def test_out_of_range_requests_never_call_a_short_horizon_model(self):
+        predictor = self._predictor()
+        longest = max(HORIZ_GRID)
         # 모델/이력 속성이 아예 없어도 범위 밖 요청은 안전하게 종료해야 한다.
-        for horizon in (0, 121, 1440, 10080, np.nan, np.inf):
+        for horizon in (0, -5, longest + 1, longest * 4, np.nan, np.inf):
             with self.subTest(horizon=horizon):
                 result = predictor.predict(53, datetime(2026, 9, 15, 12), horizon)
                 self.assertEqual(result["source"], "unsupported_horizon")
                 self.assertIsNone(result["p50"])
                 self.assertIsNone(result["full_prob"])
                 self.assertIsNone(result["model_horizon_min"])
+
+    def test_in_range_requests_snap_to_a_trained_horizon(self):
+        predictor = self._predictor()
+        predictor.accuracy_gate = _BlockAll()
+        for horizon in (1, 45, max(HORIZ_GRID)):
+            with self.subTest(horizon=horizon):
+                result = predictor.predict(53, datetime(2026, 9, 15, 12), horizon)
+                # 범위 안이면 격자를 고른 뒤 게이트 판정으로 넘어간다.
+                self.assertIn(result["model_horizon_min"], HORIZ_GRID)
+                self.assertEqual(result["source"], "lot_horizon_not_certified")
+
+    def test_service_grid_matches_the_trained_horizons(self):
+        # 두 상수가 어긋나면 없는 모델을 부르거나 학습해 두고 안 쓴다.
+        from src.models.u11_evaluate import HORIZONS
+        self.assertEqual(tuple(HORIZ_GRID), tuple(HORIZONS))
+
+
+class _BlockAll:
+    """정확도 게이트를 모두 막는 스텁. 격자 선택 이후 경로만 보기 위함이다."""
+
+    def check(self, parking_id, horizon_min):
+        return {"allowed": False, "status": "not_evaluated", "reason": "stub"}
 
 
 class PollRetryTests(unittest.TestCase):

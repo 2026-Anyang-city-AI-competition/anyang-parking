@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,9 +12,12 @@ import {
   Clock3,
   Footprints,
   Info,
+  LocateFixed,
   Map,
   MapPin,
+  Minus,
   Navigation,
+  Plus,
   Search,
   Settings,
   Star,
@@ -21,7 +26,7 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react';
-import { ApiProblem, listBenefits, recommend, searchPlaces } from './api/client';
+import { ApiProblem, listBenefits, recommend, reverseGeocode, searchPlaces } from './api/client';
 import type { Benefit, ParkingCard, Place, RankedCard, RecommendResponse } from './api/types';
 import {
   clearPreferences,
@@ -39,6 +44,7 @@ import {
   currentFree,
   demotionNote,
   fareLabel,
+  fullnessLabel,
   predictedFree,
   predictionNote,
   project,
@@ -48,10 +54,92 @@ import {
   won,
 } from './api/present';
 
-type Screen = 'home' | 'results' | 'detail' | 'settings';
+type Screen = 'home' | 'map' | 'results' | 'detail' | 'settings';
 type SortMode = 'recommend' | 'fare' | 'walk';
 
 const durations = [30, 60, 120, 180];
+
+function durationLabel(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (!hours) return `${rest}분`;
+  return rest ? `${hours}시간 ${rest}분` : `${hours}시간`;
+}
+
+function departureLabel(offset: number) {
+  if (offset === 0) return '지금 출발';
+  const now = new Date();
+  const target = new Date(now.getTime() + offset * 60_000);
+  const sameDay = now.getFullYear() === target.getFullYear()
+    && now.getMonth() === target.getMonth()
+    && now.getDate() === target.getDate();
+  const day = sameDay ? '오늘' : '내일';
+  return `${day} ${target.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 출발`;
+}
+
+function TimeSheet({
+  kind,
+  value,
+  onClose,
+  onConfirm,
+}: {
+  kind: 'departure' | 'duration';
+  value: number;
+  onClose: () => void;
+  onConfirm: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const departure = kind === 'departure';
+  const min = departure ? 0 : 5;
+  const max = departure ? 120 : 1440;
+  const quick = departure ? [0, 15, 30, 60, 120] : durations;
+  const set = (next: number) => setDraft(Math.min(max, Math.max(min, Math.round(next / 5) * 5)));
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="time-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={departure ? '출발 시각 설정' : '주차 시간 설정'}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="sheet-handle" />
+        <div className="sheet-title">
+          <div>
+            <strong>{departure ? '출발 시각 설정' : '주차 시간 설정'}</strong>
+            <span>5분 단위로 선택해요</span>
+          </div>
+          <button aria-label="닫기" onClick={onClose}><X size={20} /></button>
+        </div>
+
+        <div className="time-value">{departure ? departureLabel(draft) : durationLabel(draft)}</div>
+        <div className="stepper">
+          <button aria-label="5분 줄이기" onClick={() => set(draft - 5)} disabled={draft <= min}><Minus /></button>
+          <input
+            aria-label={departure ? '출발까지 분' : '주차 분'}
+            type="range"
+            min={min}
+            max={max}
+            step={5}
+            value={draft}
+            onChange={(event) => set(Number(event.target.value))}
+          />
+          <button aria-label="5분 늘리기" onClick={() => set(draft + 5)} disabled={draft >= max}><Plus /></button>
+        </div>
+        <div className="quick-times">
+          {quick.map((minute) => (
+            <button key={minute} className={draft === minute ? 'active' : ''} onClick={() => set(minute)}>
+              {departure ? (minute === 0 ? '지금' : `+${minute}분`) : durationLabel(minute)}
+            </button>
+          ))}
+        </div>
+        {departure && <p className="sheet-note">주차장 도착이 지금부터 120분을 넘으면 AI 예측 없이 요금과 출입 가능 여부만 안내해요.</p>}
+        <button className="primary-cta" onClick={() => { onConfirm(draft); onClose(); }}>이 조건으로 설정</button>
+      </section>
+    </div>
+  );
+}
 
 function Brand() {
   return (
@@ -71,6 +159,151 @@ function Notice({ children, tone = 'info' }: { children: React.ReactNode; tone?:
       {tone === 'warn' ? <TriangleAlert size={14} /> : <Info size={14} />}
       <span>{children}</span>
     </p>
+  );
+}
+
+const ANYANG_CENTER: [number, number] = [37.394259, 126.956861];
+
+function DestinationMap({
+  initial,
+  onBack,
+  onConfirm,
+}: {
+  initial: Place | null;
+  onBack: () => void;
+  onConfirm: (place: Place) => void;
+}) {
+  const start: [number, number] = initial ? [initial.lat, initial.lng] : ANYANG_CENTER;
+  const container = useRef<HTMLDivElement | null>(null);
+  const map = useRef<L.Map | null>(null);
+  const marker = useRef<L.Marker | null>(null);
+  const [point, setPoint] = useState({ lat: start[0], lng: start[1] });
+  const [place, setPlace] = useState<Place | null>(initial);
+  const [loadingAddress, setLoadingAddress] = useState(!initial);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    if (!container.current || map.current) return;
+    try {
+      const instance = L.map(container.current, { zoomControl: false }).setView(start, 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(instance);
+      L.control.zoom({ position: 'topright' }).addTo(instance);
+      const icon = L.divIcon({
+        className: 'destination-marker-wrap',
+        html: '<span class="destination-marker-dot"></span>',
+        iconSize: [34, 42],
+        iconAnchor: [17, 40],
+      });
+      const pin = L.marker(start, { draggable: true, icon }).addTo(instance);
+      const choose = (lat: number, lng: number) => {
+        pin.setLatLng([lat, lng]);
+        setPoint({ lat, lng });
+      };
+      instance.on('click', (event: L.LeafletMouseEvent) => choose(event.latlng.lat, event.latlng.lng));
+      pin.on('dragend', () => {
+        const next = pin.getLatLng();
+        choose(next.lat, next.lng);
+      });
+      map.current = instance;
+      marker.current = pin;
+      window.setTimeout(() => instance.invalidateSize(), 0);
+    } catch {
+      setMapError('지도를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+    }
+    return () => {
+      map.current?.remove();
+      map.current = null;
+      marker.current = null;
+    };
+    // 지도는 화면을 열 때 한 번만 만든다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLoadingAddress(true);
+      setAddressError(null);
+      try {
+        const result = await reverseGeocode(point.lat, point.lng, controller.signal);
+        setPlace(result.place);
+      } catch (problem) {
+        if (controller.signal.aborted) return;
+        setPlace(null);
+        setAddressError(problem instanceof ApiProblem ? problem.userMessage : '선택한 위치의 주소를 확인하지 못했어요.');
+      } finally {
+        if (!controller.signal.aborted) setLoadingAddress(false);
+      }
+    }, 300);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [point.lat, point.lng]);
+
+  const moveToCurrent = () => {
+    if (!navigator.geolocation) {
+      setMapError('이 브라우저는 현재 위치를 지원하지 않아요.');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const next: [number, number] = [coords.latitude, coords.longitude];
+        map.current?.setView(next, 17);
+        marker.current?.setLatLng(next);
+        setPoint({ lat: coords.latitude, lng: coords.longitude });
+        setLocating(false);
+      },
+      () => {
+        setMapError('현재 위치를 확인하지 못했어요. 위치 권한을 확인해 주세요.');
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+    );
+  };
+
+  const confirmed = place ?? {
+    name: '지도에서 선택한 위치',
+    road_address: null,
+    address: null,
+    lat: point.lat,
+    lng: point.lng,
+    in_anyang: false,
+    distance_from_anyang_m: 0,
+    category: '지도 선택',
+  };
+
+  return (
+    <main className="screen destination-map-screen">
+      <header className="light-header map-header">
+        <button className="icon-button" aria-label="뒤로" onClick={onBack}><ArrowLeft /></button>
+        <div><h1>목적지를 지도에서 선택</h1><p>지도를 누르거나 핀을 옮겨요</p></div>
+      </header>
+      <div ref={container} className="destination-map-canvas" aria-label="목적지 선택 지도" />
+      <button className="map-locate" onClick={moveToCurrent} disabled={locating}>
+        <LocateFixed size={19} /> {locating ? '현재 위치 확인 중' : '내 위치로 이동'}
+      </button>
+      <section className="map-confirm-sheet">
+        <span>선택한 목적지</span>
+        <h2>{loadingAddress ? '주소 확인 중…' : (place?.name ?? '지도에서 선택한 위치')}</h2>
+        <p>{place?.road_address ?? place?.address ?? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`}</p>
+        {mapError && <Notice tone="warn">{mapError}</Notice>}
+        {addressError && <Notice tone="warn">{addressError} 좌표로는 선택할 수 있어요.</Notice>}
+        <button
+          className="primary-cta"
+          disabled={loadingAddress || Boolean(mapError && !map.current)}
+          onClick={() => onConfirm({ ...confirmed, lat: point.lat, lng: point.lng })}
+        >
+          이 위치로 설정 <ArrowRight size={18} />
+        </button>
+      </section>
+    </main>
   );
 }
 
@@ -138,7 +371,7 @@ function Availability({ card }: { card: ParkingCard }) {
             {predicted === null ? '—' : predicted}
             <small>
               면{' '}
-              {card.full_prob !== null && <em>만차 {Math.round(card.full_prob * 100)}%</em>}
+              {fullnessLabel(card) && <em>{fullnessLabel(card)}</em>}
             </small>
           </strong>
         </div>
@@ -183,8 +416,14 @@ function ParkingCardView({ card, onOpen }: { card: RankedCard; onOpen: () => voi
 }
 
 function Home({
+  origin,
+  onOrigin,
+  onUseCurrent,
+  locating,
+  originError,
   destination,
   onDestination,
+  onMap,
   minutes,
   onMinutes,
   departInMinutes,
@@ -199,8 +438,14 @@ function Home({
   onPick,
   onToggleFavorite,
 }: {
+  origin: Place | null;
+  onOrigin: (place: Place | null) => void;
+  onUseCurrent: () => void;
+  locating: boolean;
+  originError: string | null;
   destination: Place | null;
   onDestination: (place: Place | null) => void;
+  onMap: () => void;
   minutes: number;
   onMinutes: (value: number) => void;
   departInMinutes: number;
@@ -221,6 +466,20 @@ function Home({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
   const [open, setOpen] = useState(false);
+  const [originQuery, setOriginQuery] = useState(origin?.name ?? '');
+  const [originPlaces, setOriginPlaces] = useState<Place[]>([]);
+  const [originOpen, setOriginOpen] = useState(false);
+  const [originSearching, setOriginSearching] = useState(false);
+  const [originSearchError, setOriginSearchError] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<'departure' | 'duration' | null>(null);
+
+  useEffect(() => {
+    setQuery(destination?.name ?? '');
+  }, [destination]);
+
+  useEffect(() => {
+    setOriginQuery(origin?.name ?? '');
+  }, [origin]);
 
   useEffect(() => {
     const term = query.trim();
@@ -251,6 +510,34 @@ function Home({
     };
   }, [query, open]);
 
+  useEffect(() => {
+    const term = originQuery.trim();
+    if (!originOpen || term.length < 2 || origin?.name === term) {
+      setOriginPlaces([]);
+      setOriginSearchError(null);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setOriginSearching(true);
+      setOriginSearchError(null);
+      try {
+        const found = await searchPlaces(term, controller.signal);
+        setOriginPlaces(found.places);
+      } catch (problem) {
+        if (controller.signal.aborted) return;
+        setOriginPlaces([]);
+        setOriginSearchError(problem instanceof ApiProblem ? problem.userMessage : '출발지 검색에 실패했어요.');
+      } finally {
+        if (!controller.signal.aborted) setOriginSearching(false);
+      }
+    }, 300);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [originQuery, originOpen, origin]);
+
   return (
     <main className="screen home-screen">
       <header className="hero">
@@ -262,27 +549,69 @@ function Home({
       </header>
 
       <section className="search-card">
+        <label className="field-label" htmlFor="origin">어디서 출발하세요?</label>
+        <div className="origin-row">
+          <div className="search-field compact">
+            <Navigation size={18} />
+            <input
+              id="origin"
+              value={originQuery}
+              onChange={(event) => { setOriginQuery(event.target.value); setOriginOpen(true); onOrigin(null); }}
+              onFocus={() => setOriginOpen(true)}
+              placeholder="출발지 검색"
+              autoComplete="off"
+            />
+            {originQuery && <button aria-label="출발지 지우기" onClick={() => { setOriginQuery(''); onOrigin(null); }}><X size={14} /></button>}
+          </div>
+          <button className="locate-button" onClick={onUseCurrent} disabled={locating}>
+            <LocateFixed size={18} /><span>{locating ? '확인 중' : '현재 위치'}</span>
+          </button>
+        </div>
+        {originError && <p className="inline-error">{originError}</p>}
+        {originOpen && originQuery.trim().length >= 2 && origin?.name !== originQuery.trim() && (
+          <div className="suggestions origin-suggestions">
+            {originSearching && <p className="suggestion-state">검색 중…</p>}
+            {!originSearching && originSearchError && <p className="suggestion-state warn">{originSearchError}</p>}
+            {!originSearching && !originSearchError && !originPlaces.length && <p className="suggestion-state">검색 결과가 없어요.</p>}
+            {originPlaces.map((place) => (
+              <button
+                key={`origin-${place.name}-${place.lat}-${place.lng}`}
+                onClick={() => { onOrigin(place); setOriginQuery(place.name); setOriginOpen(false); }}
+              >
+                <Navigation size={17} />
+                <span><strong>{place.name}</strong><small>{place.road_address ?? place.address ?? ''}</small></span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="divider" />
         <label className="field-label" htmlFor="destination">어디로 가세요?</label>
-        <div className="search-field">
-          <Search size={20} />
-          <input
-            id="destination"
-            value={query}
-            onChange={(event) => { setQuery(event.target.value); setOpen(true); onDestination(null); }}
-            onFocus={() => setOpen(true)}
-            placeholder="장소명 또는 주소 검색"
-            autoComplete="off"
-          />
-          {query && (
-            <button aria-label="입력 지우기" onClick={() => { setQuery(''); onDestination(null); }}>
-              <X size={14} />
-            </button>
-          )}
+        <div className="destination-row">
+          <div className="search-field">
+            <Search size={20} />
+            <input
+              id="destination"
+              value={query}
+              onChange={(event) => { setQuery(event.target.value); setOpen(true); onDestination(null); }}
+              onFocus={() => setOpen(true)}
+              placeholder="장소명 또는 주소 검색"
+              autoComplete="off"
+            />
+            {query && (
+              <button aria-label="입력 지우기" onClick={() => { setQuery(''); onDestination(null); }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <button className="destination-map-button" aria-label="지도에서 목적지 선택" onClick={onMap}>
+            <Map size={21} /><span>지도</span>
+          </button>
         </div>
         {destination && <p className="address">{destination.road_address ?? destination.address ?? ''}</p>}
 
         {open && query.trim().length >= 2 && (
-          <div className="suggestions">
+          <div className="suggestions destination-suggestions">
             {searching && <p className="suggestion-state">검색 중…</p>}
             {!searching && searchError && <p className="suggestion-state warn">{searchError}</p>}
             {!searching && !searchError && !places.length && (
@@ -342,7 +671,7 @@ function Home({
         )}
 
         <div className="divider" />
-        <span className="field-label">얼마나 주차하세요?</span>
+        <div className="section-heading"><span>얼마나 주차하세요?</span><button onClick={() => setSheet('duration')}>직접 설정 <ChevronRight size={15} /></button></div>
         <div className="duration-grid">
           {durations.map((minute) => (
             <button key={minute} className={minutes === minute ? 'active' : ''} onClick={() => onMinutes(minute)}>
@@ -350,18 +679,29 @@ function Home({
             </button>
           ))}
         </div>
+        {!durations.includes(minutes) && <button className="custom-selection" onClick={() => setSheet('duration')}>{durationLabel(minutes)} 주차 <ChevronRight size={15} /></button>}
 
         <div className="divider" />
-        <span className="field-label">언제 출발하세요?</span>
+        <div className="section-heading"><span>언제 출발하세요?</span><button onClick={() => setSheet('departure')}>직접 설정 <ChevronRight size={15} /></button></div>
         <div className="depart-grid">
           <button className={departInMinutes === 0 ? 'active' : ''} onClick={() => onDepart(0)}>
             <span><Clock3 size={15} /> 지금 출발</span><small>현재 시각 기준</small>
           </button>
-          <button className={departInMinutes === 30 ? 'active' : ''} onClick={() => onDepart(30)}>
-            <span><CalendarDays size={15} /> 30분 뒤</span><small>도착 시점으로 예측</small>
+          <button className={departInMinutes > 0 ? 'active' : ''} onClick={() => setSheet('departure')}>
+            <span><CalendarDays size={15} /> {departInMinutes > 0 ? departureLabel(departInMinutes) : '나중에 출발'}</span>
+            <small>{departInMinutes > 0 ? `지금으로부터 ${departInMinutes}분 뒤` : '5분 단위로 선택'}</small>
           </button>
         </div>
       </section>
+
+      {sheet && (
+        <TimeSheet
+          kind={sheet}
+          value={sheet === 'departure' ? departInMinutes : minutes}
+          onClose={() => setSheet(null)}
+          onConfirm={sheet === 'departure' ? onDepart : onMinutes}
+        />
+      )}
 
       <button className="nearby-card" onClick={onSettings}>
         <Settings size={18} />
@@ -376,10 +716,10 @@ function Home({
 
       {error && <Notice tone="warn">{error}</Notice>}
 
-      <button className="primary-cta" disabled={!destination || busy} onClick={onSubmit}>
+      <button className="primary-cta" disabled={!origin || !destination || busy} onClick={onSubmit}>
         {busy ? '추천을 계산하고 있어요…' : <>주차장 찾기 <ArrowRight size={20} /></>}
       </button>
-      {!destination && <p className="ai-note">목적지를 검색해 선택하면 추천을 시작해요</p>}
+      {(!origin || !destination) && <p className="ai-note">{!origin ? '출발 위치를 먼저 선택해 주세요' : '목적지를 검색해 선택하면 추천을 시작해요'}</p>}
       <p className="ai-note">
         차단기가 없어 계측되지 않는 주차장은<br />예측 없이 위치와 요금만 안내해요
       </p>
@@ -511,7 +851,7 @@ function Results({
         <button className="outline-button" onClick={onBack}>조건 변경</button>
         <div className="result-meta">
           <span><Clock3 size={13} /> {result.depart_at} 출발</span>
-          <span>{minutes < 60 ? `${minutes}분` : `${minutes / 60}시간`} 주차</span>
+          <span>{durationLabel(minutes)} 주차</span>
           <em>{result.candidate_count}곳 · 반경 {result.radius_used / 1000}km</em>
         </div>
       </header>
@@ -529,6 +869,9 @@ function Results({
       <section className="result-list">
         {busy && <p className="state-notice">최신 정보를 다시 불러오는 중이에요…</p>}
         {notice && <Notice tone="warn">{notice}</Notice>}
+        {cards.some((card) => card.route_traffic_basis === 'current') && (
+          <Notice>미래 출발의 이동 시간은 현재 교통을 기준으로 각 주차장별로 계산했어요.</Notice>
+        )}
         {gateBlocked && <Notice>현재 시간대에는 혼잡도 예측을 제공하지 않아요. 위치와 요금을 기준으로 안내해요.</Notice>}
         {result.service?.data_status === 'stale' && (
           <Notice tone="warn">실시간 관측이 최신이 아니에요. 현재 값은 참고만 해주세요.</Notice>
@@ -601,7 +944,7 @@ function Detail({ card, minutes, onBack }: { card: RankedCard; minutes: number; 
       <section className="detail-section">
         <h3>예상 주차 요금</h3>
         <div className="fare-main">
-          <span>{minutes < 60 ? `${minutes}분` : `${minutes / 60}시간`} 주차 · 후불</span>
+          <span>{durationLabel(minutes)} 주차 · 후불</span>
           <strong>{fare.main}</strong>
         </div>
         {card.fare.total !== null && (
@@ -692,6 +1035,9 @@ function Detail({ card, minutes, onBack }: { card: RankedCard; minutes: number; 
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
+  const [origin, setOrigin] = useState<Place | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [originError, setOriginError] = useState<string | null>(null);
   const [destination, setDestination] = useState<Place | null>(null);
   const [preferences, setPreferences] = useState<Preferences>(() => loadPreferences());
   const [minutes, setMinutes] = useState(() => loadPreferences().defaultMinutes);
@@ -704,8 +1050,40 @@ export default function App() {
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [screen]);
 
+  const useCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setOriginError('이 브라우저는 현재 위치를 지원하지 않아요. 출발지를 검색해 주세요.');
+      return;
+    }
+    setLocating(true);
+    setOriginError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setOrigin({
+          name: '현재 위치',
+          address: null,
+          road_address: null,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          in_anyang: true,
+          distance_from_anyang_m: 0,
+          category: '현재 위치',
+        });
+        setLocating(false);
+      },
+      (problem) => {
+        const message = problem.code === problem.PERMISSION_DENIED
+          ? '위치 권한이 꺼져 있어요. 허용하거나 출발지를 검색해 주세요.'
+          : '현재 위치를 확인하지 못했어요. 출발지를 검색해 주세요.';
+        setOriginError(message);
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+    );
+  }, []);
+
   const run = useCallback(async () => {
-    if (!destination) return;
+    if (!origin || !destination) return;
     inflight.current?.abort();
     const controller = new AbortController();
     inflight.current = controller;
@@ -715,6 +1093,7 @@ export default function App() {
       const found = await recommend(
         {
           destination: { lat: destination.lat, lng: destination.lng },
+          origin: { lat: origin.lat, lng: origin.lng },
           parkingMinutes: minutes,
           departInMinutes,
           // 코드만 보낸다. 증빙 정보는 애초에 갖고 있지 않다.
@@ -739,15 +1118,21 @@ export default function App() {
     } finally {
       if (!controller.signal.aborted) setBusy(false);
     }
-  }, [destination, minutes, departInMinutes, preferences]);
+  }, [origin, destination, minutes, departInMinutes, preferences]);
 
   return (
     <div className="app-shell">
       <div className="phone-frame">
         {screen === 'home' && (
           <Home
+            origin={origin}
+            onOrigin={(place) => { setOrigin(place); setOriginError(null); }}
+            onUseCurrent={useCurrentLocation}
+            locating={locating}
+            originError={originError}
             destination={destination}
             onDestination={setDestination}
+            onMap={() => setScreen('map')}
             minutes={minutes}
             onMinutes={(value) => {
               setMinutes(value);
@@ -772,6 +1157,13 @@ export default function App() {
               setPreferences(next);
               savePreferences(next);
             }}
+          />
+        )}
+        {screen === 'map' && (
+          <DestinationMap
+            initial={destination}
+            onBack={() => setScreen('home')}
+            onConfirm={(place) => { setDestination(place); setScreen('home'); }}
           />
         )}
         {screen === 'results' && result && (

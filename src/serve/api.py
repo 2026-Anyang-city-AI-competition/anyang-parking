@@ -35,7 +35,8 @@ from src.serve import reports
 from src.serve.candidates import load_lot
 from src.serve.benefits import catalog as benefit_catalog
 from src.serve.fare_quote import UnknownBenefit, UnknownParking, quote_fare
-from src.serve.places import MAX_QUERY_LEN, SearchUnavailable, search_places
+from src.serve.places import (MAX_QUERY_LEN, ReverseGeocodeUnavailable,
+                              SearchUnavailable, reverse_geocode, search_places)
 from src.serve import fare_tables
 
 LOG = logging.getLogger(__name__)
@@ -439,6 +440,21 @@ def create_app(predictor=None, poller=None, access_rules=None):
             raise ApiProblem(503, "search_unavailable", "장소 검색을 지금 사용할 수 없습니다")
         return {**result, "query": q, "count": len(result["places"]),
                 "request_id": _request_id(request)}
+
+    @application.get("/api/v1/places/reverse")
+    async def places_reverse_endpoint(
+            request: Request,
+            lat: float = Query(ge=36.0, le=39.0),
+            lng: float = Query(ge=125.0, le=129.0)):
+        """지도에서 고른 좌표를 주소로 확인한다. REST 키는 서버에만 둔다."""
+        try:
+            place = await run_in_threadpool(reverse_geocode, lat, lng)
+        except ValueError:
+            raise ApiProblem(422, "invalid_coordinate", "지도 좌표를 확인해주세요")
+        except ReverseGeocodeUnavailable:
+            raise ApiProblem(503, "reverse_geocode_unavailable",
+                             "선택한 위치의 주소를 확인하지 못했습니다")
+        return {"place": place, "request_id": _request_id(request)}
 
     @application.post("/api/v1/fare/quote")
     async def fare_quote_endpoint(body: FareQuoteRequest, request: Request):

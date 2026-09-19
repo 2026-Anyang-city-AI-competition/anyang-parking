@@ -22,6 +22,8 @@ export const PREDICTION_UNAVAILABLE =
 
 const PREDICTION_NOTE: Record<string, string> = {
   dead_feed: '이 주차장은 실시간 정보를 제공하지 않아요. 위치와 요금만 안내해요.',
+  accuracy_not_certified:
+    '이 주차장은 이 시간대 예측 정확도가 기준에 못 미쳐 혼잡도를 안내하지 않아요. 위치와 요금은 그대로 확인하실 수 있어요.',
   frozen: PREDICTION_UNAVAILABLE,
   anomaly: PREDICTION_UNAVAILABLE,
   evaluation_pending: PREDICTION_UNAVAILABLE,
@@ -31,6 +33,17 @@ const PREDICTION_NOTE: Record<string, string> = {
 export function predictionNote(card: ParkingCard): string | null {
   if (card.prediction_status === 'available') return null;
   return PREDICTION_NOTE[card.prediction_status] ?? PREDICTION_UNAVAILABLE;
+}
+
+/** 만차 가능성 문구. 보정이 어긋난 예측시간에서는 숫자를 인용하지 않는다.
+ *  순위에는 그대로 쓰였지만(A25: 피해 0건), "78%" 같은 수치는 과신이라 내보내지 않는다. */
+export function fullnessLabel(card: ParkingCard): string | null {
+  if (card.full_prob === null) return null;
+  if (card.full_prob_calibrated) return `만차 ${Math.round(card.full_prob * 100)}%`;
+  if (card.full_prob >= 0.8) return '만차 가능성 높음';
+  if (card.full_prob >= 0.5) return '혼잡 예상';
+  if (card.full_prob >= 0.25) return '보통';
+  return '여유 예상';
 }
 
 /** 도착 시점 예측 잔여 면수. 예측이 없으면 null 이고, 현재값으로 대신하지 않는다. */

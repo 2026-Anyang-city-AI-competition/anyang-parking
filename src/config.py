@@ -19,6 +19,10 @@ LOGS = ROOT / "logs"
 PARKING_DB = RAW / "parking.db"                 # 폴링 라벨 (비공식 내부 API)
 ACCESS_RULES_CSV = RAW / "parking_access_rules.csv"  # 조사 확정 출입·과금 규칙
 PREDICTION_AVAILABILITY_CSV = PROCESSED / "prediction_availability.csv"
+# 주차장 × 지평선 정확도 게이트. 위 파일이 "값이 움직이는가"라면 이쪽은 "맞히는가"다.
+PREDICTION_ACCURACY_CSV = PROCESSED / "prediction_accuracy.csv"
+# 만차확률을 숫자로 보여줘도 되는 지평선. 순위 사용 여부와는 별개다.
+PROBABILITY_CALIBRATION_CSV = PROCESSED / "probability_calibration.csv"
 STD_PARKING_CSV = RAW / "std_parking.csv"       # 경기데이터드림 제공표준 107곳
 SHOPS_CSV = RAW / "gg_shops.csv"
 APT_CSV = RAW / "gg_apt.csv"

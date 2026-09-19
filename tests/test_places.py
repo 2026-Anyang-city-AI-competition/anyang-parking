@@ -6,7 +6,8 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from src.serve import places
-from src.serve.places import SearchUnavailable, search_places
+from src.serve.places import (ReverseGeocodeUnavailable, SearchUnavailable,
+                              reverse_geocode, search_places)
 
 # 카카오 응답 모양 그대로다. x=경도, y=위도.
 CITY_HALL = {"place_name": "안양시청", "x": "126.956861", "y": "37.394259",
@@ -17,6 +18,10 @@ SEOUL = {"place_name": "서울시청", "x": "126.978388", "y": "37.566536",
          "road_address_name": "서울 중구 세종대로 110", "address_name": "서울 중구 태평로1가 31"}
 ADDRESS_DOC = {"address_name": "경기 안양시 동안구 관평로 149", "x": "126.960260", "y": "37.391390",
                "road_address": {"address_name": "경기 안양시 동안구 관평로 149"}}
+REVERSE_DOC = {
+    "road_address": {"address_name": "경기 안양시 동안구 시민대로 235"},
+    "address": {"address_name": "경기 안양시 동안구 관양동 1590"},
+}
 
 
 class PlaceSearchTests(unittest.TestCase):
@@ -127,6 +132,22 @@ class PlaceSearchTests(unittest.TestCase):
     def test_malformed_document_is_skipped(self):
         result = self.search(keyword=[{"place_name": "좌표없음"}, CITY_HALL], address=[])
         self.assertEqual(len(result["places"]), 1)
+
+    def test_reverse_geocode_keeps_selected_coordinate_and_returns_address(self):
+        with patch.object(places, "_call", return_value=[REVERSE_DOC]) as called:
+            place = reverse_geocode(37.394259, 126.956861, key="k")
+        self.assertEqual(called.call_args.args[0], places.COORD2ADDRESS)
+        self.assertEqual(called.call_args.args[1], {"x": 126.956861, "y": 37.394259})
+        self.assertEqual(place["road_address"], "경기 안양시 동안구 시민대로 235")
+        self.assertAlmostEqual(place["lat"], 37.394259)
+        self.assertAlmostEqual(place["lng"], 126.956861)
+
+    def test_reverse_geocode_reports_failure_and_bad_coordinate(self):
+        with patch.object(places, "_call", return_value=None):
+            with self.assertRaises(ReverseGeocodeUnavailable):
+                reverse_geocode(37.4, 126.9, key="k")
+        with self.assertRaises(ValueError):
+            reverse_geocode(91, 126.9, key="k")
 
 
 if __name__ == "__main__":

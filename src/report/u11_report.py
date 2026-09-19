@@ -69,8 +69,11 @@ def probability_report():
             reliability_slope=slope,slope_pass=bool(.9<=slope<=1.1)))
     pd.DataFrame(fold_metrics).to_csv(TAB/"u11_probability_by_fold.csv",index=False)
     rows=[]; bins=[]
-    fig,axes=plt.subplots(1,4,figsize=(16,4))
-    for ax,(h,g) in zip(axes,p.groupby("horizon")):
+    # ★ 지평선 수에 맞춰 칸을 만든다. 4로 고정하면 zip 이 나머지를 조용히 버린다
+    #   (240·360 을 추가했을 때 실제로 표에서 사라졌다).
+    groups=list(p.groupby("horizon"))
+    fig,axes=plt.subplots(1,len(groups),figsize=(4*len(groups),4),squeeze=False)
+    for ax,(h,g) in zip(axes[0],groups):
         y=g.nx.ge(90).astype(int).to_numpy(); prob=g.full_prob.to_numpy()
         ix=np.minimum((prob*10).astype(int),9)
         xs=[];ys=[]

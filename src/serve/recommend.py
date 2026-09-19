@@ -37,7 +37,10 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
               with_alternatives=True, now=None, access_rules=None, access_safety_margin_minutes=0,
               prediction_gate=None, benefit_codes=None):
     """dest=(lat,lon) · minutes=주차할 분 · start=(lat,lon) 출발지(없으면 목적지에서 출발)
-    depart_in_min>0 이면 카카오 미래운행(단건)으로 목적지 ETA 하나를 공통 적용한다.
+
+    차량 ETA는 출발지→각 주차장 다중 경로로 항상 개별 계산한다. 미래 출발은 현재
+    교통 기준의 개별 ETA를 선택한 출발시각에 더한다. 미래 교통을 붙인 단건 ETA를
+    모든 후보에 복사하지 않는다.
     predictor(lot, arrive_dt) -> (예측 점유율, 만차확률) — 모델이 준비되면 주입."""
     start = start or dest
     now = now or datetime.now(KST)
@@ -50,19 +53,18 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
     # 1. 후보
     cand = find_candidates(dest[0], dest[1], min_n=min_n)
     drive, access, excluded = {}, {}, {}
-    future = None
     while True:
         pool = cand["lots"] + (cand.get("dead_feeds") or [])
         pending = [d for d in pool if d["parking_id"] not in drive]
         if pending:
-            if depart_in_min > 0:
-                if future is None:
-                    future = routing.future_eta(start, dest, depart_in_min)
-                drive.update({d["parking_id"]: {**future, "shared": True} for d in pending})
-            else:
-                fetched = routing.multi_eta(start, {
-                    d["parking_id"]: (d["lat"], d["lng"]) for d in pending})
-                drive.update({d["parking_id"]: fetched.get(d["parking_id"]) for d in pending})
+            fetched = routing.multi_eta(start, {
+                d["parking_id"]: (d["lat"], d["lng"]) for d in pending})
+            for d in pending:
+                route = fetched.get(d["parking_id"])
+                if route is not None:
+                    route = {**route,
+                             "traffic_basis": "current" if depart_in_min > 0 else "live"}
+                drive[d["parking_id"]] = route
         service_lots = []
         for d in pool:
             pid = d["parking_id"]
@@ -122,6 +124,7 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         # 4. 혼잡도 — 모델 전이면 비워 둔다
         is_live = not d.get("dead_feed", False)
         avail_pred = full_prob = p10 = p90 = None
+        full_prob_calibrated = None
         interval_status = "unavailable"
         model_horizon_min = None
         prediction_source = "dead_feed" if not is_live else "no_model"
@@ -138,8 +141,13 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
                 # ★ 예측 시점은 「차가 주차장에 도착하는 시각」이다. 도보를 더하지 않는다.
                 h = max(1, int(round((arrive - now).total_seconds() / 60)))
                 pr = predictor.predict(pid, arrive, h)
+                # 정확도 게이트가 막으면 그 사유가 예측 미제공 사유가 된다.
+                if pr.get("source") == "lot_horizon_not_certified":
+                    gate = {"allowed": False, "status": "accuracy_not_certified",
+                            "reason": pr.get("accuracy_reason") or "lot_horizon_not_certified"}
                 if is_live:
                     avail_pred, full_prob = pr.get("p50"), pr.get("full_prob")
+                    full_prob_calibrated = pr.get("full_prob_calibrated")
                     p10, p90 = pr.get("p10"), pr.get("p90")
                     interval_status = pr.get("interval_status", "unverified")
                     prediction_source = pr.get("source")
@@ -194,10 +202,14 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "occ_now": (min(120, 100*d["avail_now"]/d["cell_cnt"])
                         if not hide_current and d.get("avail_now") is not None and d.get("cell_cnt") else None),
             "full_prob": full_prob, "pred_p10": p10, "pred_p90": p90,
+            # 순위에는 썼지만 숫자로 보여줘도 되는지는 별개다(보정 기울기 기준).
+            "full_prob_calibrated": full_prob_calibrated,
             "interval_status": interval_status, "prediction_source": prediction_source,
             "model_horizon_min": model_horizon_min,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
             "estimated": est,
+            "route_source": dv.get("source") if dv else None,
+            "route_traffic_basis": dv.get("traffic_basis") if dv else None,
             "cell_cnt": d.get("cell_cnt"), "straight_m": d.get("straight_m"),
             "grade": d.get("grade"), "is_live": is_live,
             "operating_hours": f"{d.get('wdays_start') or '-'}~{d.get('wdays_end') or '-'}",

@@ -1,0 +1,40 @@
+{
+  "trained_horizons": [
+    15,
+    30,
+    60,
+    120
+  ],
+  "evaluated_horizons": [
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70,
+    75,
+    80,
+    85,
+    90,
+    95,
+    100,
+    105,
+    110,
+    115,
+    120
+  ],
+  "continuous_beats_grid_on_trained": false,
+  "continuous_beats_persistence_everywhere": false,
+  "worst_unseen_gap_pct": -32.49,
+  "test_start": "2026-09-16",
+  "runtime_sec": 31.6,
+  "note": "학습하지 않은 지평선에서도 격자 반올림보다 낫고 persistence 를 이기면 5분 단위 연속 예측을 쓸 근거가 된다. 재현은 다른 fold 에서 확인한다."
+}

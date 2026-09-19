@@ -72,6 +72,42 @@ class RecommendAccessTests(unittest.TestCase):
         self.assertEqual(result["cards"][0]["access_status"], "unknown")
         self.assertEqual(len(result["unavailable"]), 1)
 
+    def test_future_departure_uses_origin_and_candidate_specific_eta(self):
+        lots = [lot(1), lot(2)]
+        lots[0]["lat"], lots[0]["lng"] = 37.41, 126.91
+        lots[1]["lat"], lots[1]["lng"] = 37.42, 126.92
+        cand = candidates(lots, 1000)
+        origin = (37.39, 126.88)
+
+        def routes(start, targets):
+            self.assertEqual(start, origin)
+            self.assertEqual(targets, {1: (37.41, 126.91), 2: (37.42, 126.92)})
+            return {
+                1: {"duration": 5 * 60, "estimated": False, "source": "kakao"},
+                2: {"duration": 15 * 60, "estimated": False, "source": "kakao"},
+            }
+
+        walk = lambda targets, dest: {
+            pid: {"duration": 60, "estimated": False} for pid in targets
+        }
+        now = datetime(2026, 9, 16, 10)
+        with patch("src.serve.recommend.find_candidates", return_value=cand), \
+             patch("src.serve.recommend.routing.multi_eta", side_effect=routes) as multi, \
+             patch("src.serve.recommend.routing.future_eta") as future, \
+             patch("src.serve.recommend.walking.walk_times", side_effect=walk):
+            result = recommend((37.4, 126.9), 60, start=origin, depart_in_min=30,
+                               now=now, min_n=2, with_alternatives=False)
+
+        by_id = {card["parking_id"]: card for card in result["cards"]}
+        self.assertEqual(by_id[1]["arrive_at"], "10:35")
+        self.assertEqual(by_id[2]["arrive_at"], "10:45")
+        self.assertEqual(by_id[1]["expected_departure_at"][11:16], "11:35")
+        self.assertEqual(by_id[2]["expected_departure_at"][11:16], "11:45")
+        self.assertEqual(by_id[1]["route_traffic_basis"], "current")
+        self.assertEqual(by_id[2]["route_traffic_basis"], "current")
+        multi.assert_called_once()
+        future.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

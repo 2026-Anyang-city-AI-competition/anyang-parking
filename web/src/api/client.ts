@@ -10,6 +10,7 @@ import type {
   BenefitsResponse,
   FareQuoteResponse,
   PlacesResponse,
+  ReverseGeocodeResponse,
   RecommendResponse,
 } from './types';
 
@@ -69,6 +70,15 @@ async function request<T>(path: string, init?: RequestInit & { timeoutMs?: numbe
 
 export function searchPlaces(query: string, signal?: AbortSignal): Promise<PlacesResponse> {
   return request<PlacesResponse>(`/api/v1/places/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    signal,
+    timeoutMs: 8000,
+  });
+}
+
+export function reverseGeocode(lat: number, lng: number, signal?: AbortSignal): Promise<ReverseGeocodeResponse> {
+  const query = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+  return request<ReverseGeocodeResponse>(`/api/v1/places/reverse?${query}`, {
     method: 'GET',
     signal,
     timeoutMs: 8000,

@@ -14,6 +14,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from src.features.temporal import oprtime_features
+from src.serve.accuracy_gate import AccuracyGate
+from src.serve.calibration import CalibrationTable
 
 MODEL_PATH = ROOT / "data/processed/predictor.pkl"
 DB_PATH = ROOT / "data/raw/parking.db"
@@ -22,7 +24,9 @@ STALE_MIN = 20
 LIVE_HISTORY_HOURS = 4
 FULL_THRESHOLD = 90.0
 QUANTILES = (.1, .5, .9)
-HORIZ_GRID = (15, 30, 60, 120)
+# 학습된 지평선 격자. u11_evaluate.HORIZONS 와 **반드시 같아야 한다** —
+# 여기에만 넣으면 없는 모델을 부르고, 저기에만 넣으면 학습해 두고 안 쓴다.
+HORIZ_GRID = (15, 30, 60, 120, 240, 360)
 
 
 def _logodds(p):
@@ -36,9 +40,15 @@ def _lazy():
 
 
 class Predictor:
-    def __init__(self, path=MODEL_PATH):
+    def __init__(self, path=MODEL_PATH, accuracy_gate=None):
         self.ok = False
         self.dead, self.hist = set(), {}
+        # 주차장 × 지평선 정확도 게이트. 모델 번들과 별개 파일이라 재학습 없이 갱신된다.
+        self.accuracy_gate = accuracy_gate or AccuracyGate()
+        self.accuracy_gate.refresh(force=True)
+        # 확률을 숫자로 보여줘도 되는지. **순위 사용은 막지 않는다**(A25: 피해 0건).
+        self.calibration = CalibrationTable()
+        self.calibration.refresh(force=True)
         self._refresh_lock = threading.Lock()
         self._last_refresh_attempt = 0.0
         self.observation_at = None
@@ -181,7 +191,9 @@ class Predictor:
     def predict(self, parking_id, target_time, horizon_min):
         out = dict(p10=None, p50=None, p90=None, full_prob=None,
                    is_live=self.is_live(parking_id), source=None,
-                   interval_status="unverified", model_version=self.model_version if self.ok else None)
+                   interval_status="unverified", model_version=self.model_version if self.ok else None,
+                   accuracy_status=None, accuracy_reason=None,
+                   full_prob_calibrated=None)
         out["model_horizon_min"] = None
         # 학습 범위를 넘는 요청을 120분 예측으로 가장하지 않는다.
         if not np.isfinite(horizon_min) or not 1 <= horizon_min <= max(HORIZ_GRID):
@@ -196,6 +208,14 @@ class Predictor:
             return out
         h = min(HORIZ_GRID,key=lambda x:abs(x-horizon_min))
         out["model_horizon_min"] = h
+        # 이 주차장이 이 지평선에서 맞히는지. 평균이 좋아도 크게 틀리는 곳이 있다.
+        accuracy = self.accuracy_gate.check(parking_id, h)
+        out["accuracy_status"] = accuracy["status"]
+        if not accuracy["allowed"]:
+            out["source"] = "lot_horizon_not_certified"
+            out["interval_status"] = "unavailable"
+            out["accuracy_reason"] = accuracy["reason"]
+            return out
         # 관측 시각은 실제 horizon으로 찾고 모델만 가장 가까운 격자를 사용한다.
         row,occ = self._row(parking_id,target_time,horizon_min)
         if row is None:
@@ -221,6 +241,8 @@ class Predictor:
         if platt is not None:
             p=platt.predict_proba(_logodds(p).reshape(-1,1))[:,1]
         out["full_prob"]=float(p[0])
+        # 보정이 어긋난 지평선에서는 순위에만 쓰고 수치는 화면에 내보내지 않는다.
+        out["full_prob_calibrated"]=self.calibration.is_calibrated(h)
         state=("operating" if op["is_operating"] else "outside")+("|we" if tt.weekday()>=5 else "|wd")
         key=f"{h}|{state}"
         adj=self.cqr.get(key)

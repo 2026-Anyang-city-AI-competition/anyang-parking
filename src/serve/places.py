@@ -25,6 +25,7 @@ from src.serve.routing import _key
 
 KEYWORD = "https://dapi.kakao.com/v2/local/search/keyword.json"
 ADDRESS = "https://dapi.kakao.com/v2/local/search/address.json"
+COORD2ADDRESS = "https://dapi.kakao.com/v2/local/geo/coord2address.json"
 TIMEOUT, RETRY = 5, 2
 
 # 안양시청. 결과 정렬의 기준점이며 카카오에 보내는 중심 좌표다.
@@ -45,6 +46,10 @@ _last_call = 0.0
 
 class SearchUnavailable(Exception):
     """카카오도 캐시도 답을 주지 못했다. 빈 목록으로 위장하지 않는다."""
+
+
+class ReverseGeocodeUnavailable(Exception):
+    """좌표는 있지만 주소로 변환하지 못했다."""
 
 
 def _cache():
@@ -92,7 +97,9 @@ def _throttle():
 def _call(url, params, key):
     _throttle()
     started = time.monotonic()
-    name = "kakao_local_keyword" if url == KEYWORD else "kakao_local_address"
+    name = ("kakao_local_keyword" if url == KEYWORD else
+            "kakao_local_reverse" if url == COORD2ADDRESS else
+            "kakao_local_address")
     for attempt in range(RETRY):
         try:
             response = requests.get(url, headers={"Authorization": f"KakaoAK {key}"},
@@ -108,6 +115,36 @@ def _call(url, params, key):
             time.sleep(0.3)
     metrics.record_external(name, False, (time.monotonic() - started) * 1000)
     return None
+
+
+def reverse_geocode(lat, lng, key=None):
+    """지도에서 고른 WGS84 좌표를 서비스 `Place`로 바꿔 준다.
+
+    좌표 선택은 주소 변환이 실패해도 유효하지만, 사용자가 다른 곳을 선택하는
+    실수를 막기 위해 API는 실패를 명시적으로 알린다. 브라우저에 REST 키를 노출하지 않는다.
+    """
+    lat, lng = float(lat), float(lng)
+    if not (36.0 <= lat <= 39.0 and 125.0 <= lng <= 129.0):
+        raise ValueError("지원 좌표 범위를 벗어났습니다")
+    key = _key() if key is None else key
+    documents = _call(COORD2ADDRESS, {"x": lng, "y": lat}, key) if key else None
+    if documents is None:
+        raise ReverseGeocodeUnavailable("좌표를 주소로 변환할 수 없습니다")
+
+    doc = documents[0] if documents else {}
+    road = (doc.get("road_address") or {}).get("address_name")
+    address = (doc.get("address") or {}).get("address_name")
+    label = road or address or f"{lat:.5f}, {lng:.5f}"
+    return {
+        "name": label,
+        "road_address": road or None,
+        "address": address or None,
+        "lat": lat,
+        "lng": lng,
+        "in_anyang": _in_anyang(lat, lng),
+        "distance_from_anyang_m": round(haversine_m(ANYANG[0], ANYANG[1], lat, lng)),
+        "category": "지도 선택",
+    }
 
 
 def _in_anyang(lat, lng):
