@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# 배포 직후의 최소 생존 검사. 데이터가 잠시 stale인 것은 롤백 사유가 아니지만,
+# API 무응답·모델 로드 실패·백그라운드 갱신 중단·프런트 누락은 롤백한다.
+set -euo pipefail
+
+API_URL="${API_URL:-http://127.0.0.1:8000/api/v1/health}"
+WEB_URL="${WEB_URL:-http://127.0.0.1/}"
+ATTEMPTS="${ATTEMPTS:-15}"
+WAIT_SEC="${WAIT_SEC:-2}"
+
+for ((attempt=1; attempt<=ATTEMPTS; attempt++)); do
+  body="$(curl -fsS --max-time 8 "$API_URL" 2>/dev/null || true)"
+  if [ -n "$body" ] && printf '%s' "$body" | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+checks = data.get("checks") or {}
+background = data.get("background_refresh") or {}
+if checks.get("model") is not True:
+    raise SystemExit(1)
+if checks.get("model_bundle_current") is not True:
+    raise SystemExit(1)
+if background.get("running") is not True or background.get("last_error") is not None:
+    raise SystemExit(1)
+' 2>/dev/null; then
+    if curl -fsS --max-time 8 "$WEB_URL" 2>/dev/null | grep -q '<div id="root"></div>'; then
+      echo "배포 스모크 체크 통과 (시도 $attempt/$ATTEMPTS)"
+      exit 0
+    fi
+  fi
+  sleep "$WAIT_SEC"
+done
+
+echo "배포 스모크 체크 실패: API·모델·백그라운드 갱신·프런트 중 하나가 준비되지 않음" >&2
+exit 1

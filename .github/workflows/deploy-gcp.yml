@@ -1,0 +1,139 @@
+name: Test and deploy to GCP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-gcp
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-api.txt
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements-api.txt httpx
+
+      - name: Compile service code
+        run: python -m compileall -q src scripts tests
+
+      - name: Run service regression tests
+        run: >-
+          python -m unittest
+          tests.test_background_refresh
+          tests.test_routing_cache
+          tests.test_api
+          tests.test_live_refresh
+          tests.test_recommend_access
+          tests.test_recommend_demotion
+          tests.test_prediction_gate
+          tests.test_web_contract
+          tests.test_accuracy_gate
+          tests.test_places
+          tests.test_deploy_release
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build web
+        working-directory: web
+        run: npm ci && npm run build
+
+      - name: Validate deployment scripts
+        run: bash -n scripts/deploy/deploy_release.sh scripts/deploy/deploy_smoke_check.sh
+
+      - name: Package immutable release input
+        run: |
+          tar -czf release.tgz \
+            --exclude='__pycache__' --exclude='*.pyc' \
+            src scripts web/dist requirements-api.txt
+          sha256sum release.tgz > release.tgz.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            release.tgz
+            release.tgz.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+
+      - name: Extract trusted deploy entrypoint
+        run: tar -xOf release.tgz scripts/deploy/deploy_release.sh > deploy_release.sh
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Upload release to VM
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          GCP_ZONE: ${{ vars.GCP_ZONE }}
+          GCP_VM: ${{ vars.GCP_VM }}
+          GCP_VM_USER: ${{ vars.GCP_VM_USER }}
+          REMOTE_DIR: /tmp/anyang-deploy-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          gcloud compute ssh "$GCP_VM_USER@$GCP_VM" \
+            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --quiet \
+            --command="install -d -m 700 '$REMOTE_DIR'"
+          gcloud compute scp release.tgz release.tgz.sha256 deploy_release.sh \
+            "$GCP_VM_USER@$GCP_VM:$REMOTE_DIR/" \
+            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --quiet
+
+      - name: Deploy, health check, and rollback on failure
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          GCP_ZONE: ${{ vars.GCP_ZONE }}
+          GCP_VM: ${{ vars.GCP_VM }}
+          GCP_VM_USER: ${{ vars.GCP_VM_USER }}
+          REMOTE_DIR: /tmp/anyang-deploy-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          gcloud compute ssh "$GCP_VM_USER@$GCP_VM" \
+            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --quiet \
+            --command="cd '$REMOTE_DIR' && sha256sum -c release.tgz.sha256 && sudo bash deploy_release.sh '$REMOTE_DIR/release.tgz' '${{ github.sha }}'"
+
+      - name: Remove uploaded temporary files
+        if: always()
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          GCP_ZONE: ${{ vars.GCP_ZONE }}
+          GCP_VM: ${{ vars.GCP_VM }}
+          GCP_VM_USER: ${{ vars.GCP_VM_USER }}
+          REMOTE_DIR: /tmp/anyang-deploy-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          gcloud compute ssh "$GCP_VM_USER@$GCP_VM" \
+            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --quiet \
+            --command="case '$REMOTE_DIR' in /tmp/anyang-deploy-*) rm -rf -- '$REMOTE_DIR' ;; esac" || true
