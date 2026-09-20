@@ -1,549 +1,549 @@
-﻿parking_id,horizon,n_first,n_second,mae_first,mae_second,mae_overall,evidence_report,evaluated_at,status,reason
-7,15,281,388,0.053,0.406,0.258,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-8,15,659,767,1.772,2.086,1.941,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,15,659,767,1.461,1.24,1.342,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,15,659,767,1.064,1.214,1.145,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,15,659,767,2.818,2.436,2.612,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,15,659,767,0.538,0.876,0.72,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,15,659,767,1.063,2.004,1.57,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,15,40,234,2.209,0.656,0.883,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 40행/후반 234행)
-16,15,659,767,0.788,0.937,0.868,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,15,659,767,0.614,0.959,0.799,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,15,659,767,1.358,1.718,1.552,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,15,659,767,1.394,1.05,1.209,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,15,659,767,1.198,1.261,1.232,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,15,120,310,5.413,5.162,5.232,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-23,15,51,235,1.953,1.647,1.701,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 51행/후반 235행)
-24,15,659,767,1.424,1.717,1.582,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,15,659,767,1.57,2.016,1.81,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-26,15,516,767,2.904,2.621,2.735,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-27,15,659,767,1.072,1.071,1.071,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,15,659,767,1.613,1.937,1.787,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,15,659,767,2.488,3.797,3.192,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,15,659,767,3.377,3.953,3.687,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-31,15,659,767,1.832,1.347,1.571,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,15,659,767,1.558,2.85,2.253,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,15,659,767,1.311,1.448,1.385,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,15,659,767,1.034,1.598,1.337,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-37,15,659,767,0.832,0.991,0.918,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,15,659,767,1.15,1.822,1.512,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,15,659,767,1.18,1.424,1.311,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,15,659,767,2.084,2.711,2.421,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-42,15,659,767,1.713,1.523,1.611,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-48,15,271,385,7.489,7.373,7.421,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-52,15,40,232,3.169,4.05,3.92,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 40행/후반 232행)
-53,15,281,388,3.503,3.957,3.766,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-56,15,120,321,6.336,7.133,6.916,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-81,15,659,767,2.23,2.348,2.293,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-82,15,659,767,0.853,0.862,0.858,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,15,659,767,0.0,1.296,0.697,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,15,659,767,0.377,1.412,0.934,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,15,659,767,2.402,3.253,2.859,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-121,15,659,767,0.689,1.139,0.931,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-161,15,52,307,7.567,7.346,7.378,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 307행)
-162,15,52,307,6.096,7.959,7.69,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 307행)
-163,15,52,310,0.685,3.082,2.738,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-164,15,52,308,5.231,4.626,4.714,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 308행)
-165,15,52,310,6.538,10.839,10.221,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-166,15,52,310,4.622,4.756,4.737,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-167,15,52,310,4.396,10.268,9.425,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-168,15,52,310,6.882,7.211,7.164,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-169,15,52,308,11.16,10.38,10.493,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 308행)
-170,15,52,310,8.223,7.426,7.541,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-171,15,52,310,4.153,7.315,6.86,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
-172,15,52,271,0.652,2.935,2.567,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 271행)
-181,15,659,767,1.459,1.746,1.614,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,15,659,767,2.536,2.058,2.279,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-183,15,659,767,2.423,3.773,3.149,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-201,15,659,767,1.158,2.98,2.138,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-241,15,140,357,6.928,8.965,8.391,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-261,15,140,357,6.46,6.115,6.212,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-262,15,140,357,6.39,6.54,6.498,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-401,15,659,767,2.852,3.214,3.047,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-421,15,659,767,1.738,2.351,2.068,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,15,659,767,1.752,2.575,2.194,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-461,15,659,767,1.632,2.896,2.312,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,15,659,767,0.948,0.951,0.95,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,15,659,767,0.738,0.739,0.738,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-7,30,259,367,0.096,0.686,0.442,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-8,30,625,728,2.479,2.573,2.529,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,30,625,728,2.065,1.788,1.916,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,30,625,728,1.695,1.757,1.728,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,30,625,728,4.18,3.326,3.72,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,30,625,728,0.922,1.342,1.148,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,30,625,728,1.65,3.136,2.449,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,30,33,216,3.411,1.135,1.437,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 33행/후반 216행)
-16,30,625,728,1.315,1.076,1.186,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,30,625,728,1.027,1.473,1.267,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,30,625,728,1.9,2.465,2.204,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,30,625,728,2.096,1.572,1.814,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,30,625,728,1.749,1.872,1.815,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,30,106,286,7.251,6.406,6.635,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-23,30,45,214,2.269,2.502,2.461,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 214행)
-24,30,625,728,2.08,2.39,2.247,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,30,625,728,2.688,2.932,2.819,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-26,30,485,728,4.45,3.988,4.173,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-27,30,625,728,1.685,1.337,1.498,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,30,625,728,2.433,2.612,2.53,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,30,625,728,3.786,5.242,4.57,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,30,625,728,5.897,6.878,6.425,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-31,30,625,728,3.066,1.89,2.433,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,30,625,728,2.208,4.047,3.197,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,30,625,728,2.063,2.006,2.033,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,30,625,728,1.67,2.282,1.999,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-37,30,625,728,1.201,1.299,1.254,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,30,625,728,1.591,2.412,2.033,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,30,625,728,1.671,1.879,1.783,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,30,625,728,3.491,4.08,3.808,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-42,30,625,728,2.929,2.411,2.65,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-48,30,249,364,9.119,9.415,9.295,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-52,30,33,214,3.72,5.392,5.169,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 33행/후반 214행)
-53,30,259,367,4.124,4.981,4.626,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-56,30,101,300,7.956,8.022,8.005,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-81,30,625,728,3.474,3.664,3.577,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-82,30,625,728,1.254,1.221,1.236,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,30,625,728,0.0,1.963,1.056,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,30,625,728,0.644,2.496,1.641,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,30,625,728,3.683,4.352,4.043,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-121,30,625,728,1.211,1.988,1.629,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-161,30,45,286,8.186,10.531,10.212,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-162,30,45,283,7.829,11.035,10.595,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 283행)
-163,30,45,286,0.0,4.928,4.258,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-164,30,45,286,6.285,5.753,5.825,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-165,30,45,286,11.527,15.39,14.865,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-166,30,45,286,6.115,5.744,5.795,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-167,30,45,286,3.146,12.474,11.206,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-168,30,45,286,9.424,10.446,10.307,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-169,30,45,284,11.497,12.828,12.646,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 284행)
-170,30,45,286,12.612,10.126,10.464,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-171,30,45,286,5.351,9.477,8.916,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
-172,30,45,250,0.388,3.479,3.008,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 250행)
-181,30,625,728,2.25,2.267,2.259,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,30,625,728,3.798,3.476,3.625,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-183,30,625,728,4.176,5.674,4.982,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-201,30,625,728,1.906,5.249,3.705,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-241,30,121,336,8.437,10.466,9.929,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-261,30,121,336,7.821,8.436,8.273,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-262,30,121,336,8.24,9.786,9.377,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-401,30,625,728,4.189,4.766,4.5,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-421,30,625,728,2.521,3.366,2.976,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,30,625,728,2.485,3.597,3.083,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-461,30,625,728,2.761,4.503,3.698,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,30,625,728,1.47,1.409,1.437,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,30,625,728,1.046,1.087,1.068,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-7,60,223,325,0.022,0.802,0.484,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-8,60,565,659,3.618,3.289,3.441,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,60,565,659,2.932,2.353,2.62,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,60,565,659,3.036,2.595,2.799,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,60,565,659,6.154,4.487,5.256,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,60,565,659,1.6,1.766,1.689,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,60,565,659,2.485,4.519,3.58,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,60,27,180,4.239,1.288,1.673,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 180행)
-16,60,565,659,2.373,1.555,1.933,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,60,565,659,1.536,1.956,1.762,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,60,565,659,3.151,3.143,3.147,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,60,565,659,3.012,2.443,2.706,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,60,565,659,2.492,2.658,2.581,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,60,88,249,8.381,6.836,7.24,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 88행/후반 249행)
-23,60,39,183,4.516,3.494,3.673,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 183행)
-24,60,565,659,2.836,3.186,3.025,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,60,565,659,4.47,4.563,4.52,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-26,60,431,659,7.039,5.675,6.214,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-27,60,565,659,2.785,2.104,2.418,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,60,565,659,3.559,3.292,3.415,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,60,565,659,5.399,6.945,6.232,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,60,565,659,9.967,11.4,10.738,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-31,60,565,659,5.069,2.48,3.675,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,60,565,659,2.962,5.268,4.204,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,60,565,659,3.418,2.531,2.941,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,60,565,659,2.418,2.929,2.693,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-37,60,565,659,1.697,1.96,1.839,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,60,565,659,2.329,3.471,2.944,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,60,565,659,2.306,2.69,2.512,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,60,565,659,4.654,5.51,5.115,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-42,60,565,659,4.957,4.027,4.456,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-48,60,213,322,9.86,10.281,10.113,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-52,60,27,178,4.291,5.966,5.746,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 178행)
-53,60,223,325,4.769,5.585,5.253,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-56,60,72,258,9.44,9.013,9.106,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 72행/후반 258행)
-81,60,565,659,5.639,5.422,5.522,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-82,60,565,659,1.842,1.747,1.791,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,60,565,659,0.01,3.369,1.818,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,60,565,659,0.935,4.522,2.866,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,60,565,659,5.977,5.147,5.53,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-121,60,565,659,2.133,3.331,2.778,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-161,60,39,249,9.408,11.905,11.567,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-162,60,39,246,8.446,12.738,12.151,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 246행)
-163,60,39,249,0.004,5.97,5.162,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-164,60,39,249,6.945,6.281,6.371,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-165,60,39,249,5.913,24.026,21.573,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-166,60,39,249,3.638,6.672,6.262,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-167,60,39,249,4.687,15.29,13.854,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-168,60,39,249,15.356,13.603,13.84,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-169,60,39,247,9.492,14.46,13.783,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 247행)
-170,60,39,249,14.051,11.208,11.593,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-171,60,39,249,7.426,11.613,11.046,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
-172,60,39,213,0.357,3.986,3.424,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 213행)
-181,60,565,659,3.203,2.687,2.925,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,60,565,659,5.235,5.435,5.342,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-183,60,565,659,7.169,8.227,7.739,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-201,60,565,659,3.432,8.425,6.12,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-241,60,91,294,10.261,11.532,11.232,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 91행/후반 294행)
-261,60,91,294,8.443,9.381,9.159,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 91행/후반 294행)
-262,60,91,294,9.013,11.415,10.847,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 91행/후반 294행)
-401,60,565,659,5.852,6.67,6.292,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-421,60,565,659,3.83,4.845,4.377,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,60,565,659,3.343,5.385,4.442,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-461,60,565,659,4.39,6.473,5.511,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,60,565,659,2.172,1.955,2.055,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,60,565,659,1.532,1.55,1.541,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-7,120,151,253,0.032,1.006,0.642,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-8,120,466,573,4.407,3.762,4.051,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,120,466,573,3.832,3.046,3.399,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,120,466,573,4.629,3.536,4.026,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,120,466,573,7.474,5.988,6.654,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,120,466,573,2.735,2.361,2.529,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,120,466,573,3.668,5.943,4.923,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,120,15,126,10.587,0.581,1.645,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 126행)
-16,120,466,573,3.949,2.268,3.022,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,120,466,573,1.866,2.404,2.162,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,120,466,573,4.545,4.155,4.33,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,120,466,573,4.27,3.095,3.622,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,120,466,573,3.511,3.274,3.38,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,120,52,189,8.498,8.343,8.376,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 189행)
-23,120,27,135,8.607,4.741,5.386,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 135행)
-24,120,466,573,4.485,4.477,4.481,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,120,466,573,7.138,6.948,7.033,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-26,120,355,573,10.144,7.832,8.716,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-27,120,466,573,3.938,3.02,3.432,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,120,466,573,4.688,4.463,4.564,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,120,466,573,7.006,7.854,7.474,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,120,466,573,11.357,13.177,12.361,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-31,120,466,573,7.56,3.662,5.411,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,120,466,573,3.756,5.939,4.96,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,120,466,573,4.837,3.075,3.866,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,120,466,573,4.073,4.052,4.062,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-37,120,466,573,2.193,2.516,2.371,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,120,466,573,3.521,4.467,4.043,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,120,466,573,3.046,3.19,3.125,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,120,466,573,6.146,7.065,6.653,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-42,120,466,573,6.369,7.233,6.845,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-48,120,141,250,13.027,10.532,11.432,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-52,120,15,124,5.625,5.395,5.42,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 124행)
-53,120,151,253,7.314,6.272,6.661,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-56,120,32,192,7.03,10.345,9.871,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 192행)
-81,120,466,573,8.051,6.906,7.42,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-82,120,466,573,2.692,2.584,2.633,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,120,466,573,0.102,5.712,3.196,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,120,466,573,3.073,3.906,3.532,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,120,466,573,9.725,6.196,7.779,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-121,120,466,573,3.243,5.444,4.457,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-161,120,27,189,10.62,15.791,15.145,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-162,120,27,186,11.833,16.704,16.087,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 186행)
-163,120,27,189,0.023,6.925,6.063,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-164,120,27,189,5.777,7.482,7.269,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-165,120,27,189,9.685,25.403,23.438,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-166,120,27,189,4.47,7.688,7.286,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-167,120,27,189,6.369,13.675,12.761,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-168,120,27,189,19.547,13.83,14.545,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-169,120,27,187,11.447,15.431,14.928,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 187행)
-170,120,27,189,23.869,13.757,15.021,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-171,120,27,189,16.284,13.887,14.187,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
-172,120,27,159,0.466,5.104,4.431,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 159행)
-181,120,466,573,4.267,3.268,3.716,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,120,466,573,7.858,7.776,7.813,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-183,120,466,573,10.2,11.146,10.722,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-201,120,466,573,5.582,15.104,10.833,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-241,120,32,222,6.39,11.588,10.933,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 222행)
-261,120,32,222,7.737,11.36,10.903,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 222행)
-262,120,32,222,5.968,11.762,11.032,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 222행)
-401,120,466,573,7.662,7.981,7.838,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-421,120,466,573,5.233,5.775,5.532,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,120,466,573,3.981,7.835,6.106,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-461,120,466,573,6.232,7.79,7.091,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,120,466,573,3.132,2.342,2.696,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,120,466,573,2.096,1.943,2.012,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-7,180,102,190,0.475,0.609,0.563,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-8,180,384,501,4.486,3.705,4.044,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,180,384,501,4.523,2.852,3.577,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,180,384,501,5.088,4.48,4.744,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,180,384,501,8.226,6.833,7.437,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,180,384,501,3.293,2.515,2.852,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,180,384,501,4.829,5.89,5.43,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,180,3,87,19.794,0.965,1.592,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 87행)
-16,180,384,501,4.367,1.957,3.003,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,180,384,501,1.798,2.888,2.415,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,180,384,501,6.428,5.032,5.638,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,180,384,501,4.811,3.046,3.812,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,180,384,501,4.757,3.051,3.791,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,180,18,135,7.807,8.01,7.986,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 18행/후반 135행)
-23,180,15,87,8.75,6.31,6.668,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 87행)
-24,180,384,501,4.556,5.459,5.067,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,180,384,501,8.649,8.133,8.357,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-26,180,285,501,8.443,9.14,8.887,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-27,180,384,501,4.455,3.57,3.954,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,180,384,501,4.703,5.049,4.899,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,180,384,501,7.325,7.826,7.608,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,180,384,501,11.859,12.738,12.357,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-31,180,384,501,6.686,3.911,5.115,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,180,384,501,4.229,6.624,5.585,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,180,384,501,4.771,3.356,3.97,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,180,384,501,5.044,4.764,4.885,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-37,180,384,501,2.256,2.84,2.587,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,180,384,501,4.589,3.92,4.21,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,180,384,501,3.906,3.121,3.461,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,180,384,501,6.278,8.613,7.6,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-42,180,384,501,7.735,8.008,7.89,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-48,180,92,187,15.79,10.495,12.241,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 92행/후반 187행)
-52,180,3,85,15.384,8.156,8.402,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 85행)
-53,180,102,190,7.581,7.261,7.372,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-56,180,6,141,5.78,10.475,10.284,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 141행)
-81,180,384,501,8.807,7.08,7.829,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-82,180,384,501,3.846,3.01,3.373,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,180,384,501,0.513,8.052,4.781,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,180,384,501,0.934,3.538,2.408,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,180,384,501,10.465,6.684,8.325,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-121,180,384,501,4.078,5.89,5.104,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-161,180,15,135,17.378,18.304,18.211,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-162,180,15,132,6.234,22.091,20.473,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 132행)
-163,180,15,135,0.043,7.107,6.4,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-164,180,15,135,4.285,7.627,7.293,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-165,180,15,135,11.9,26.377,24.929,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-166,180,15,135,4.392,8.736,8.301,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-167,180,15,135,4.467,11.994,11.241,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-168,180,15,135,21.237,12.681,13.537,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-169,180,15,133,9.574,15.998,15.347,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 133행)
-170,180,15,135,20.292,12.782,13.533,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-171,180,15,135,6.888,16.123,15.199,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
-172,180,15,111,1.089,6.058,5.467,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 111행)
-181,180,384,501,4.299,3.801,4.017,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,180,384,501,9.132,8.683,8.878,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-183,180,384,501,9.922,12.959,11.641,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-201,180,384,501,4.19,19.857,13.059,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-241,180,6,165,7.798,11.604,11.47,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 165행)
-261,180,6,165,6.228,10.225,10.085,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 165행)
-262,180,6,165,9.44,12.387,12.283,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 165행)
-401,180,384,501,8.956,8.794,8.864,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-421,180,384,501,5.483,6.208,5.894,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,180,384,501,3.94,9.269,6.957,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-461,180,384,501,6.772,8.636,7.827,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,180,384,501,3.534,2.47,2.931,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,180,384,501,2.257,2.142,2.192,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-7,240,84,156,0.215,0.814,0.604,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 84행/후반 156행)
-8,240,321,468,4.445,3.904,4.124,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,240,321,468,6.286,2.669,4.14,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,240,321,468,5.145,4.856,4.973,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,240,321,468,9.806,7.774,8.601,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,240,321,468,3.557,2.949,3.196,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,240,321,468,6.094,6.654,6.426,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,240,0,60,,1.326,1.326,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-16,240,321,468,5.774,2.514,3.84,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,240,321,468,1.811,2.774,2.382,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,240,321,468,7.158,5.317,6.066,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,240,321,468,5.623,3.181,4.175,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,240,321,468,5.58,3.974,4.627,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,240,3,99,4.833,9.121,8.995,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-23,240,3,51,10.4,6.696,6.902,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 51행)
-24,240,321,468,5.21,6.11,5.744,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,240,321,468,8.242,8.978,8.678,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-26,240,234,468,8.271,10.102,9.491,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-27,240,321,468,4.274,3.92,4.064,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,240,321,468,4.783,5.323,5.104,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,240,321,468,7.785,8.58,8.257,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,240,321,468,11.444,12.594,12.126,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-31,240,321,468,5.677,3.366,4.306,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,240,321,468,4.899,7.627,6.517,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,240,321,468,4.092,3.316,3.632,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,240,321,468,9.719,6.273,7.675,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-37,240,321,468,2.63,3.024,2.864,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,240,321,468,5.884,3.713,4.596,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,240,321,468,4.781,3.501,4.021,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,240,321,468,6.836,9.615,8.484,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-42,240,321,468,7.155,9.797,8.722,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-48,240,74,153,11.94,12.02,11.994,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 74행/후반 153행)
-52,240,0,58,,10.854,10.854,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 58행)
-53,240,84,156,10.987,8.176,9.159,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 84행/후반 156행)
-56,240,0,108,,12.273,12.273,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 108행)
-81,240,321,468,8.396,8.817,8.646,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-82,240,321,468,4.172,3.49,3.768,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,240,321,468,0.916,9.094,5.767,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,240,321,468,0.692,3.365,2.278,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,240,321,468,12.039,6.358,8.669,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-121,240,321,468,3.767,7.065,5.723,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-161,240,3,99,35.457,20.315,20.76,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-162,240,3,96,11.064,23.412,23.038,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 96행)
-163,240,3,99,0.055,9.782,9.496,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-164,240,3,99,8.022,9.136,9.104,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-165,240,3,99,7.988,32.07,31.362,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-166,240,3,99,4.293,7.205,7.119,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-167,240,3,99,15.087,13.644,13.687,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-168,240,3,99,25.627,17.316,17.56,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-169,240,3,97,24.205,13.738,14.052,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 97행)
-170,240,3,99,5.722,12.549,12.348,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-171,240,3,99,8.394,14.277,14.104,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 99행)
-172,240,3,75,3.433,7.82,7.651,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 75행)
-181,240,321,468,4.618,3.785,4.124,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,240,321,468,9.623,11.084,10.489,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-183,240,321,468,9.94,12.871,11.679,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-201,240,321,468,4.113,22.154,14.814,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-241,240,0,132,,12.879,12.879,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 132행)
-261,240,0,132,,11.555,11.555,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 132행)
-262,240,0,132,,12.954,12.954,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 132행)
-401,240,321,468,8.387,9.287,8.921,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-421,240,321,468,5.095,7.149,6.314,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,240,321,468,3.135,11.143,7.885,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-461,240,321,468,7.689,8.882,8.397,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,240,321,468,3.248,2.069,2.549,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,240,321,468,2.551,2.025,2.239,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-7,360,60,108,0.508,1.1,0.889,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 60행/후반 108행)
-8,360,243,420,5.963,4.751,5.196,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-9,360,243,420,5.034,3.208,3.877,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-10,360,243,420,5.535,4.622,4.956,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-11,360,243,420,8.081,7.643,7.804,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-12,360,243,420,3.335,2.859,3.033,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-13,360,243,420,6.015,6.619,6.398,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-14,360,0,12,,2.458,2.458,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 12행)
-16,360,243,420,6.646,3.107,4.404,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-17,360,243,420,2.736,3.028,2.921,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-18,360,243,420,8.112,5.319,6.343,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-20,360,243,420,5.393,3.007,3.882,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-21,360,243,420,6.807,5.505,5.982,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-22,360,0,48,,14.611,14.611,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-23,360,0,12,,8.591,8.591,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 12행)
-24,360,243,420,5.675,9.465,8.076,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-25,360,243,420,11.134,8.005,9.152,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-26,360,180,420,8.571,10.809,10.138,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-27,360,243,420,4.663,4.654,4.657,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-28,360,243,420,5.99,5.278,5.539,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-29,360,243,420,5.353,9.702,8.108,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-30,360,243,420,9.699,12.351,11.379,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-31,360,243,420,5.206,4.076,4.49,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-33,360,243,420,4.484,8.185,6.829,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-34,360,243,420,2.96,3.273,3.158,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-36,360,243,420,13.202,8.067,9.949,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-37,360,243,420,2.989,3.635,3.398,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-38,360,243,420,6.46,4.123,4.98,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-39,360,243,420,6.467,3.862,4.817,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-40,360,243,420,9.382,10.274,9.947,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-42,360,243,420,6.659,13.028,10.694,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-48,360,50,105,12.726,14.663,14.038,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 50행/후반 105행)
-52,360,0,12,,21.798,21.798,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 12행)
-53,360,60,108,14.868,9.91,11.681,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 60행/후반 108행)
-56,360,0,60,,16.579,16.579,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-81,360,243,420,11.672,9.419,10.245,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-82,360,243,420,5.721,4.13,4.713,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-106,360,243,420,1.083,8.753,5.942,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-108,360,243,420,0.528,3.918,2.676,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-112,360,243,420,11.84,6.942,8.737,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-121,360,243,420,6.526,10.65,9.139,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-161,360,0,48,,19.759,19.759,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-162,360,0,45,,28.607,28.607,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 45행)
-163,360,0,48,,18.8,18.8,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-164,360,0,48,,9.348,9.348,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-165,360,0,48,,30.303,30.303,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-166,360,0,48,,6.387,6.387,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-167,360,0,48,,15.903,15.903,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-168,360,0,48,,19.216,19.216,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-169,360,0,47,,12.557,12.557,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 47행)
-170,360,0,48,,12.171,12.171,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-171,360,0,48,,10.198,10.198,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 48행)
-172,360,0,24,,9.635,9.635,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 24행)
-181,360,243,420,4.682,4.63,4.649,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-182,360,243,420,10.944,14.841,13.413,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-183,360,243,420,11.397,14.556,13.398,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
-201,360,243,420,6.052,23.122,16.865,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-241,360,0,84,,15.668,15.668,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 84행)
-261,360,0,84,,15.217,15.217,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 84행)
-262,360,0,84,,14.947,14.947,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 84행)
-401,360,243,420,7.582,12.534,10.719,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-421,360,243,420,5.019,8.87,7.458,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-441,360,243,420,3.129,10.465,7.776,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
-461,360,243,420,9.225,9.126,9.162,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-521,360,243,420,3.001,2.801,2.874,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-522,360,243,420,2.845,2.484,2.617,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하
-8,720,98,276,2.413,4.497,3.951,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-9,720,98,276,6.071,8.811,8.093,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-10,720,98,276,3.272,3.53,3.463,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-11,720,98,276,10.713,11.023,10.942,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-12,720,98,276,2.555,3.366,3.153,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-13,720,98,276,7.412,8.082,7.906,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-16,720,98,276,2.24,7.849,6.379,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-17,720,98,276,2.026,2.972,2.724,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-18,720,98,276,7.769,6.383,6.746,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-20,720,98,276,2.712,7.127,5.97,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-21,720,98,276,9.125,7.955,8.261,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-24,720,98,276,7.057,14.732,12.721,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-25,720,98,276,6.419,8.745,8.136,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-26,720,87,276,5.168,6.913,6.495,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 87행/후반 276행)
-27,720,98,276,3.859,6.776,6.012,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-28,720,98,276,4.695,5.873,5.564,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-29,720,98,276,10.665,14.423,13.438,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-30,720,98,276,4.491,9.886,8.472,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-31,720,98,276,1.976,11.822,9.242,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-33,720,98,276,3.101,10.376,8.47,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-34,720,98,276,2.635,3.388,3.191,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-36,720,98,276,9.205,10.056,9.833,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-37,720,98,276,4.016,5.94,5.436,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-38,720,98,276,4.455,5.986,5.585,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-39,720,98,276,6.701,6.767,6.75,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-40,720,98,276,12.407,14.541,13.982,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-42,720,98,276,5.019,19.676,15.836,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-81,720,98,276,17.831,11.089,12.855,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-82,720,98,276,11.316,4.839,6.536,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-106,720,98,276,2.645,5.643,4.858,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-108,720,98,276,0.184,5.09,3.804,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-112,720,98,276,15.328,4.587,7.401,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-121,720,98,276,9.401,11.849,11.208,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-181,720,98,276,5.409,6.589,6.28,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-182,720,98,276,15.438,24.655,22.24,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-183,720,98,276,15.311,18.376,17.573,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-201,720,98,276,3.536,29.047,22.362,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-401,720,98,276,9.367,9.599,9.538,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-421,720,98,276,2.611,13.544,10.679,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-441,720,98,276,5.016,8.669,7.712,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-461,720,98,276,10.754,9.386,9.745,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-521,720,98,276,1.948,3.252,2.911,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-522,720,98,276,4.892,2.361,3.024,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
-8,1440,0,60,,5.556,5.556,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-9,1440,0,60,,15.563,15.563,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-10,1440,0,60,,3.856,3.856,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-11,1440,0,60,,9.438,9.438,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-12,1440,0,60,,3.463,3.463,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-13,1440,0,60,,8.232,8.232,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-16,1440,0,60,,15.242,15.242,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-17,1440,0,60,,6.438,6.438,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-18,1440,0,60,,2.404,2.404,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-20,1440,0,60,,8.6,8.6,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-21,1440,0,60,,9.887,9.887,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-24,1440,0,60,,3.213,3.213,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-25,1440,0,60,,9.077,9.077,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-26,1440,0,49,,13.599,13.599,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 49행)
-27,1440,0,60,,9.194,9.194,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-28,1440,0,60,,6.046,6.046,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-29,1440,0,60,,21.052,21.052,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-30,1440,0,60,,10.279,10.279,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-31,1440,0,60,,10.75,10.75,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-33,1440,0,60,,11.184,11.184,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-34,1440,0,60,,2.118,2.118,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-36,1440,0,60,,7.406,7.406,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-37,1440,0,60,,4.726,4.726,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-38,1440,0,60,,6.235,6.235,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-39,1440,0,60,,6.009,6.009,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-40,1440,0,60,,9.086,9.086,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-42,1440,0,60,,29.057,29.057,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-81,1440,0,60,,10.661,10.661,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-82,1440,0,60,,3.576,3.576,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-106,1440,0,60,,31.029,31.029,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-108,1440,0,60,,52.339,52.339,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-112,1440,0,60,,16.218,16.218,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-121,1440,0,60,,2.134,2.134,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-181,1440,0,60,,4.007,4.007,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-182,1440,0,60,,0.309,0.309,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-183,1440,0,60,,13.196,13.196,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-201,1440,0,60,,26.083,26.083,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-401,1440,0,60,,14.039,14.039,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-421,1440,0,60,,16.401,16.401,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-441,1440,0,60,,11.837,11.837,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-461,1440,0,60,,10.638,10.638,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-521,1440,0,60,,2.296,2.296,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
-522,1440,0,60,,1.685,1.685,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+﻿parking_id,horizon,n_first,n_second,mae_first,mae_second,mae_overall,baseline_mae,baseline_name,evidence_report,evaluated_at,status,reason
+7,15,281,388,0.053,0.406,0.258,0.258,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(0.26)보다 나쁨 — 모델을 쓸 이유가 없음
+8,15,659,767,1.772,2.086,1.941,2.365,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.36) 대비 우위
+9,15,659,767,1.461,1.24,1.342,1.491,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.49) 대비 우위
+10,15,659,767,1.064,1.214,1.145,1.343,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.34) 대비 우위
+11,15,659,767,2.818,2.436,2.612,2.84,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.84) 대비 우위
+12,15,659,767,0.538,0.876,0.72,0.722,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.72) 대비 우위
+13,15,659,767,1.063,2.004,1.57,1.569,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(1.57)보다 나쁨 — 모델을 쓸 이유가 없음
+14,15,40,234,2.209,0.656,0.883,0.883,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 40행/후반 234행)
+16,15,659,767,0.788,0.937,0.868,1.552,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.55) 대비 우위
+17,15,659,767,0.614,0.959,0.799,0.8,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.80) 대비 우위
+18,15,659,767,1.358,1.718,1.552,1.559,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.56) 대비 우위
+20,15,659,767,1.394,1.05,1.209,1.277,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.28) 대비 우위
+21,15,659,767,1.198,1.261,1.232,1.291,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.29) 대비 우위
+22,15,120,310,5.413,5.162,5.232,5.216,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(5.22)보다 나쁨 — 모델을 쓸 이유가 없음
+23,15,51,235,1.953,1.647,1.701,1.69,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 51행/후반 235행)
+24,15,659,767,1.424,1.717,1.582,1.628,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.63) 대비 우위
+25,15,659,767,1.57,2.016,1.81,1.827,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.83) 대비 우위
+26,15,516,767,2.904,2.621,2.735,2.76,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.76) 대비 우위
+27,15,659,767,1.072,1.071,1.071,1.4,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.40) 대비 우위
+28,15,659,767,1.613,1.937,1.787,1.79,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.79) 대비 우위
+29,15,659,767,2.488,3.797,3.192,3.182,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(3.18)보다 나쁨 — 모델을 쓸 이유가 없음
+30,15,659,767,3.377,3.953,3.687,3.793,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.79) 대비 우위
+31,15,659,767,1.832,1.347,1.571,2.072,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.07) 대비 우위
+33,15,659,767,1.558,2.85,2.253,2.292,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.29) 대비 우위
+34,15,659,767,1.311,1.448,1.385,1.691,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.69) 대비 우위
+36,15,659,767,1.034,1.598,1.337,1.368,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.37) 대비 우위
+37,15,659,767,0.832,0.991,0.918,1.06,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.06) 대비 우위
+38,15,659,767,1.15,1.822,1.512,1.898,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.90) 대비 우위
+39,15,659,767,1.18,1.424,1.311,1.376,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.38) 대비 우위
+40,15,659,767,2.084,2.711,2.421,2.422,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.42) 대비 우위
+42,15,659,767,1.713,1.523,1.611,1.648,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.65) 대비 우위
+48,15,271,385,7.489,7.373,7.421,7.533,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(7.53) 대비 우위
+52,15,40,232,3.169,4.05,3.92,3.884,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 40행/후반 232행)
+53,15,281,388,3.503,3.957,3.766,4.181,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.18) 대비 우위
+56,15,120,321,6.336,7.133,6.916,6.924,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.92) 대비 우위
+81,15,659,767,2.23,2.348,2.293,2.328,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.33) 대비 우위
+82,15,659,767,0.853,0.862,0.858,0.876,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.88) 대비 우위
+106,15,659,767,0.0,1.296,0.697,0.697,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(0.70)보다 나쁨 — 모델을 쓸 이유가 없음
+108,15,659,767,0.377,1.412,0.934,0.935,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.94) 대비 우위
+112,15,659,767,2.402,3.253,2.859,3.182,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.18) 대비 우위
+121,15,659,767,0.689,1.139,0.931,0.932,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.93) 대비 우위
+161,15,52,307,7.567,7.346,7.378,7.373,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 307행)
+162,15,52,307,6.096,7.959,7.69,7.683,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 307행)
+163,15,52,310,0.685,3.082,2.738,2.732,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+164,15,52,308,5.231,4.626,4.714,4.708,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 308행)
+165,15,52,310,6.538,10.839,10.221,10.221,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+166,15,52,310,4.622,4.756,4.737,4.751,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+167,15,52,310,4.396,10.268,9.425,9.417,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+168,15,52,310,6.882,7.211,7.164,7.152,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+169,15,52,308,11.16,10.38,10.493,10.505,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 308행)
+170,15,52,310,8.223,7.426,7.541,7.534,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+171,15,52,310,4.153,7.315,6.86,6.851,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 310행)
+172,15,52,271,0.652,2.935,2.567,2.693,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 271행)
+181,15,659,767,1.459,1.746,1.614,1.688,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.69) 대비 우위
+182,15,659,767,2.536,2.058,2.279,2.279,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(2.28)보다 나쁨 — 모델을 쓸 이유가 없음
+183,15,659,767,2.423,3.773,3.149,3.145,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(3.15)보다 나쁨 — 모델을 쓸 이유가 없음
+201,15,659,767,1.158,2.98,2.138,2.168,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.17) 대비 우위
+241,15,140,357,6.928,8.965,8.391,8.395,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(8.39) 대비 우위
+261,15,140,357,6.46,6.115,6.212,6.221,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.22) 대비 우위
+262,15,140,357,6.39,6.54,6.498,6.561,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.56) 대비 우위
+401,15,659,767,2.852,3.214,3.047,3.027,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(3.03)보다 나쁨 — 모델을 쓸 이유가 없음
+421,15,659,767,1.738,2.351,2.068,2.099,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.10) 대비 우위
+441,15,659,767,1.752,2.575,2.194,2.196,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.20) 대비 우위
+461,15,659,767,1.632,2.896,2.312,2.311,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(2.31)보다 나쁨 — 모델을 쓸 이유가 없음
+521,15,659,767,0.948,0.951,0.95,0.949,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(0.95)보다 나쁨 — 모델을 쓸 이유가 없음
+522,15,659,767,0.738,0.739,0.738,0.73,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(0.73)보다 나쁨 — 모델을 쓸 이유가 없음
+7,30,259,367,0.096,0.686,0.442,0.515,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.52) 대비 우위
+8,30,625,728,2.479,2.573,2.529,3.907,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.91) 대비 우위
+9,30,625,728,2.065,1.788,1.916,2.47,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.47) 대비 우위
+10,30,625,728,1.695,1.757,1.728,2.404,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.40) 대비 우위
+11,30,625,728,4.18,3.326,3.72,4.664,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.66) 대비 우위
+12,30,625,728,0.922,1.342,1.148,1.213,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.21) 대비 우위
+13,30,625,728,1.65,3.136,2.449,2.441,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(2.44)보다 나쁨 — 모델을 쓸 이유가 없음
+14,30,33,216,3.411,1.135,1.437,1.756,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 33행/후반 216행)
+16,30,625,728,1.315,1.076,1.186,2.49,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(2.49) 대비 우위
+17,30,625,728,1.027,1.473,1.267,1.306,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.31) 대비 우위
+18,30,625,728,1.9,2.465,2.204,2.411,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.41) 대비 우위
+20,30,625,728,2.096,1.572,1.814,2.112,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.11) 대비 우위
+21,30,625,728,1.749,1.872,1.815,2.285,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.29) 대비 우위
+22,30,106,286,7.251,6.406,6.635,7.097,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(7.10) 대비 우위
+23,30,45,214,2.269,2.502,2.461,2.409,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 214행)
+24,30,625,728,2.08,2.39,2.247,2.513,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.51) 대비 우위
+25,30,625,728,2.688,2.932,2.819,3.053,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.05) 대비 우위
+26,30,485,728,4.45,3.988,4.173,4.394,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.39) 대비 우위
+27,30,625,728,1.685,1.337,1.498,2.494,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.49) 대비 우위
+28,30,625,728,2.433,2.612,2.53,2.597,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.60) 대비 우위
+29,30,625,728,3.786,5.242,4.57,4.691,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.69) 대비 우위
+30,30,625,728,5.897,6.878,6.425,7.091,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(7.09) 대비 우위
+31,30,625,728,3.066,1.89,2.433,2.313,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.31)보다 나쁨 — 모델을 쓸 이유가 없음
+33,30,625,728,2.208,4.047,3.197,3.574,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.57) 대비 우위
+34,30,625,728,2.063,2.006,2.033,3.016,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.02) 대비 우위
+36,30,625,728,1.67,2.282,1.999,2.286,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.29) 대비 우위
+37,30,625,728,1.201,1.299,1.254,1.831,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.83) 대비 우위
+38,30,625,728,1.591,2.412,2.033,3.369,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.37) 대비 우위
+39,30,625,728,1.671,1.879,1.783,2.092,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.09) 대비 우위
+40,30,625,728,3.491,4.08,3.808,3.865,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.87) 대비 우위
+42,30,625,728,2.929,2.411,2.65,2.898,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.90) 대비 우위
+48,30,249,364,9.119,9.415,9.295,10.4,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(10.40) 대비 우위
+52,30,33,214,3.72,5.392,5.169,5.263,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 33행/후반 214행)
+53,30,259,367,4.124,4.981,4.626,5.978,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(5.98) 대비 우위
+56,30,101,300,7.956,8.022,8.005,7.98,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(7.98)보다 나쁨 — 모델을 쓸 이유가 없음
+81,30,625,728,3.474,3.664,3.577,3.926,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.93) 대비 우위
+82,30,625,728,1.254,1.221,1.236,1.44,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.44) 대비 우위
+106,30,625,728,0.0,1.963,1.056,1.054,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(1.05)보다 나쁨 — 모델을 쓸 이유가 없음
+108,30,625,728,0.644,2.496,1.641,1.689,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.69) 대비 우위
+112,30,625,728,3.683,4.352,4.043,5.302,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.30) 대비 우위
+121,30,625,728,1.211,1.988,1.629,1.657,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.66) 대비 우위
+161,30,45,286,8.186,10.531,10.212,10.272,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+162,30,45,283,7.829,11.035,10.595,10.442,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 283행)
+163,30,45,286,0.0,4.928,4.258,4.397,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+164,30,45,286,6.285,5.753,5.825,6.551,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+165,30,45,286,11.527,15.39,14.865,14.985,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+166,30,45,286,6.115,5.744,5.795,6.566,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+167,30,45,286,3.146,12.474,11.206,11.233,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+168,30,45,286,9.424,10.446,10.307,10.339,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+169,30,45,284,11.497,12.828,12.646,12.849,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 284행)
+170,30,45,286,12.612,10.126,10.464,10.876,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+171,30,45,286,5.351,9.477,8.916,8.802,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 286행)
+172,30,45,250,0.388,3.479,3.008,3.385,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 45행/후반 250행)
+181,30,625,728,2.25,2.267,2.259,2.646,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.65) 대비 우위
+182,30,625,728,3.798,3.476,3.625,3.627,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.63) 대비 우위
+183,30,625,728,4.176,5.674,4.982,5.004,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.00) 대비 우위
+201,30,625,728,1.906,5.249,3.705,3.962,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.96) 대비 우위
+241,30,121,336,8.437,10.466,9.929,9.461,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+261,30,121,336,7.821,8.436,8.273,8.662,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(8.66) 대비 우위
+262,30,121,336,8.24,9.786,9.377,9.847,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(9.85) 대비 우위
+401,30,625,728,4.189,4.766,4.5,4.544,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.54) 대비 우위
+421,30,625,728,2.521,3.366,2.976,3.286,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.29) 대비 우위
+441,30,625,728,2.485,3.597,3.083,3.163,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.16) 대비 우위
+461,30,625,728,2.761,4.503,3.698,3.744,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.74) 대비 우위
+521,30,625,728,1.47,1.409,1.437,1.46,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.46) 대비 우위
+522,30,625,728,1.046,1.087,1.068,1.112,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.11) 대비 우위
+7,60,223,325,0.022,0.802,0.484,0.995,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(0.99) 대비 우위
+8,60,565,659,3.618,3.289,3.441,4.512,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(4.51) 대비 우위
+9,60,565,659,2.932,2.353,2.62,2.868,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(2.87) 대비 우위
+10,60,565,659,3.036,2.595,2.799,4.078,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(4.08) 대비 우위
+11,60,565,659,6.154,4.487,5.256,5.965,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(5.97) 대비 우위
+12,60,565,659,1.6,1.766,1.689,1.976,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.98) 대비 우위
+13,60,565,659,2.485,4.519,3.58,3.497,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,persistence 기준선(3.50)보다 나쁨 — 모델을 쓸 이유가 없음
+14,60,27,180,4.239,1.288,1.673,2.856,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 180행)
+16,60,565,659,2.373,1.555,1.933,2.45,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(2.45) 대비 우위
+17,60,565,659,1.536,1.956,1.762,1.986,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.99) 대비 우위
+18,60,565,659,3.151,3.143,3.147,3.598,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.60) 대비 우위
+20,60,565,659,3.012,2.443,2.706,3.631,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.63) 대비 우위
+21,60,565,659,2.492,2.658,2.581,4.034,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.03) 대비 우위
+22,60,88,249,8.381,6.836,7.24,8.552,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 88행/후반 249행)
+23,60,39,183,4.516,3.494,3.673,3.904,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 183행)
+24,60,565,659,2.836,3.186,3.025,3.951,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.95) 대비 우위
+25,60,565,659,4.47,4.563,4.52,5.209,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.21) 대비 우위
+26,60,431,659,7.039,5.675,6.214,7.183,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(7.18) 대비 우위
+27,60,565,659,2.785,2.104,2.418,4.683,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.68) 대비 우위
+28,60,565,659,3.559,3.292,3.415,3.808,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.81) 대비 우위
+29,60,565,659,5.399,6.945,6.232,6.799,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.80) 대비 우위
+30,60,565,659,9.967,11.4,10.738,9.54,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+31,60,565,659,5.069,2.48,3.675,2.401,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.40)보다 나쁨 — 모델을 쓸 이유가 없음
+33,60,565,659,2.962,5.268,4.204,5.481,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.48) 대비 우위
+34,60,565,659,3.418,2.531,2.941,3.545,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(3.54) 대비 우위
+36,60,565,659,2.418,2.929,2.693,3.799,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.80) 대비 우위
+37,60,565,659,1.697,1.96,1.839,3.266,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.27) 대비 우위
+38,60,565,659,2.329,3.471,2.944,3.972,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(3.97) 대비 우위
+39,60,565,659,2.306,2.69,2.512,3.337,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.34) 대비 우위
+40,60,565,659,4.654,5.51,5.115,5.899,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.90) 대비 우위
+42,60,565,659,4.957,4.027,4.456,5.169,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.17) 대비 우위
+48,60,213,322,9.86,10.281,10.113,11.109,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+52,60,27,178,4.291,5.966,5.746,5.655,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 178행)
+53,60,223,325,4.769,5.585,5.253,6.151,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(6.15) 대비 우위
+56,60,72,258,9.44,9.013,9.106,8.575,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 72행/후반 258행)
+81,60,565,659,5.639,5.422,5.522,6.962,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.96) 대비 우위
+82,60,565,659,1.842,1.747,1.791,2.4,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.40) 대비 우위
+106,60,565,659,0.01,3.369,1.818,1.824,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.82) 대비 우위
+108,60,565,659,0.935,4.522,2.866,1.995,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(1.99)보다 나쁨 — 모델을 쓸 이유가 없음
+112,60,565,659,5.977,5.147,5.53,6.758,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(6.76) 대비 우위
+121,60,565,659,2.133,3.331,2.778,2.978,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.98) 대비 우위
+161,60,39,249,9.408,11.905,11.567,12.786,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+162,60,39,246,8.446,12.738,12.151,12.047,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 246행)
+163,60,39,249,0.004,5.97,5.162,4.363,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+164,60,39,249,6.945,6.281,6.371,8.973,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+165,60,39,249,5.913,24.026,21.573,17.218,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+166,60,39,249,3.638,6.672,6.262,7.917,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+167,60,39,249,4.687,15.29,13.854,15.499,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+168,60,39,249,15.356,13.603,13.84,14.233,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+169,60,39,247,9.492,14.46,13.783,13.119,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 247행)
+170,60,39,249,14.051,11.208,11.593,13.889,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+171,60,39,249,7.426,11.613,11.046,10.764,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 249행)
+172,60,39,213,0.357,3.986,3.424,4.097,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 39행/후반 213행)
+181,60,565,659,3.203,2.687,2.925,3.927,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(3.93) 대비 우위
+182,60,565,659,5.235,5.435,5.342,5.456,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.46) 대비 우위
+183,60,565,659,7.169,8.227,7.739,8.19,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(8.19) 대비 우위
+201,60,565,659,3.432,8.425,6.12,6.957,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.96) 대비 우위
+241,60,91,294,10.261,11.532,11.232,9.3,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 91행/후반 294행)
+261,60,91,294,8.443,9.381,9.159,10.566,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 91행/후반 294행)
+262,60,91,294,9.013,11.415,10.847,12.456,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 91행/후반 294행)
+401,60,565,659,5.852,6.67,6.292,6.718,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.72) 대비 우위
+421,60,565,659,3.83,4.845,4.377,5.518,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.52) 대비 우위
+441,60,565,659,3.343,5.385,4.442,4.869,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(4.87) 대비 우위
+461,60,565,659,4.39,6.473,5.511,6.115,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.12) 대비 우위
+521,60,565,659,2.172,1.955,2.055,2.3,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(2.30) 대비 우위
+522,60,565,659,1.532,1.55,1.541,1.716,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(1.72) 대비 우위
+7,120,151,253,0.032,1.006,0.642,0.86,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(0.86) 대비 우위
+8,120,466,573,4.407,3.762,4.051,4.502,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(4.50) 대비 우위
+9,120,466,573,3.832,3.046,3.399,2.93,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.93)보다 나쁨 — 모델을 쓸 이유가 없음
+10,120,466,573,4.629,3.536,4.026,4.194,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(4.19) 대비 우위
+11,120,466,573,7.474,5.988,6.654,5.995,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(6.00)보다 나쁨 — 모델을 쓸 이유가 없음
+12,120,466,573,2.735,2.361,2.529,3.366,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.37) 대비 우위
+13,120,466,573,3.668,5.943,4.923,5.168,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.17) 대비 우위
+14,120,15,126,10.587,0.581,1.645,1.305,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 126행)
+16,120,466,573,3.949,2.268,3.022,2.385,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.38)보다 나쁨 — 모델을 쓸 이유가 없음
+17,120,466,573,1.866,2.404,2.162,3.025,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.03) 대비 우위
+18,120,466,573,4.545,4.155,4.33,3.703,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(3.70)보다 나쁨 — 모델을 쓸 이유가 없음
+20,120,466,573,4.27,3.095,3.622,3.793,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(3.79) 대비 우위
+21,120,466,573,3.511,3.274,3.38,4.492,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(4.49) 대비 우위
+22,120,52,189,8.498,8.343,8.376,9.699,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 52행/후반 189행)
+23,120,27,135,8.607,4.741,5.386,5.761,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 135행)
+24,120,466,573,4.485,4.477,4.481,6.535,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.53) 대비 우위
+25,120,466,573,7.138,6.948,7.033,9.329,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(9.33) 대비 우위
+26,120,355,573,10.144,7.832,8.716,11.419,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+27,120,466,573,3.938,3.02,3.432,5.425,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(5.43) 대비 우위
+28,120,466,573,4.688,4.463,4.564,4.431,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(4.43)보다 나쁨 — 모델을 쓸 이유가 없음
+29,120,466,573,7.006,7.854,7.474,9.798,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(9.80) 대비 우위
+30,120,466,573,11.357,13.177,12.361,9.208,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
+31,120,466,573,7.56,3.662,5.411,2.505,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.51)보다 나쁨 — 모델을 쓸 이유가 없음
+33,120,466,573,3.756,5.939,4.96,6.394,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(6.39) 대비 우위
+34,120,466,573,4.837,3.075,3.866,3.369,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(3.37)보다 나쁨 — 모델을 쓸 이유가 없음
+36,120,466,573,4.073,4.052,4.062,5.855,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.85) 대비 우위
+37,120,466,573,2.193,2.516,2.371,3.356,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(3.36) 대비 우위
+38,120,466,573,3.521,4.467,4.043,4.016,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(4.02)보다 나쁨 — 모델을 쓸 이유가 없음
+39,120,466,573,3.046,3.19,3.125,3.782,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(3.78) 대비 우위
+40,120,466,573,6.146,7.065,6.653,9.143,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(9.14) 대비 우위
+42,120,466,573,6.369,7.233,6.845,8.38,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(8.38) 대비 우위
+48,120,141,250,13.027,10.532,11.432,11.606,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
+52,120,15,124,5.625,5.395,5.42,5.654,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 124행)
+53,120,151,253,7.314,6.272,6.661,6.458,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(6.46)보다 나쁨 — 모델을 쓸 이유가 없음
+56,120,32,192,7.03,10.345,9.871,8.057,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 192행)
+81,120,466,573,8.051,6.906,7.42,6.9,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(6.90)보다 나쁨 — 모델을 쓸 이유가 없음
+82,120,466,573,2.692,2.584,2.633,2.766,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(2.77) 대비 우위
+106,120,466,573,0.102,5.712,3.196,3.33,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(3.33) 대비 우위
+108,120,466,573,3.073,3.906,3.532,1.978,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(1.98)보다 나쁨 — 모델을 쓸 이유가 없음
+112,120,466,573,9.725,6.196,7.779,6.715,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(6.72)보다 나쁨 — 모델을 쓸 이유가 없음
+121,120,466,573,3.243,5.444,4.457,5.647,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.65) 대비 우위
+161,120,27,189,10.62,15.791,15.145,18.382,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+162,120,27,186,11.833,16.704,16.087,17.371,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 186행)
+163,120,27,189,0.023,6.925,6.063,4.872,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+164,120,27,189,5.777,7.482,7.269,8.931,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+165,120,27,189,9.685,25.403,23.438,16.702,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+166,120,27,189,4.47,7.688,7.286,7.84,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+167,120,27,189,6.369,13.675,12.761,14.7,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+168,120,27,189,19.547,13.83,14.545,12.973,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+169,120,27,187,11.447,15.431,14.928,11.559,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 187행)
+170,120,27,189,23.869,13.757,15.021,17.929,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+171,120,27,189,16.284,13.887,14.187,12.531,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 189행)
+172,120,27,159,0.466,5.104,4.431,4.251,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 27행/후반 159행)
+181,120,466,573,4.267,3.268,3.716,4.108,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(4.11) 대비 우위
+182,120,466,573,7.858,7.776,7.813,8.587,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(8.59) 대비 우위
+183,120,466,573,10.2,11.146,10.722,13.08,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
+201,120,466,573,5.582,15.104,10.833,12.004,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+241,120,32,222,6.39,11.588,10.933,9.163,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 222행)
+261,120,32,222,7.737,11.36,10.903,10.553,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 222행)
+262,120,32,222,5.968,11.762,11.032,14.036,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 32행/후반 222행)
+401,120,466,573,7.662,7.981,7.838,9.361,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(9.36) 대비 우위
+421,120,466,573,5.233,5.775,5.532,7.965,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(7.97) 대비 우위
+441,120,466,573,3.981,7.835,6.106,7.232,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(7.23) 대비 우위
+461,120,466,573,6.232,7.79,7.091,8.967,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(8.97) 대비 우위
+521,120,466,573,3.132,2.342,2.696,3.278,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(3.28) 대비 우위
+522,120,466,573,2.096,1.943,2.012,2.401,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(2.40) 대비 우위
+7,180,102,190,0.475,0.609,0.563,0.214,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(0.21)보다 나쁨 — 모델을 쓸 이유가 없음
+8,180,384,501,4.486,3.705,4.044,4.322,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(4.32) 대비 우위
+9,180,384,501,4.523,2.852,3.577,2.937,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.94)보다 나쁨 — 모델을 쓸 이유가 없음
+10,180,384,501,5.088,4.48,4.744,4.21,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(4.21)보다 나쁨 — 모델을 쓸 이유가 없음
+11,180,384,501,8.226,6.833,7.437,5.979,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(5.98)보다 나쁨 — 모델을 쓸 이유가 없음
+12,180,384,501,3.293,2.515,2.852,3.49,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(3.49) 대비 우위
+13,180,384,501,4.829,5.89,5.43,5.895,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(5.90) 대비 우위
+14,180,3,87,19.794,0.965,1.592,0.243,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 87행)
+16,180,384,501,4.367,1.957,3.003,2.346,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.35)보다 나쁨 — 모델을 쓸 이유가 없음
+17,180,384,501,1.798,2.888,2.415,3.355,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_24h(3.36) 대비 우위
+18,180,384,501,6.428,5.032,5.638,3.236,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(3.24)보다 나쁨 — 모델을 쓸 이유가 없음
+20,180,384,501,4.811,3.046,3.812,3.462,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(3.46)보다 나쁨 — 모델을 쓸 이유가 없음
+21,180,384,501,4.757,3.051,3.791,4.92,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(4.92) 대비 우위
+22,180,18,135,7.807,8.01,7.986,9.307,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 18행/후반 135행)
+23,180,15,87,8.75,6.31,6.668,6.209,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 87행)
+24,180,384,501,4.556,5.459,5.067,9.064,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(9.06) 대비 우위
+25,180,384,501,8.649,8.133,8.357,8.891,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(8.89) 대비 우위
+26,180,285,501,8.443,9.14,8.887,10.577,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(10.58) 대비 우위
+27,180,384,501,4.455,3.57,3.954,5.217,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(5.22) 대비 우위
+28,180,384,501,4.703,5.049,4.899,3.702,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(3.70)보다 나쁨 — 모델을 쓸 이유가 없음
+29,180,384,501,7.325,7.826,7.608,8.986,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(8.99) 대비 우위
+30,180,384,501,11.859,12.738,12.357,9.497,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,failed,양쪽 모두 MAE 10%p 초과
+31,180,384,501,6.686,3.911,5.115,2.554,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.55)보다 나쁨 — 모델을 쓸 이유가 없음
+33,180,384,501,4.229,6.624,5.585,6.464,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(6.46) 대비 우위
+34,180,384,501,4.771,3.356,3.97,3.091,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(3.09)보다 나쁨 — 모델을 쓸 이유가 없음
+36,180,384,501,5.044,4.764,4.885,6.788,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(6.79) 대비 우위
+37,180,384,501,2.256,2.84,2.587,3.258,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(3.26) 대비 우위
+38,180,384,501,4.589,3.92,4.21,4.0,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(4.00)보다 나쁨 — 모델을 쓸 이유가 없음
+39,180,384,501,3.906,3.121,3.461,4.007,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(4.01) 대비 우위
+40,180,384,501,6.278,8.613,7.6,11.119,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(11.12) 대비 우위
+42,180,384,501,7.735,8.008,7.89,8.48,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(8.48) 대비 우위
+48,180,92,187,15.79,10.495,12.241,11.641,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 92행/후반 187행)
+52,180,3,85,15.384,8.156,8.402,5.227,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 3행/후반 85행)
+53,180,102,190,7.581,7.261,7.372,7.013,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(7.01)보다 나쁨 — 모델을 쓸 이유가 없음
+56,180,6,141,5.78,10.475,10.284,8.078,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 141행)
+81,180,384,501,8.807,7.08,7.829,6.514,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(6.51)보다 나쁨 — 모델을 쓸 이유가 없음
+82,180,384,501,3.846,3.01,3.373,2.813,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,seasonal_naive 기준선(2.81)보다 나쁨 — 모델을 쓸 이유가 없음
+106,180,384,501,0.513,8.052,4.781,3.238,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(3.24)보다 나쁨 — 모델을 쓸 이유가 없음
+108,180,384,501,0.934,3.538,2.408,1.918,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,below_baseline,lag_7d 기준선(1.92)보다 나쁨 — 모델을 쓸 이유가 없음
+112,180,384,501,10.465,6.684,8.325,6.473,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+121,180,384,501,4.078,5.89,5.104,8.471,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(8.47) 대비 우위
+161,180,15,135,17.378,18.304,18.211,19.059,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+162,180,15,132,6.234,22.091,20.473,19.922,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 132행)
+163,180,15,135,0.043,7.107,6.4,6.433,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+164,180,15,135,4.285,7.627,7.293,7.502,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+165,180,15,135,11.9,26.377,24.929,17.761,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+166,180,15,135,4.392,8.736,8.301,8.467,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+167,180,15,135,4.467,11.994,11.241,14.349,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+168,180,15,135,21.237,12.681,13.537,12.457,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+169,180,15,133,9.574,15.998,15.347,11.536,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 133행)
+170,180,15,135,20.292,12.782,13.533,14.315,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+171,180,15,135,6.888,16.123,15.199,15.467,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 135행)
+172,180,15,111,1.089,6.058,5.467,6.218,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 15행/후반 111행)
+181,180,384,501,4.299,3.801,4.017,4.221,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(4.22) 대비 우위
+182,180,384,501,9.132,8.683,8.878,11.458,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(11.46) 대비 우위
+183,180,384,501,9.922,12.959,11.641,13.268,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+201,180,384,501,4.19,19.857,13.059,15.372,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,not_reproduced,한쪽 구간에서만 합격 — 재현되지 않음
+241,180,6,165,7.798,11.604,11.47,8.706,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 165행)
+261,180,6,165,6.228,10.225,10.085,11.181,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 165행)
+262,180,6,165,9.44,12.387,12.283,12.933,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 6행/후반 165행)
+401,180,384,501,8.956,8.794,8.864,10.042,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · persistence(10.04) 대비 우위
+421,180,384,501,5.483,6.208,5.894,7.58,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(7.58) 대비 우위
+441,180,384,501,3.94,9.269,6.957,8.5,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(8.50) 대비 우위
+461,180,384,501,6.772,8.636,7.827,9.189,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(9.19) 대비 우위
+521,180,384,501,3.534,2.47,2.931,3.477,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · lag_7d(3.48) 대비 우위
+522,180,384,501,2.257,2.142,2.192,2.464,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,certified,전·후반 모두 MAE 10%p 이하 · seasonal_naive(2.46) 대비 우위
+7,240,84,156,0.215,0.814,0.604,0.0,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+8,240,321,468,4.445,3.904,4.124,4.259,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+9,240,321,468,6.286,2.669,4.14,2.952,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+10,240,321,468,5.145,4.856,4.973,4.136,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+11,240,321,468,9.806,7.774,8.601,5.959,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+12,240,321,468,3.557,2.949,3.196,3.378,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+13,240,321,468,6.094,6.654,6.426,6.37,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+14,240,0,60,,1.326,1.326,0.0,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+16,240,321,468,5.774,2.514,3.84,2.366,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+17,240,321,468,1.811,2.774,2.382,3.399,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+18,240,321,468,7.158,5.317,6.066,2.776,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+20,240,321,468,5.623,3.181,4.175,3.413,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+21,240,321,468,5.58,3.974,4.627,5.126,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+22,240,3,99,4.833,9.121,8.995,9.127,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+23,240,3,51,10.4,6.696,6.902,7.672,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+24,240,321,468,5.21,6.11,5.744,9.964,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+25,240,321,468,8.242,8.978,8.678,8.123,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+26,240,234,468,8.271,10.102,9.491,9.566,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+27,240,321,468,4.274,3.92,4.064,5.271,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+28,240,321,468,4.783,5.323,5.104,3.592,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+29,240,321,468,7.785,8.58,8.257,8.773,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+30,240,321,468,11.444,12.594,12.126,9.289,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+31,240,321,468,5.677,3.366,4.306,2.674,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+33,240,321,468,4.899,7.627,6.517,6.522,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+34,240,321,468,4.092,3.316,3.632,2.957,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+36,240,321,468,9.719,6.273,7.675,7.727,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+37,240,321,468,2.63,3.024,2.864,3.138,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+38,240,321,468,5.884,3.713,4.596,3.96,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+39,240,321,468,4.781,3.501,4.021,4.13,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+40,240,321,468,6.836,9.615,8.484,10.933,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+42,240,321,468,7.155,9.797,8.722,8.649,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+48,240,74,153,11.94,12.02,11.994,11.71,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+52,240,0,58,,10.854,10.854,5.423,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+53,240,84,156,10.987,8.176,9.159,7.204,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+56,240,0,108,,12.273,12.273,7.099,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+81,240,321,468,8.396,8.817,8.646,6.798,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+82,240,321,468,4.172,3.49,3.768,2.747,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+106,240,321,468,0.916,9.094,5.767,3.357,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+108,240,321,468,0.692,3.365,2.278,2.014,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+112,240,321,468,12.039,6.358,8.669,6.068,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+121,240,321,468,3.767,7.065,5.723,8.18,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+161,240,3,99,35.457,20.315,20.76,20.682,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+162,240,3,96,11.064,23.412,23.038,23.118,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+163,240,3,99,0.055,9.782,9.496,8.591,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+164,240,3,99,8.022,9.136,9.104,7.197,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+165,240,3,99,7.988,32.07,31.362,16.735,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+166,240,3,99,4.293,7.205,7.119,7.876,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+167,240,3,99,15.087,13.644,13.687,13.08,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+168,240,3,99,25.627,17.316,17.56,13.889,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+169,240,3,97,24.205,13.738,14.052,10.464,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+170,240,3,99,5.722,12.549,12.348,13.039,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+171,240,3,99,8.394,14.277,14.104,14.706,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+172,240,3,75,3.433,7.82,7.651,7.942,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+181,240,321,468,4.618,3.785,4.124,4.303,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+182,240,321,468,9.623,11.084,10.489,12.014,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+183,240,321,468,9.94,12.871,11.679,13.121,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+201,240,321,468,4.113,22.154,14.814,17.098,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+241,240,0,132,,12.879,12.879,9.436,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+261,240,0,132,,11.555,11.555,12.016,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+262,240,0,132,,12.954,12.954,12.639,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+401,240,321,468,8.387,9.287,8.921,10.634,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+421,240,321,468,5.095,7.149,6.314,7.352,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+441,240,321,468,3.135,11.143,7.885,8.132,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+461,240,321,468,7.689,8.882,8.397,9.046,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+521,240,321,468,3.248,2.069,2.549,3.214,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+522,240,321,468,2.551,2.025,2.239,2.429,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+7,360,60,108,0.508,1.1,0.889,0.0,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+8,360,243,420,5.963,4.751,5.196,4.298,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+9,360,243,420,5.034,3.208,3.877,2.809,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+10,360,243,420,5.535,4.622,4.956,3.959,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+11,360,243,420,8.081,7.643,7.804,6.102,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+12,360,243,420,3.335,2.859,3.033,3.302,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+13,360,243,420,6.015,6.619,6.398,7.109,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+14,360,0,12,,2.458,2.458,0.0,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+16,360,243,420,6.646,3.107,4.404,2.36,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+17,360,243,420,2.736,3.028,2.921,3.633,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+18,360,243,420,8.112,5.319,6.343,2.546,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+20,360,243,420,5.393,3.007,3.882,3.005,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+21,360,243,420,6.807,5.505,5.982,5.072,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+22,360,0,48,,14.611,14.611,11.384,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+23,360,0,12,,8.591,8.591,2.143,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+24,360,243,420,5.675,9.465,8.076,10.851,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+25,360,243,420,11.134,8.005,9.152,8.459,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+26,360,180,420,8.571,10.809,10.138,8.09,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+27,360,243,420,4.663,4.654,4.657,5.531,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+28,360,243,420,5.99,5.278,5.539,3.447,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+29,360,243,420,5.353,9.702,8.108,8.769,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+30,360,243,420,9.699,12.351,11.379,9.725,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+31,360,243,420,5.206,4.076,4.49,2.785,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+33,360,243,420,4.484,8.185,6.829,6.314,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+34,360,243,420,2.96,3.273,3.158,2.97,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+36,360,243,420,13.202,8.067,9.949,8.655,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+37,360,243,420,2.989,3.635,3.398,3.101,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+38,360,243,420,6.46,4.123,4.98,4.225,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+39,360,243,420,6.467,3.862,4.817,4.154,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+40,360,243,420,9.382,10.274,9.947,11.444,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+42,360,243,420,6.659,13.028,10.694,9.47,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+48,360,50,105,12.726,14.663,14.038,12.52,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+52,360,0,12,,21.798,21.798,9.394,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+53,360,60,108,14.868,9.91,11.681,8.088,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+56,360,0,60,,16.579,16.579,8.444,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+81,360,243,420,11.672,9.419,10.245,7.136,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+82,360,243,420,5.721,4.13,4.713,2.537,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+106,360,243,420,1.083,8.753,5.942,2.767,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+108,360,243,420,0.528,3.918,2.676,1.957,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+112,360,243,420,11.84,6.942,8.737,6.164,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+121,360,243,420,6.526,10.65,9.139,7.029,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+161,360,0,48,,19.759,19.759,16.176,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+162,360,0,45,,28.607,28.607,21.032,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+163,360,0,48,,18.8,18.8,12.037,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+164,360,0,48,,9.348,9.348,7.072,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+165,360,0,48,,30.303,30.303,23.75,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+166,360,0,48,,6.387,6.387,7.535,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+167,360,0,48,,15.903,15.903,14.962,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+168,360,0,48,,19.216,19.216,9.788,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+169,360,0,47,,12.557,12.557,10.928,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+170,360,0,48,,12.171,12.171,12.311,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+171,360,0,48,,10.198,10.198,11.111,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+172,360,0,24,,9.635,9.635,8.873,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+181,360,243,420,4.682,4.63,4.649,4.222,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+182,360,243,420,10.944,14.841,13.413,12.655,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+183,360,243,420,11.397,14.556,13.398,13.463,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+201,360,243,420,6.052,23.122,16.865,18.337,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+241,360,0,84,,15.668,15.668,11.012,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+261,360,0,84,,15.217,15.217,15.329,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+262,360,0,84,,14.947,14.947,14.829,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+401,360,243,420,7.582,12.534,10.719,10.909,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+421,360,243,420,5.019,8.87,7.458,7.554,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+441,360,243,420,3.129,10.465,7.776,7.169,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+461,360,243,420,9.225,9.126,9.162,8.97,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+521,360,243,420,3.001,2.801,2.874,3.185,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+522,360,243,420,2.845,2.484,2.617,2.314,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,display_blocked,독립 rolling-origin 재현 확인 전까지 노출 보류
+8,720,98,276,2.413,4.497,3.951,3.381,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+9,720,98,276,6.071,8.811,8.093,1.819,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+10,720,98,276,3.272,3.53,3.463,2.494,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+11,720,98,276,10.713,11.023,10.942,4.624,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+12,720,98,276,2.555,3.366,3.153,2.315,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+13,720,98,276,7.412,8.082,7.906,7.515,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+16,720,98,276,2.24,7.849,6.379,2.079,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+17,720,98,276,2.026,2.972,2.724,3.547,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+18,720,98,276,7.769,6.383,6.746,2.922,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+20,720,98,276,2.712,7.127,5.97,2.42,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+21,720,98,276,9.125,7.955,8.261,4.445,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+24,720,98,276,7.057,14.732,12.721,11.961,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+25,720,98,276,6.419,8.745,8.136,8.198,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+26,720,87,276,5.168,6.913,6.495,3.719,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 87행/후반 276행)
+27,720,98,276,3.859,6.776,6.012,4.738,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+28,720,98,276,4.695,5.873,5.564,4.501,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+29,720,98,276,10.665,14.423,13.438,8.929,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+30,720,98,276,4.491,9.886,8.472,7.746,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+31,720,98,276,1.976,11.822,9.242,2.89,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+33,720,98,276,3.101,10.376,8.47,6.487,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+34,720,98,276,2.635,3.388,3.191,2.059,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+36,720,98,276,9.205,10.056,9.833,6.875,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+37,720,98,276,4.016,5.94,5.436,2.638,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+38,720,98,276,4.455,5.986,5.585,3.888,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+39,720,98,276,6.701,6.767,6.75,4.106,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+40,720,98,276,12.407,14.541,13.982,14.232,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+42,720,98,276,5.019,19.676,15.836,10.984,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+81,720,98,276,17.831,11.089,12.855,8.848,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+82,720,98,276,11.316,4.839,6.536,2.353,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+106,720,98,276,2.645,5.643,4.858,1.443,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+108,720,98,276,0.184,5.09,3.804,1.626,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+112,720,98,276,15.328,4.587,7.401,4.776,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+121,720,98,276,9.401,11.849,11.208,4.049,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+181,720,98,276,5.409,6.589,6.28,4.669,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+182,720,98,276,15.438,24.655,22.24,14.738,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+183,720,98,276,15.311,18.376,17.573,7.284,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+201,720,98,276,3.536,29.047,22.362,12.92,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+401,720,98,276,9.367,9.599,9.538,9.669,lag_24h,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+421,720,98,276,2.611,13.544,10.679,9.107,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+441,720,98,276,5.016,8.669,7.712,6.477,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+461,720,98,276,10.754,9.386,9.745,6.981,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+521,720,98,276,1.948,3.252,2.911,2.854,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+522,720,98,276,4.892,2.361,3.024,2.191,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 98행/후반 276행)
+8,1440,0,60,,5.556,5.556,3.037,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+9,1440,0,60,,15.563,15.563,1.845,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+10,1440,0,60,,3.856,3.856,2.115,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+11,1440,0,60,,9.438,9.438,4.024,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+12,1440,0,60,,3.463,3.463,4.053,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+13,1440,0,60,,8.232,8.232,6.703,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+16,1440,0,60,,15.242,15.242,0.577,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+17,1440,0,60,,6.438,6.438,1.904,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+18,1440,0,60,,2.404,2.404,2.068,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+20,1440,0,60,,8.6,8.6,3.52,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+21,1440,0,60,,9.887,9.887,4.167,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+24,1440,0,60,,3.213,3.213,6.319,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+25,1440,0,60,,9.077,9.077,8.192,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+26,1440,0,49,,13.599,13.599,10.436,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 49행)
+27,1440,0,60,,9.194,9.194,3.793,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+28,1440,0,60,,6.046,6.046,6.947,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+29,1440,0,60,,21.052,21.052,11.049,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+30,1440,0,60,,10.279,10.279,4.635,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+31,1440,0,60,,10.75,10.75,2.706,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+33,1440,0,60,,11.184,11.184,8.388,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+34,1440,0,60,,2.118,2.118,1.738,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+36,1440,0,60,,7.406,7.406,5.213,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+37,1440,0,60,,4.726,4.726,1.443,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+38,1440,0,60,,6.235,6.235,2.311,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+39,1440,0,60,,6.009,6.009,2.769,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+40,1440,0,60,,9.086,9.086,12.389,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+42,1440,0,60,,29.057,29.057,18.106,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+81,1440,0,60,,10.661,10.661,11.111,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+82,1440,0,60,,3.576,3.576,2.121,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+106,1440,0,60,,31.029,31.029,5.0,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+108,1440,0,60,,52.339,52.339,3.361,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+112,1440,0,60,,16.218,16.218,8.789,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+121,1440,0,60,,2.134,2.134,0.924,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+181,1440,0,60,,4.007,4.007,3.733,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+182,1440,0,60,,0.309,0.309,0.238,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+183,1440,0,60,,13.196,13.196,3.167,persistence,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+201,1440,0,60,,26.083,26.083,18.043,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+401,1440,0,60,,14.039,14.039,14.677,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+421,1440,0,60,,16.401,16.401,12.113,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+441,1440,0,60,,11.837,11.837,13.524,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+461,1440,0,60,,10.638,10.638,4.5,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+521,1440,0,60,,2.296,2.296,3.281,lag_7d,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)
+522,1440,0,60,,1.685,1.685,2.905,seasonal_naive,reports/tables/accuracy_gate_detail.csv,2026-09-20,insufficient,표본 부족(전반 0행/후반 60행)

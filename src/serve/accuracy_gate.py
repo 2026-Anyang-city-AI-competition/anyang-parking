@@ -22,8 +22,8 @@ from pathlib import Path
 from src.config import PREDICTION_ACCURACY_CSV
 
 SERVED_STATUS = "certified"
-FIELDS = ("parking_id", "horizon", "status", "mae_first", "mae_second", "mae_overall",
-          "n_first", "n_second", "reason", "evidence_report", "evaluated_at")
+# 빌더와 한 곳에서 공유한다. 컬럼이 늘 때 양쪽이 어긋나면 게이트가 통째로 무효가 된다.
+REQUIRED_FIELDS = ("parking_id", "horizon", "status")
 
 
 class AccuracyGate:
@@ -53,8 +53,11 @@ class AccuracyGate:
             try:
                 with self.path.open(encoding="utf-8-sig", newline="") as handle:
                     reader = csv.DictReader(handle)
-                    if tuple(reader.fieldnames or ()) != FIELDS:
-                        errors.append("invalid_header")
+                    # 필수 컬럼만 요구한다. 근거 컬럼이 늘어도 게이트는 계속 동작해야 한다.
+                    missing = [f for f in REQUIRED_FIELDS
+                               if f not in (reader.fieldnames or ())]
+                    if missing:
+                        errors.append(f"missing_columns:{','.join(missing)}")
                     else:
                         for line, raw in enumerate(reader, 2):
                             try:
@@ -86,6 +89,11 @@ class AccuracyGate:
     def check(self, parking_id, horizon_min):
         """(주차장, 지평선) 이 예측을 내보내도 되는 칸인지."""
         with self._lock:
+            # ★ 파일이 **있는데 읽지 못한** 경우는 막는다. 파일이 아예 없을 때만 연다.
+            #   불량 파일에서 열어 버리면 검증되지 않은 예측이 조용히 나간다.
+            if self._status["status"] == "invalid":
+                return {"allowed": False, "status": "gate_invalid",
+                        "reason": "정확도 게이트 파일을 읽을 수 없습니다"}
             if not self._rules:
                 # 게이트를 아직 만들지 않았다. 막지 않되 검증되지 않았음을 알린다.
                 return {"allowed": True, "status": "gate_absent",

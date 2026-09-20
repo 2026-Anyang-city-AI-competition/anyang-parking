@@ -35,9 +35,21 @@ OUTPUT = PROCESSED / "prediction_accuracy.csv"
 EVIDENCE = "reports/tables/accuracy_gate_detail.csv"
 
 FIELDS = ("parking_id", "horizon", "status", "mae_first", "mae_second", "mae_overall",
-          "n_first", "n_second", "reason", "evidence_report", "evaluated_at")
+          "baseline_mae", "baseline_name", "n_first", "n_second", "reason",
+          "evidence_report", "evaluated_at")
 MAE_TARGET_PP = 10.0
 MIN_ROWS_PER_HALF = 100
+
+# 비AI 기준선. 이 중 가장 좋은 것보다 나아야 모델을 쓸 이유가 있다.
+BASELINES = {"pred_persistence": "persistence", "pred_lag_24h": "lag_24h",
+             "pred_lag_7d": "lag_7d", "pred_seasonal_naive": "seasonal_naive"}
+
+# ★ 독립 검증 전까지 화면에 내보내지 않을 지평선.
+#   240·360 은 날짜별로 lag_24h 에 지는 날이 있고(240분 1일·360분 2일) 방향 재현이
+#   확인되지 않았다(`a23_certification.csv`, `direction_reproduced=False`).
+#   모델과 실험은 그대로 두고 **노출만** 막는다. 다음 독립 rolling-origin 평가에서
+#   재현되면 이 집합에서 뺀다.
+DISPLAY_BLOCKED_HORIZONS = (240, 360)
 
 
 def evaluate(source=SOURCE, target=MAE_TARGET_PP, min_rows=MIN_ROWS_PER_HALF):
@@ -53,29 +65,53 @@ def evaluate(source=SOURCE, target=MAE_TARGET_PP, min_rows=MIN_ROWS_PER_HALF):
     for (pid, horizon), group in frame.groupby(["parking_id", "horizon"]):
         a = group[group.test_date.isin(first)].ae
         b = group[group.test_date.isin(second)].ae
+        # 그 주차장에서 가장 좋은 비AI 기준선. 정의된 기준선만 본다.
+        best_name, best_mae = None, None
+        for column, label in BASELINES.items():
+            if column not in group or group[column].isna().all():
+                continue
+            usable = group[group[column].notna()]
+            mae = float((usable.actual_occ - usable[column]).abs().mean())
+            if best_mae is None or mae < best_mae:
+                best_name, best_mae = label, mae
         record = {
             "parking_id": int(pid), "horizon": int(horizon),
             "n_first": int(len(a)), "n_second": int(len(b)),
             "mae_first": round(float(a.mean()), 3) if len(a) else "",
             "mae_second": round(float(b.mean()), 3) if len(b) else "",
             "mae_overall": round(float(group.ae.mean()), 3),
+            "baseline_mae": round(best_mae, 3) if best_mae is not None else "",
+            "baseline_name": best_name or "",
             "evidence_report": EVIDENCE, "evaluated_at": date.today().isoformat(),
         }
+        if int(horizon) in DISPLAY_BLOCKED_HORIZONS:
+            # 정확도와 무관한 **정책** 차단이다. 수치는 그대로 남겨 근거를 보존한다.
+            rows.append({**record, "status": "display_blocked",
+                         "reason": "독립 rolling-origin 재현 확인 전까지 노출 보류"})
+            continue
         if len(a) < min_rows or len(b) < min_rows:
             rows.append({**record, "status": "insufficient",
                          "reason": f"표본 부족(전반 {len(a)}행/후반 {len(b)}행)"})
             continue
         ok_first, ok_second = a.mean() <= target, b.mean() <= target
-        if ok_first and ok_second:
-            rows.append({**record, "status": "certified",
-                         "reason": f"전·후반 모두 MAE {target:g}%p 이하"})
-        elif ok_first or ok_second:
-            # 한쪽만 통과한 곳은 재현되지 않은 것이다. 켜지 않는다.
-            rows.append({**record, "status": "not_reproduced",
-                         "reason": "한쪽 구간에서만 합격 — 재현되지 않음"})
+        # ★ MAE 만 보면 기준선보다 나쁜데 통과하는 칸이 생긴다. 반드시 함께 본다.
+        beats_baseline = best_mae is not None and group.ae.mean() < best_mae
+        if not (ok_first and ok_second):
+            status = "not_reproduced" if (ok_first or ok_second) else "failed"
+            reason = ("한쪽 구간에서만 합격 — 재현되지 않음" if status == "not_reproduced"
+                      else f"양쪽 모두 MAE {target:g}%p 초과")
+            rows.append({**record, "status": status, "reason": reason})
+        elif best_mae is None:
+            rows.append({**record, "status": "no_baseline",
+                         "reason": "비교할 기준선이 없어 우위를 확인할 수 없음"})
+        elif not beats_baseline:
+            rows.append({**record, "status": "below_baseline",
+                         "reason": f"{best_name} 기준선({best_mae:.2f})보다 나쁨 "
+                                   f"— 모델을 쓸 이유가 없음"})
         else:
-            rows.append({**record, "status": "failed",
-                         "reason": f"양쪽 모두 MAE {target:g}%p 초과"})
+            rows.append({**record, "status": "certified",
+                         "reason": f"전·후반 모두 MAE {target:g}%p 이하 · "
+                                   f"{best_name}({best_mae:.2f}) 대비 우위"})
     table = pd.DataFrame(rows).sort_values(["horizon", "parking_id"])
     return table, first, second
 
@@ -91,14 +127,16 @@ def main():
     print(f"재현 검증: 전반 {first[0]}~{first[-1]} / 후반 {second[0]}~{second[-1]}")
     print(f"목표 MAE {args.target:g}%p · 반쪽당 최소 {args.min_rows}행\n")
 
-    print("지평선 | 인증 | 미재현 | 미달 | 표본부족 | 인증 주차장 평균MAE")
+    print("지평선 | 인증 | 미재현 | 미달 | 기준선미달 | 표본부족 | 노출보류 | 인증 평균MAE")
     for horizon, group in table.groupby("horizon"):
         counts = group.status.value_counts()
         certified = group[group.status.eq("certified")]
         mae = f"{certified.mae_overall.mean():.2f}" if len(certified) else "—"
         print(f"{horizon:>6}분 | {counts.get('certified', 0):>4} | "
               f"{counts.get('not_reproduced', 0):>6} | {counts.get('failed', 0):>4} | "
-              f"{counts.get('insufficient', 0):>8} | {mae:>18}")
+              f"{counts.get('below_baseline', 0):>10} | "
+              f"{counts.get('insufficient', 0):>8} | "
+              f"{counts.get('display_blocked', 0):>8} | {mae:>11}")
 
     total = len(table)
     certified = int((table.status == "certified").sum())
