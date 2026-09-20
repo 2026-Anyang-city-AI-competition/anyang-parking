@@ -67,6 +67,28 @@ class RoutingCacheTests(unittest.TestCase):
         self.assertEqual(result[1]["source"], "cache")
         self.assertEqual(result[2]["source"], "kakao")
 
+    def test_destination_outside_multi_radius_uses_single_route(self):
+        origin = (37.5665, 126.9780)
+        dest = (37.3920, 126.9510)
+        outside = {"result_code": 304, "result_msg": "반경 범위를 벗어남", "key": "39"}
+        single = {"result_code": 0,
+                  "summary": {"distance": 29240, "duration": 4323}}
+        with patch.object(routing.requests, "post", return_value=self.response([outside])), \
+             patch.object(routing.requests, "get", return_value=self.response([single])) as get:
+            result = routing.multi_eta(origin, {39: dest}, key="key")
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(result[39]["source"], "kakao_single")
+        self.assertFalse(result[39]["estimated"])
+        self.assertEqual(result[39]["duration"], 4323)
+
+        # 보완 성공 결과도 캐시돼 같은 요청에서 외부 API를 다시 부르지 않는다.
+        with patch.object(routing.requests, "post") as post, \
+             patch.object(routing.requests, "get") as get:
+            cached = routing.multi_eta(origin, {39: dest}, key="key")
+        post.assert_not_called()
+        get.assert_not_called()
+        self.assertEqual(cached[39]["source"], "cache")
+
     def test_recent_stale_cache_is_explicit_estimate_when_api_is_unavailable(self):
         origin = (37.4018, 126.9226)
         dest = (37.3942, 126.9568)

@@ -39,7 +39,7 @@ export function predictionNote(card: ParkingCard): string | null {
  *  순위에는 그대로 쓰였지만(A25: 피해 0건), "78%" 같은 수치는 과신이라 내보내지 않는다. */
 export function fullnessLabel(card: ParkingCard): string | null {
   if (card.full_prob === null) return null;
-  if (card.full_prob_calibrated) return `만차 ${Math.round(card.full_prob * 100)}%`;
+  if (card.full_prob_calibrated) return `만차확률 ${Math.round(card.full_prob * 100)}%`;
   if (card.full_prob >= 0.8) return '만차 가능성 높음';
   if (card.full_prob >= 0.5) return '혼잡 예상';
   if (card.full_prob >= 0.25) return '보통';

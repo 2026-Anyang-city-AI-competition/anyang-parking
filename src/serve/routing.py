@@ -21,6 +21,7 @@
   python3 src/serve/routing.py            # 자체 점검(폴백 포함)
 """
 import json, math, os, time, sqlite3
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -117,6 +118,38 @@ def _write_cached(con, origin, dest, value):
         (*key, value["distance"], value["duration"], datetime.now(KST).isoformat()),
     )
 
+
+def _single_eta(origin, dest, key):
+    """다중 목적지 API의 10km 반경 밖 후보를 일반 길찾기로 보완한다."""
+    for attempt in range(RETRY):
+        try:
+            response = requests.get(
+                f"{NAVI}/v1/directions",
+                headers={"Authorization": f"KakaoAK {key}"},
+                params={
+                    "origin": f"{origin[1]},{origin[0]}",
+                    "destination": f"{dest[1]},{dest[0]}",
+                    "summary": "true",
+                },
+                timeout=TIMEOUT,
+            )
+            if response.status_code == 200:
+                route = (response.json().get("routes") or [{}])[0]
+                if route.get("result_code") == 0 and route.get("summary"):
+                    summary = route["summary"]
+                    return {
+                        "distance": summary["distance"],
+                        "duration": summary["duration"],
+                        "source": "kakao_single",
+                        "estimated": False,
+                    }
+            if attempt < RETRY - 1:
+                time.sleep(2 ** attempt)
+        except Exception:
+            if attempt < RETRY - 1:
+                time.sleep(2 ** attempt)
+    return None
+
 def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     """origin=(lat,lon) · dests={id:(lat,lon)} → {id:{distance,duration,source}}
     신선 캐시 → 카카오 → 24시간 이내 stale 캐시 → 직선 폴백 순이다.
@@ -135,7 +168,7 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     misses = [(pid, dest) for pid, dest in dests.items() if pid not in out]
     for i in range(0, len(misses), MAX_DEST):          # 캐시 미스만 30개씩 끊는다.
         chunk = misses[i:i+MAX_DEST]
-        got = {}
+        got, outside_radius = {}, set()
         if key:
             body = {"origin": {"x": origin[1], "y": origin[0]},        # ★ x=경도
                     "destinations": [{"x": lon, "y": lat, "key": str(k)}
@@ -153,6 +186,10 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
                                 got[rt["key"]] = {"distance": rt["summary"]["distance"],
                                                   "duration": rt["summary"]["duration"],
                                                   "source": "kakao", "estimated": False}
+                            elif rt.get("result_code") == 304 and rt.get("key") is not None:
+                                # 다중 목적지는 origin 기준 10km 제한이 있다. 먼 출발지는
+                                # 일반 길찾기로 후보별 보완해 실제 차량 ETA를 유지한다.
+                                outside_radius.add(str(rt["key"]))
                         break  # Success, break out of retry loop
                     else:
                         if a == RETRY - 1:  # Last attempt
@@ -170,6 +207,16 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
                         wait_time = 2 ** a
                         print(f"[routing] Attempt {a+1} failed: {type(e).__name__}: {str(e)[:100]}. Retrying in {wait_time}s...", flush=True)
                         time.sleep(wait_time)
+        if key and outside_radius:
+            targets = {str(pid): dest for pid, dest in chunk if str(pid) in outside_radius}
+            # 후보가 최대 30개라 순차 호출하면 화면이 오래 멈춘다. 동시성은 6개로 제한한다.
+            with ThreadPoolExecutor(max_workers=min(6, len(targets))) as executor:
+                futures = {executor.submit(_single_eta, origin, dest, key): pid
+                           for pid, dest in targets.items()}
+                for future in as_completed(futures):
+                    value = future.result()
+                    if value is not None:
+                        got[futures[future]] = value
         for pid, (lat, lon) in chunk:
             api_value = got.get(str(pid))
             if api_value is not None:
@@ -193,7 +240,7 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
     for value in out.values():
         if isinstance(value, dict):
             metrics.record_external("kakao_route_multi",
-                                    value.get("source") in {"kakao", "cache"}, 0.0)
+                                    value.get("source") in {"kakao", "kakao_single", "cache"}, 0.0)
     return out
 
 def future_eta(origin, dest, minutes_ahead=30, key=None):
