@@ -209,8 +209,9 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
                         time.sleep(wait_time)
         if key and outside_radius:
             targets = {str(pid): dest for pid, dest in chunk if str(pid) in outside_radius}
-            # 후보가 최대 30개라 순차 호출하면 화면이 오래 멈춘다. 동시성은 6개로 제한한다.
-            with ThreadPoolExecutor(max_workers=min(6, len(targets))) as executor:
+            # 다중 목적지 API의 한 묶음 자체가 최대 30개다. 반경 밖 후보도 같은
+            # 상한 안에서 병렬 보완해 먼 출발지의 첫 조회가 직렬로 늘어지지 않게 한다.
+            with ThreadPoolExecutor(max_workers=min(MAX_DEST, len(targets))) as executor:
                 futures = {executor.submit(_single_eta, origin, dest, key): pid
                            for pid, dest in targets.items()}
                 for future in as_completed(futures):
