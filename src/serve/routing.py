@@ -209,9 +209,9 @@ def multi_eta(origin, dests, radius=10000, key=None, use_cache=True):
                         time.sleep(wait_time)
         if key and outside_radius:
             targets = {str(pid): dest for pid, dest in chunk if str(pid) in outside_radius}
-            # 다중 목적지 API의 한 묶음 자체가 최대 30개다. 반경 밖 후보도 같은
-            # 상한 안에서 병렬 보완해 먼 출발지의 첫 조회가 직렬로 늘어지지 않게 한다.
-            with ThreadPoolExecutor(max_workers=min(MAX_DEST, len(targets))) as executor:
+            # 카카오 일반 길찾기를 30개 동시에 보내면 쿼터 제한으로 전부 실패할 수 있다.
+            # 운영 실측에서 안정적으로 전부 성공한 6개까지만 병렬 처리한다.
+            with ThreadPoolExecutor(max_workers=min(6, len(targets))) as executor:
                 futures = {executor.submit(_single_eta, origin, dest, key): pid
                            for pid, dest in targets.items()}
                 for future in as_completed(futures):
