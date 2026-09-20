@@ -24,6 +24,7 @@ CARD = {"parking_id", "name", "lat", "lng", "grade", "cell_cnt",
         "prediction_status", "prediction_reason", "avail_now", "avail_pred",
         "full_prob", "cell_cnt", "is_live", "weekday_hours", "weekend_hours", "benefit"}
 RANKED = CARD | {"rank", "rank_without_demotion", "demoted", "demotion_reason"}
+ROUTE_STATE = {"drive_estimated", "walk_estimated", "route_source", "walk_source"}
 FARE = {"total", "reason", "breakdown", "billable_min", "free_minutes",
         "free_minutes_outside_fee_window", "total_prepaid", "fee_source"}
 
@@ -60,6 +61,7 @@ class WebContractTests(unittest.TestCase):
         self.assertLessEqual(TOP_LEVEL, set(body))
         for card in body["cards"]:
             self.assertLessEqual(CARD, set(card), card["name"])
+            self.assertLessEqual(ROUTE_STATE, set(card), card["name"])
             self.assertLessEqual(FARE, set(card["fare"]), card["name"])
         for axis in ("by_walk", "by_fare"):
             for card in body[axis]:

@@ -117,9 +117,12 @@ export type ParkingCard = {
   total_min: number | null;
   arrive_at: string;
   arrive_at_iso: string;
-  /** 경로 조회 실패로 추정치를 쓴 경우. UI 에 "추정치"를 반드시 표시한다. */
+  /** 차량 경로 조회 실패로 추정치를 쓴 경우. 기존 클라이언트 호환 필드다. */
   estimated: boolean;
+  drive_estimated?: boolean;
+  walk_estimated?: boolean;
   route_source?: string | null;
+  walk_source?: string | null;
   /** 미래 출발에서 `current`면 현재 교통 기준 ETA다. */
   route_traffic_basis?: 'live' | 'current' | null;
   walk_far_warning: boolean;

@@ -175,7 +175,11 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
         f = price(applied_code)
         op = oprtime_features(d, arrive)
 
-        est = bool((dv and dv.get("estimated")) or (wk and wk.get("estimated")))
+        # 차량 ETA가 추정치인지와 도보 ETA가 추정치인지는 의미가 다르다.
+        # 도보 경로만 폴백인데 차량 경로까지 실패했다고 표시하거나, 정상적인
+        # 차량 도착시간으로 계산한 만차확률 강등을 끌 수 없다.
+        drive_estimated = bool(dv and dv.get("estimated"))
+        walk_estimated = bool(wk and wk.get("estimated"))
         walk_min = round(walk_s / 60) if walk_s is not None else None
         cards.append({
             "name": d["name"], "parking_id": pid,
@@ -207,8 +211,12 @@ def recommend(dest, minutes, start=None, depart_in_min=0, min_n=5,
             "interval_status": interval_status, "prediction_source": prediction_source,
             "model_horizon_min": model_horizon_min,
             "walk_far_warning": bool(walk_min is not None and walk_min > WALK_FAR_MIN),
-            "estimated": est,
+            # `estimated`는 기존 순위 로직과의 호환을 위해 차량 ETA 상태로 유지한다.
+            "estimated": drive_estimated,
+            "drive_estimated": drive_estimated,
+            "walk_estimated": walk_estimated,
             "route_source": dv.get("source") if dv else None,
+            "walk_source": wk.get("source") if wk else None,
             "route_traffic_basis": dv.get("traffic_basis") if dv else None,
             "cell_cnt": d.get("cell_cnt"), "straight_m": d.get("straight_m"),
             "grade": d.get("grade"), "is_live": is_live,

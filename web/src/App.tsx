@@ -513,7 +513,6 @@ function ParkingCardView({
   onOpen: () => void;
 }) {
   const fare = fareLabel(card);
-  const warning = accessWarning(card);
   const demotion = demotionNote(card);
   return (
     <article
@@ -552,8 +551,6 @@ function ParkingCardView({
       </div>
       <Availability card={card} />
       {demotion && <Notice tone="warn">{demotion}</Notice>}
-      {warning && <Notice tone="warn">{warning}</Notice>}
-      {card.estimated && <Notice tone="warn">실시간 경로 조회 실패 — 이동 시간은 추정치예요.</Notice>}
       <div className="card-footer">
         <span><Car size={14} /> {card.drive_min ?? '—'}분</span>
         <span><Footprints size={14} /> {card.walk_min ?? '—'}분</span>
@@ -562,7 +559,6 @@ function ParkingCardView({
           {fare.sub && <small>{fare.sub}</small>}
         </strong>
       </div>
-      {fare.note && <Notice tone="warn">{fare.note}</Notice>}
     </article>
   );
 }
@@ -993,6 +989,10 @@ function Results({
   const cards = sortedBy(result, sort);
   const notice = resultNotice(result);
   const gateBlocked = cards.length > 0 && cards.every((c) => c.prediction_status !== 'available');
+  const hasDriveEstimate = cards.some((card) => card.drive_estimated ?? card.estimated);
+  const hasWalkEstimate = cards.some((card) => card.walk_estimated === true);
+  const hasUnknownAccess = cards.some((card) => accessWarning(card) !== null);
+  const hasUnverifiedFare = cards.some((card) => fareLabel(card).note !== null);
 
   useEffect(() => {
     setSelectedParkingId((current) => (
@@ -1050,6 +1050,18 @@ function Results({
           <Notice>미래 출발의 이동 시간은 현재 교통을 기준으로 각 주차장별로 계산했어요.</Notice>
         )}
         {gateBlocked && <Notice>현재 시간대에는 혼잡도 예측을 제공하지 않아요. 위치와 요금을 기준으로 안내해요.</Notice>}
+        {hasDriveEstimate && (
+          <Notice tone="warn">일부 주차장의 차량 경로를 불러오지 못해 운전 시간은 거리 기반 추정치예요.</Notice>
+        )}
+        {hasWalkEstimate && (
+          <Notice tone="warn">일부 주차장의 도보 경로를 불러오지 못해 도보 시간은 거리 기반 추정치예요.</Notice>
+        )}
+        {hasUnknownAccess && (
+          <Notice tone="warn">일부 주차장은 입·출차 시간이 아직 확인되지 않아 방문 전 확인이 필요해요.</Notice>
+        )}
+        {hasUnverifiedFare && (
+          <Notice tone="warn">일부 요금은 조사가 확정되지 않은 운영시간 기준으로 계산했어요.</Notice>
+        )}
         {result.service?.data_status === 'stale' && (
           <Notice tone="warn">실시간 관측이 최신이 아니에요. 현재 값은 참고만 해주세요.</Notice>
         )}
@@ -1121,7 +1133,12 @@ function Detail({ card, minutes, onBack }: { card: RankedCard; minutes: number; 
           <ArrowRight />
           <div><span><Footprints /></span><strong>도보 {card.walk_min ?? '—'}분</strong><small>주차장 → 목적지</small></div>
         </div>
-        {card.estimated && <Notice tone="warn">실시간 경로 조회 실패 — 추정치예요.</Notice>}
+        {(card.drive_estimated ?? card.estimated) && (
+          <Notice tone="warn">차량 경로를 불러오지 못해 운전 시간은 거리 기반 추정치예요.</Notice>
+        )}
+        {card.walk_estimated && (
+          <Notice tone="warn">도보 경로를 불러오지 못해 도보 시간은 거리 기반 추정치예요.</Notice>
+        )}
       </section>
 
       <section className="detail-section">

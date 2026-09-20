@@ -11,6 +11,33 @@ class _Predictor:
 
 
 class DemotionTests(unittest.TestCase):
+    def test_walking_fallback_does_not_disable_full_probability_demotion(self):
+        lots = [
+            {"parking_id": 1, "name": "가까운만차노상", "lat": 37.4, "lng": 126.9, "grade": 1,
+             "div": "노상", "cell_cnt": 20, "avail_now": 20, "straight_m": 100,
+             "wdays_start": "00:00", "wdays_end": "24:00", "wend_start": "00:00", "wend_end": "24:00"},
+            {"parking_id": 2, "name": "먼여유노상", "lat": 37.41, "lng": 126.91, "grade": 1,
+             "div": "노상", "cell_cnt": 20, "avail_now": 1, "straight_m": 200,
+             "wdays_start": "00:00", "wdays_end": "24:00", "wend_start": "00:00", "wend_end": "24:00"},
+        ]
+        cand = {"lots": lots, "dead_feeds": [], "radius_used": 1000,
+                "exhausted": False, "message": None, "unlabeled": []}
+        drive = {x["parking_id"]: {"duration": 60, "distance": 100,
+                                    "estimated": False, "source": "kakao"} for x in lots}
+        walk = {1: {"duration": 60, "distance": 100, "estimated": True, "source": "fallback"},
+                2: {"duration": 120, "distance": 200, "estimated": True, "source": "fallback"}}
+        with patch("src.serve.recommend.find_candidates", return_value=cand), \
+             patch("src.serve.recommend.routing.multi_eta", return_value=drive), \
+             patch("src.serve.recommend.walking.walk_times", return_value=walk):
+            result = recommend((37.4, 126.9), 60, predictor=_Predictor(), with_alternatives=False)
+
+        by_id = {card["parking_id"]: card for card in result["by_walk"]}
+        self.assertFalse(by_id[1]["estimated"])
+        self.assertFalse(by_id[1]["drive_estimated"])
+        self.assertTrue(by_id[1]["walk_estimated"])
+        self.assertEqual(by_id[1]["walk_source"], "fallback")
+        self.assertTrue(by_id[1]["demoted"])
+
     def test_high_full_probability_is_demoted_but_estimated_is_not(self):
         lots = [
             {"parking_id": 1, "name": "가까운만차노상", "lat": 37.4, "lng": 126.9, "grade": 1,

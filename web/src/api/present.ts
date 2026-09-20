@@ -24,8 +24,8 @@ const PREDICTION_NOTE: Record<string, string> = {
   dead_feed: '이 주차장은 실시간 정보를 제공하지 않아요. 위치와 요금만 안내해요.',
   accuracy_not_certified:
     '이 주차장은 이 시간대 예측 정확도가 기준에 못 미쳐 혼잡도를 안내하지 않아요. 위치와 요금은 그대로 확인하실 수 있어요.',
-  frozen: PREDICTION_UNAVAILABLE,
-  anomaly: PREDICTION_UNAVAILABLE,
+  frozen: '실시간 값이 오래 변하지 않아 현재값과 예측을 숨겼어요.',
+  anomaly: '실시간 데이터 이상이 감지돼 현재값과 예측을 숨겼어요.',
   evaluation_pending: PREDICTION_UNAVAILABLE,
   unavailable: PREDICTION_UNAVAILABLE,
 };
