@@ -244,7 +244,7 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
     # 별표 2-1 · 15분 미만 전액 면제
     if billable < T.FREE_UNDER_MIN:
         out["total"], out["breakdown"] = 0, breakdown
-        out["reason"] = f"운영시간 내 {billable}분 — 15분 미만 면제"
+        out["reason"] = "요금 부과시간이 아닙니다."
         return out
 
     # 감면 중 '먼저 면제되는 분'을 뺀다. 1회 주차 기준이라 첫 유료일부터 소진한다.

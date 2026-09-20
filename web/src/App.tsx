@@ -482,7 +482,7 @@ function Availability({ card }: { card: ParkingCard }) {
           <span><i /> 지금 {card.is_live ? '· 실시간' : '· 미제공'}</span>
           <strong>
             {now === null ? '—' : now}
-            <small>{card.cell_cnt ? `면 / ${card.cell_cnt}` : '면'}</small>
+            <small>{card.cell_cnt ? `자리 / ${card.cell_cnt}` : '자리'}</small>
           </strong>
         </div>
         <div className="availability-box future">
@@ -490,7 +490,7 @@ function Availability({ card }: { card: ParkingCard }) {
           <strong>
             {predicted === null ? '—' : predicted}
             <small>
-              면{' '}
+              자리{' '}
               {fullnessLabel(card) && <em>{fullnessLabel(card)}</em>}
             </small>
           </strong>
@@ -535,7 +535,7 @@ function ParkingCardView({
           <h3>{card.name}</h3>
           <p>
             <span>{card.grade ? `${card.grade}급지` : '급지 미상'}</span>
-            {card.cell_cnt ? <small>총 {card.cell_cnt}면</small> : null}
+            {card.cell_cnt ? <small>총 {card.cell_cnt}자리</small> : null}
           </p>
         </div>
         <button
@@ -1115,7 +1115,7 @@ function Detail({ card, minutes, onBack }: { card: RankedCard; minutes: number; 
         <div>
           <p>추천 {card.rank}순위</p>
           <h2>{card.name}</h2>
-          <span>{card.grade ? `${card.grade}급지` : '급지 미상'} · 총 {card.cell_cnt ?? '—'}면</span>
+          <span>{card.grade ? `${card.grade}급지` : '급지 미상'} · 총 {card.cell_cnt ?? '—'}자리</span>
         </div>
       </section>
 

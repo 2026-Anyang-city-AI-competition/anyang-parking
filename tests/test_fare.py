@@ -45,6 +45,7 @@ check("걸침(21시 입차 3h) 요금", r["total"], 1500)
 sun = datetime(2026, 9, 6, 14, 0)
 check("일요일 무료", calc_fare(G1, sun, 120)["total"], 0)
 check("일요일 무료 끄면 과금", calc_fare(G1, sun, 120, sunday_free=False)["total"], 5100)
+check("15분 미만 안내 문구", calc_fare(G1, MON, 10)["reason"], "요금 부과시간이 아닙니다.")
 
 print("\n=== 감면 (별표 2) ===")
 check("경형자동차 50% (120분 5,100→2,550→절사)",
