@@ -253,6 +253,14 @@ class ApiTests(unittest.TestCase):
         # 증빙 서류 자체를 요구하는 필드가 있으면 안 된다.
         self.assertNotIn("document", str(body))
 
+    def test_disability_benefits_use_official_names_and_evidence(self):
+        body = self.client.get("/api/v1/benefits").json()
+        benefits = {item["code"]: item for item in body["benefits"]}
+        self.assertEqual(benefits["장애인_경"]["label"], "장애의 정도가 심하지 않은 장애인")
+        self.assertEqual(benefits["장애인_중"]["label"], "장애의 정도가 심한 장애인")
+        for code in ("장애인_경", "장애인_중"):
+            self.assertEqual(benefits[code]["evidence"], "장애인식별표지 또는 복지카드")
+
     def test_recommend_accepts_multiple_benefit_codes(self):
         stub = {"cards": [], "by_walk": [], "by_fare": [], "unavailable": []}
         payload = {"destination": {"lat": 37.4, "lng": 126.9}, "parking_minutes": 60,
