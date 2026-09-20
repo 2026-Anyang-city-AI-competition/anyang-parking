@@ -5,7 +5,9 @@ set -euo pipefail
 
 API_URL="${API_URL:-http://127.0.0.1:8000/api/v1/health}"
 WEB_URL="${WEB_URL:-http://127.0.0.1/}"
-ATTEMPTS="${ATTEMPTS:-15}"
+# 1GB VM은 OS 캐시가 차가우면 50MB 모델 역직렬화와 초기 데이터 적재에 1분 이상
+# 걸릴 수 있다. 30초만 기다리면 정상 릴리스를 실패로 오판하고 다시 모델을 읽게 된다.
+ATTEMPTS="${ATTEMPTS:-60}"
 WAIT_SEC="${WAIT_SEC:-2}"
 last_body=""
 last_web="unreachable"
