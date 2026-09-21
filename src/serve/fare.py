@@ -171,7 +171,8 @@ def _progressive(rate, billable):
     if billable <= 0:
         return 0, []
     total = first30
-    bd = [{"seg": T.SEG_NAMES[0], "min": min(billable, 30), "amt": first30}]
+    # 화면엔 정수 분만 보인다(round). 올림 단위(units)는 반올림 전 span 으로 계산해 금액엔 영향 없다.
+    bd = [{"seg": T.SEG_NAMES[0], "min": round(min(billable, 30)), "amt": first30}]
     prev = 30
     for i, bound in enumerate(T.SEG_BOUNDS[1:] + (None,)):
         if billable <= prev:
@@ -181,7 +182,7 @@ def _progressive(rate, billable):
         units = -(-span // 10)                     # 10분 단위 올림
         amt = units * tiers[i]
         total += amt
-        bd.append({"seg": T.SEG_NAMES[i + 1], "min": span, "amt": amt})
+        bd.append({"seg": T.SEG_NAMES[i + 1], "min": round(span), "amt": amt})
         prev = end
     return total, bd
 
@@ -239,7 +240,7 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
     breakdown = []
     if out["free_minutes_outside_fee_window"] > 0:
         breakdown.append({"kind": "free_window", "seg": "요금 징수시간 외",
-                          "min": out["free_minutes_outside_fee_window"], "amt": 0})
+                          "min": round(out["free_minutes_outside_fee_window"]), "amt": 0})
 
     # 별표 2-1 · 15분 미만 전액 면제
     if billable < T.FREE_UNDER_MIN:
@@ -255,7 +256,7 @@ def calc_fare(lot, start_dt, minutes, discount=None, sunday_free=None,
         remaining = min(billable, d["free_min"])
         out["free_minutes"] = remaining
         breakdown.append({"kind": "benefit_free", "seg": f"{discount} 면제",
-                          "min": remaining, "amt": 0})
+                          "min": round(remaining), "amt": 0})
         for i, day_minutes in enumerate(minutes_by_day):
             used = min(day_minutes, remaining)
             minutes_by_day[i] = day_minutes - used
